@@ -274,7 +274,7 @@ public class GSSClient {
             int beforeNumSubjectCreds = 0;
             // Traces all credentials too.
             if (subject != null) {
-                LOG.debug("[{0}] AUTH_NEGOTIATE as subject {1}",
+                LOG.debug("[{}] AUTH_NEGOTIATE as subject {1}",
                         getName(), subject.getPrincipals().toString());
                 beforeNumSubjectCreds = subject.getPrivateCredentials().size();
             }
@@ -283,7 +283,7 @@ public class GSSClient {
                 try {
                     final OutputStream outputStream = new ByteArrayOutputStream();
                     HexDump.dump(negotiationToken, 0, outputStream, 0);
-                    LOG.debug("[{0}] AUTH_NEGOTIATE Process token from service==>\n", getName());
+                    LOG.debug("[{}] AUTH_NEGOTIATE Process token from service==>\n", getName());
                 } catch (IOException e) {
                     LOG.catching(e);
                 }
@@ -300,9 +300,9 @@ public class GSSClient {
             if (subject != null) {
                 final int afterNumSubjectCreds = subject.getPrivateCredentials().size();
                 if (afterNumSubjectCreds > beforeNumSubjectCreds) {
-                    LOG.debug("[{0}] AUTH_NEGOTIATE have extra credentials.", getName());
+                    LOG.debug("[{}] AUTH_NEGOTIATE have extra credentials.", getName());
                     // Traces all credentials too.
-                    LOG.debug("[{0}] AUTH_NEGOTIATE updated subject {1}",
+                    LOG.debug("[{}] AUTH_NEGOTIATE updated subject {1}",
                             getName(), subject.toString());
                 }
             }
@@ -313,7 +313,7 @@ public class GSSClient {
                 try {
                     final OutputStream outputStream = new ByteArrayOutputStream();
                     HexDump.dump(negotiationToken, 0, outputStream, 0);
-                    LOG.debug("[{0}] AUTH_NEGOTIATE Send token to service\n", getName());
+                    LOG.debug("[{}] AUTH_NEGOTIATE Send token to service\n", getName());
                 } catch (IOException e) {
                     LOG.catching(e);
                 }
@@ -333,7 +333,7 @@ public class GSSClient {
             }
             final Set<Object> creds = subject.getPrivateCredentials();
             if (creds.isEmpty()) {
-                LOG.debug("[{0}] No service tickets ", getName());
+                LOG.debug("[{}] No service tickets ", getName());
             }
 
             synchronized (creds) {
@@ -343,7 +343,7 @@ public class GSSClient {
                     if (ecred instanceof KerberosTicket) {
                         final KerberosTicket ticket = (KerberosTicket) ecred;
                         if (LOG.isDebugEnabled()) {
-                            LOG.debug("[{0}] Service ticket belonging to client principal [{1}] "
+                            LOG.debug("[{}] Service ticket belonging to client principal [{1}] "
                                     + "for server principal [{2}] End time=[{3}] isCurrent={4}",
                                     getName(), ticket.getClient().getName(),
                                     ticket.getServer().getName(), ticket.getEndTime(),

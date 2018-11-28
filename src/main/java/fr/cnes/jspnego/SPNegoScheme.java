@@ -152,7 +152,7 @@ public class SPNegoScheme extends AuthSchemeBase {
     protected byte[] generateGSSToken(final Oid oid) throws GSSException {
         LOG.traceEntry("Parameters : {}", oid);
 
-        LOG.debug("Init token for {0}", servicePrincipalName);
+        LOG.debug("Init token for {}", servicePrincipalName);
 
         final byte[] tokenInit = new byte[0];
         final GSSManager manager = getManager();
@@ -255,7 +255,7 @@ public class SPNegoScheme extends AuthSchemeBase {
     private BasicHeader getBasicHeader() {
         LOG.traceEntry();
         final String tokenStr = new String(base64codec.encode(token), Charset.defaultCharset());
-        LOG.debug("Sending response '{0}' back to the auth server", tokenStr);
+        LOG.debug("Sending response '{}' back to the auth server", tokenStr);
         return LOG.traceExit(new BasicHeader(AUTH.PROXY_AUTH_RESP, "Negotiate " + tokenStr));
     }
 
@@ -273,7 +273,7 @@ public class SPNegoScheme extends AuthSchemeBase {
             final int endIndex) throws MalformedChallengeException {
         LOG.traceEntry("Parameters {} : ", buffer, beginIndex, endIndex);
         final String challenge = buffer.substringTrimmed(beginIndex, endIndex);
-        LOG.debug("Received challenge {0} from the auth server", challenge);
+        LOG.debug("Received challenge {} from the auth server", challenge);
         if (state == State.UNINITIATED) {
             LOG.debug("Authentication received");
             state = State.CHALLENGE_RECEIVED;

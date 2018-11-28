@@ -416,7 +416,7 @@ public final class ProxySPNegoHttpClient implements Closeable {
     public CloseableHttpResponse execute(final HttpHost target, final HttpContext context)
             throws IOException, ClientProtocolException {
         LOG.traceEntry("Parameters : {}", target, context);
-        LOG.info("Executing request to {0} via {1}:{2}",
+        LOG.info("Executing request to {} via {}:{}",
                 target, this.getProxy().getHostName(), this.getProxy().getPort());
         return LOG.traceExit(this.httpClient.execute(target, this.request, context));
     }
@@ -435,7 +435,7 @@ public final class ProxySPNegoHttpClient implements Closeable {
     public CloseableHttpResponse execute(final HttpHost target) throws IOException,
             ClientProtocolException {
         LOG.traceEntry("Parameters : {}", target);
-        LOG.info("Executing request to {0}  via {1}:{2}", target, this.getProxy().getHostName(),
+        LOG.info("Executing request to {}  via {}:{}", target, this.getProxy().getHostName(),
                 this.getProxy().getPort());
         return LOG.traceExit(this.httpClient.execute(target, this.request));
     }
@@ -460,7 +460,7 @@ public final class ProxySPNegoHttpClient implements Closeable {
             final ResponseHandler<? extends T> responseHandler) throws IOException,
             ClientProtocolException {
         LOG.traceEntry("Parameters : {}", target, responseHandler);
-        LOG.info("Executing request to {0}  via {1}:{2}", target, this.getProxy().getHostName(),
+        LOG.info("Executing request to {}  via {}:{}", target, this.getProxy().getHostName(),
                 this.getProxy().getPort());
         return LOG.traceExit(this.httpClient.execute(target, this.request, responseHandler));
     }
@@ -487,7 +487,7 @@ public final class ProxySPNegoHttpClient implements Closeable {
             IOException,
             ClientProtocolException {
         LOG.traceEntry("Parameters : {}", target, responseHandler, context);
-        LOG.info("Executing request to {0}  via {1}:{2}", target, this.getProxy().getHostName(),
+        LOG.info("Executing request to {}  via {}:{}", target, this.getProxy().getHostName(),
                 this.getProxy().getPort());
         return LOG.
                 traceExit(this.httpClient.execute(target, this.request, responseHandler, context));

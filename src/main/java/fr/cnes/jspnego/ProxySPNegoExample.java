@@ -77,15 +77,15 @@ public class ProxySPNegoExample {
 
             HttpHost target = new HttpHost("www.google.com", 443, "https");
             HttpResponse response = httpclient.execute(target);
-            LOG.info("---------------------------------\n{0}", response.getStatusLine());
+            LOG.info("---------------------------------\n{}", response.getStatusLine());
 
             target = new HttpHost("www.nasa.gov", 443, "https");
             response = httpclient.execute(target);
-            LOG.info("-----------------------------------\n{0}", response.getStatusLine());
+            LOG.info("-----------------------------------\n{}", response.getStatusLine());
 
             target = new HttpHost("www.larousse.fr", 80, "http");
             response = httpclient.execute(target);
-            LOG.info("----------------------------------------\n{0}", response.getStatusLine());
+            LOG.info("----------------------------------------\n{}", response.getStatusLine());
 
         } catch (IOException e) {
             LOG.error(e.toString());

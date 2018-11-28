@@ -23,6 +23,13 @@ package fr.cnes.jspnego;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScheme;
 import org.apache.http.auth.AuthSchemeFactory;
@@ -41,6 +48,10 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.params.AuthPolicy;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
+import org.apache.http.conn.scheme.Scheme;
+import org.apache.http.conn.scheme.SchemeRegistry;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -86,6 +97,28 @@ public final class ProxySPNegoHttpClient implements Closeable {
      * Environment variable that defines the path of krb5 configuration file: {@value #ENV_KRB5}.
      */
     private static final String ENV_KRB5 = "KRB5CCNAME";
+    
+    /**
+     * Disable SSL certtificate checking.
+     */
+    private static final TrustManager TRUST_MANAGER = new X509TrustManager() {
+
+        @Override
+        public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+        }
+
+        @Override
+        public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+            // This will never throw an exception.
+            // this doesn't check anything at all
+            // it is insecure
+        }
+
+        @Override
+        public X509Certificate[] getAcceptedIssuers() {
+            return null;
+        }
+    };
 
     /**
      * http client.
@@ -170,7 +203,10 @@ public final class ProxySPNegoHttpClient implements Closeable {
         httpClient.setCredentialsProvider(createCredsProvider(proxy));
         httpClient.setAuthSchemes(registerSPNegoProviderDefaultHttp(userId, keytabFileName,
                 ticketCacheFileName, krbConf, spn));
+        SSLSocketFactory sf = new SSLSocketFactory(disableSSLCertificateChecking());
+        Scheme httpsScheme = new Scheme("https", 443, sf);       
         this.httpClient = httpClient;
+        this.httpClient.getConnectionManager().getSchemeRegistry().register(httpsScheme);
         setProxy(proxy);
     }
 
@@ -238,10 +274,13 @@ public final class ProxySPNegoHttpClient implements Closeable {
                 getenv(ENV_KRB5);
         final String krbConf = (krbConfPath == null) ? defaultKrbConf : krbConfPath;
         final String spn = "HTTP@" + proxy.getHostName();
-        final HttpClientBuilder builder = HttpClients.custom();
-        builder.setDefaultCredentialsProvider(createCredsProvider(proxy));
-        builder.setDefaultAuthSchemeRegistry(registerSPNegoProvider(userId, keytabFileName,
-                ticketCacheFileName, krbConf, spn));
+        HttpClientBuilder builder = HttpClients.custom()
+                .setDefaultCredentialsProvider(createCredsProvider(proxy))
+                .setDefaultAuthSchemeRegistry(registerSPNegoProvider(
+                        userId, keytabFileName,ticketCacheFileName, krbConf, spn)
+                )
+                .setSSLContext(disableSSLCertificateChecking())
+                .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
         this.httpClient = builder.build();
         setProxy(proxy);
     }
@@ -256,6 +295,16 @@ public final class ProxySPNegoHttpClient implements Closeable {
         final RequestConfig config = RequestConfig.custom().setProxy(proxy).build();
         this.request.setConfig(config);
         LOG.traceExit();
+    }
+    
+    private SSLContext disableSSLCertificateChecking() {
+        try {
+            SSLContext sslCtx = SSLContext.getInstance("TLS");
+            sslCtx.init(null, new TrustManager[] { TRUST_MANAGER }, null);
+            return sslCtx;
+        } catch (NoSuchAlgorithmException | KeyManagementException ex) {
+            throw LOG.throwing(new RuntimeException(ex));
+        }
     }
 
     /**

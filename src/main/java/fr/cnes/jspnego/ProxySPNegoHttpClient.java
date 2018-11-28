@@ -271,8 +271,8 @@ public final class ProxySPNegoHttpClient implements Closeable {
             final String ticketCacheFileName, final String krbConfPath, final HttpHost proxy) {
         LOG.traceEntry("Parameters : {}", userId, keytabFileName, ticketCacheFileName, krbConfPath,
                 proxy);
-        final String defaultKrbConf = (System.getenv(ENV_KRB5) == null) ? KRB_CONF_PATH : System.
-                getenv(ENV_KRB5);
+        final String defaultKrbConf = (Files.isReadable(Paths.get(System.getenv(ENV_KRB5)))) ? 
+                System.getenv(ENV_KRB5) : KRB_CONF_PATH;
         final String krbConf = (krbConfPath == null) ? defaultKrbConf : krbConfPath;
         final String spn = "HTTP@" + proxy.getHostName();
         HttpClientBuilder builder = HttpClients.custom()

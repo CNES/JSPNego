@@ -23,6 +23,8 @@ package fr.cnes.jspnego;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
@@ -49,7 +51,6 @@ import org.apache.http.client.params.AuthPolicy;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.scheme.Scheme;
-import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.impl.client.BasicCredentialsProvider;
@@ -196,8 +197,8 @@ public final class ProxySPNegoHttpClient implements Closeable {
             final String keytabFileName,
             final String ticketCacheFileName, final String krbConfPath, final HttpHost proxy,
             final DefaultHttpClient httpClient) {
-        final String defaultKrbConf = (System.getenv(ENV_KRB5) == null) ? KRB_CONF_PATH : System.
-                getenv(ENV_KRB5);
+        final String defaultKrbConf = (Files.isReadable(Paths.get(System.getenv(ENV_KRB5)))) ? 
+                System.getenv(ENV_KRB5) : KRB_CONF_PATH;
         final String krbConf = (krbConfPath == null) ? defaultKrbConf : krbConfPath;
         final String spn = "HTTP@" + proxy.getHostName();
         httpClient.setCredentialsProvider(createCredsProvider(proxy));
@@ -345,7 +346,7 @@ public final class ProxySPNegoHttpClient implements Closeable {
             final String keytabFileName, final String ticketCacheFileName,
             final String krbConfPath, final String spn) {
         LOG.traceEntry("Parameters: {}", userId, keytabFileName, ticketCacheFileName, krbConfPath,
-                spn);
+                spn);        
         // init an registerSPNegoProviderDefaultHttp a SPNEGO auth scheme
         final GSSClient gssClient = new GSSClient(userId, keytabFileName,
                 ticketCacheFileName, new File(krbConfPath));

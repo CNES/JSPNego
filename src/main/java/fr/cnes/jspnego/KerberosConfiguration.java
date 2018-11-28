@@ -153,7 +153,9 @@ public class KerberosConfiguration extends Configuration {
     public void setKeytab(final String keytabFilename) {
         final String useKeyTabVal = (keytabFilename == null) ? "false" : DEFAULT_USE_KEY_TAB;
         options.put(USE_KEY_TAB, useKeyTabVal);
-        options.put(KEY_TAB, keytabFilename);
+        if(Boolean.parseBoolean(useKeyTabVal)) {
+            options.put(KEY_TAB, keytabFilename);
+        }
         options.put(DO_NOT_PROMPT, DEFAULT_DO_NOT_PROMPT);
     }
 
@@ -170,7 +172,9 @@ public class KerberosConfiguration extends Configuration {
                 || !Files.isReadable(Paths.get(ticketCacheFileName)))
                 ? "false" : DEFAULT_USE_TICKET_CACHE;
         options.put(USE_TICKET_CACHE, useTicketCacheVal);
-        options.put(TICKET_CACHE, ticketCacheFileName);
+        if(Boolean.parseBoolean(useTicketCacheVal)) {
+            options.put(TICKET_CACHE, ticketCacheFileName);
+        }
     }
 
     /**

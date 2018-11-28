@@ -98,23 +98,44 @@ public final class ProxySPNegoHttpClient implements Closeable {
      * Environment variable that defines the path of krb5 configuration file: {@value #ENV_KRB5}.
      */
     private static final String ENV_KRB5 = "KRB5CCNAME";
-    
+
     /**
-     * Disable SSL certtificate checking.
+     * Disable SSL certificate checking.
      */
     private static final TrustManager TRUST_MANAGER = new X509TrustManager() {
 
+        /**
+         * Given the partial or complete certificate chain provided by the peer, 
+         * ignores the certificate checking.
+         * @param chain the peer certificate chain
+         * @param authType the authentication type based on the client certificate
+         */
         @Override
-        public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+        public void checkClientTrusted(final X509Certificate[] chain, final String authType) {
+            // This will never throw an exception.
+            // this doesn't check anything at all
+            // it is insecure            
         }
 
+        /**
+         * Given the partial or complete certificate chain provided by the peer, 
+         * ignores the certificate checking.
+         * @param chain the peer certificate chain
+         * @param authType the authentication type based on the client certificate
+         * @throws CertificateException 
+         */
         @Override
-        public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+        public void checkServerTrusted(final X509Certificate[] chain, final String authType) throws
+                CertificateException {
             // This will never throw an exception.
             // this doesn't check anything at all
             // it is insecure
         }
 
+        /**
+         * Return null, everybody is trusted.
+         * @return null
+         */
         @Override
         public X509Certificate[] getAcceptedIssuers() {
             return null;
@@ -143,7 +164,25 @@ public final class ProxySPNegoHttpClient implements Closeable {
     public ProxySPNegoHttpClient(final String userId,
             final String keytabFileName, final String proxyHost, final int proxyPort,
             final DefaultHttpClient httpClient) {
-        this(userId, keytabFileName, null, null, proxyHost, proxyPort, httpClient);
+        this(userId, keytabFileName, null, null, proxyHost, proxyPort, httpClient, false);
+    }
+
+    /**
+     * Updates an HttpClient for crossing a proxy using SPNego.
+     *
+     * Setting to true the isDisabledSSL parameter is insecure.
+     *
+     * @param userId User ID
+     * @param keytabFileName Keytab filename
+     * @param proxyHost proxy host
+     * @param proxyPort proxy port
+     * @param httpClient http client
+     * @param isDisabledSSL true to disable the SSL certificate checking otherwise false
+     */
+    public ProxySPNegoHttpClient(final String userId,
+            final String keytabFileName, final String proxyHost, final int proxyPort,
+            final DefaultHttpClient httpClient, final boolean isDisabledSSL) {
+        this(userId, keytabFileName, null, null, proxyHost, proxyPort, httpClient, isDisabledSSL);
     }
 
     /**
@@ -161,7 +200,28 @@ public final class ProxySPNegoHttpClient implements Closeable {
             final String ticketCacheFileName, final String proxyHost, final int proxyPort,
             final DefaultHttpClient httpClient) {
         this(userId, keytabFileName, ticketCacheFileName, null, proxyHost, proxyPort,
-                httpClient);
+                httpClient, false);
+    }
+
+    /**
+     * Updates an HttpClient for crossing a proxy using SPNego with a cache on file system.
+     *
+     * Setting to true the isDisabledSSL parameter is insecure.
+     *
+     * @param userId user ID
+     * @param keytabFileName keytab filename
+     * @param ticketCacheFileName ticket cache filename
+     * @param proxyHost proxy host
+     * @param proxyPort proxy port
+     * @param httpClient http client
+     * @param isDisabledSSL true to disable the SSL certificate checking otherwise false
+     */
+    public ProxySPNegoHttpClient(final String userId,
+            final String keytabFileName,
+            final String ticketCacheFileName, final String proxyHost, final int proxyPort,
+            final DefaultHttpClient httpClient, final boolean isDisabledSSL) {
+        this(userId, keytabFileName, ticketCacheFileName, null, proxyHost, proxyPort,
+                httpClient, isDisabledSSL);
     }
 
     /**
@@ -180,11 +240,37 @@ public final class ProxySPNegoHttpClient implements Closeable {
             final String ticketCacheFileName, final String krbConfPath, final String proxyHost,
             final int proxyPort, final DefaultHttpClient httpClient) {
         this(userId, keytabFileName, ticketCacheFileName, krbConfPath,
-                new HttpHost(proxyHost, proxyPort, HttpHost.DEFAULT_SCHEME_NAME), httpClient);
+                new HttpHost(proxyHost, proxyPort, HttpHost.DEFAULT_SCHEME_NAME),
+                httpClient, false);
     }
 
     /**
      * Updates an HttpClient for crossing a proxy using SPNego with a cache on file system.
+     *
+     * Setting to true the isDisabledSSL parameter is insecure.
+     *
+     * @param userId user ID
+     * @param keytabFileName keytab filename
+     * @param ticketCacheFileName ticket cache filename
+     * @param krbConfPath krb conf path
+     * @param proxyHost proxy host
+     * @param proxyPort proxy port
+     * @param httpClient http client
+     * @param isDisabledSSL true to disable the SSL certificate checking otherwise false
+     */
+    public ProxySPNegoHttpClient(final String userId,
+            final String keytabFileName,
+            final String ticketCacheFileName, final String krbConfPath, final String proxyHost,
+            final int proxyPort, final DefaultHttpClient httpClient, final boolean isDisabledSSL) {
+        this(userId, keytabFileName, ticketCacheFileName, krbConfPath,
+                new HttpHost(proxyHost, proxyPort, HttpHost.DEFAULT_SCHEME_NAME),
+                httpClient, isDisabledSSL);
+    }
+
+    /**
+     * Updates an HttpClient for crossing a proxy using SPNego with a cache on file system.
+     *
+     * Setting to true the isDisabledSSL parameter is insecure.
      *
      * @param userId user ID
      * @param keytabFileName keytab filename
@@ -192,22 +278,24 @@ public final class ProxySPNegoHttpClient implements Closeable {
      * @param krbConfPath krb conf path
      * @param proxy proxy
      * @param httpClient http client
+     * @param isDisabledSSL true to disable the SSL certificate checking otherwise false
      */
     public ProxySPNegoHttpClient(final String userId,
             final String keytabFileName,
             final String ticketCacheFileName, final String krbConfPath, final HttpHost proxy,
-            final DefaultHttpClient httpClient) {
-        final String defaultKrbConf = (Files.isReadable(Paths.get(System.getenv(ENV_KRB5)))) ? 
-                System.getenv(ENV_KRB5) : KRB_CONF_PATH;
-        final String krbConf = (krbConfPath == null) ? defaultKrbConf : krbConfPath;
-        final String spn = "HTTP@" + proxy.getHostName();
+            final DefaultHttpClient httpClient, final boolean isDisabledSSL) {
+        final String krbConf = getKrbConf(krbConfPath);
+        final String spn = getSPN(proxy.getHostName());
         httpClient.setCredentialsProvider(createCredsProvider(proxy));
         httpClient.setAuthSchemes(registerSPNegoProviderDefaultHttp(userId, keytabFileName,
                 ticketCacheFileName, krbConf, spn));
-        SSLSocketFactory sf = new SSLSocketFactory(disableSSLCertificateChecking());
-        Scheme httpsScheme = new Scheme("https", 443, sf);       
         this.httpClient = httpClient;
-        this.httpClient.getConnectionManager().getSchemeRegistry().register(httpsScheme);
+        if (isDisabledSSL) {
+            LOG.warn("SSL Certificate checking is disabled. The connection is insecured.");
+            final SSLSocketFactory sslSocket = new SSLSocketFactory(disableSSLCertificateChecking());
+            final Scheme httpsScheme = new Scheme("https", 443, sslSocket);
+            this.httpClient.getConnectionManager().getSchemeRegistry().register(httpsScheme);
+        }
         setProxy(proxy);
     }
 
@@ -221,11 +309,13 @@ public final class ProxySPNegoHttpClient implements Closeable {
      */
     public ProxySPNegoHttpClient(final String userId,
             final String keytabFileName, final String proxyHost, final int proxyPort) {
-        this(userId, keytabFileName, null, null, proxyHost, proxyPort);
+        this(userId, keytabFileName, null, null, proxyHost, proxyPort, false);
     }
 
     /**
      * Creates a http client that crosses a proxy using SPNego with a cache on the file system.
+     *
+     * Setting to true the isDisabledSSL parameter is insecure.
      *
      * @param userId user ID
      * @param keytabFileName keytab filename
@@ -236,7 +326,26 @@ public final class ProxySPNegoHttpClient implements Closeable {
     public ProxySPNegoHttpClient(final String userId,
             final String keytabFileName,
             final String ticketCacheFileName, final String proxyHost, final int proxyPort) {
-        this(userId, keytabFileName, ticketCacheFileName, null, proxyHost, proxyPort);
+        this(userId, keytabFileName, ticketCacheFileName, null, proxyHost, proxyPort, false);
+    }
+
+    /**
+     * Creates a http client that crosses a proxy using SPNego with a cache on the file system.
+     *
+     * Setting to true the isDisabledSSL parameter is insecure.
+     *
+     * @param userId user ID
+     * @param keytabFileName keytab filename
+     * @param ticketCacheFileName ticket cache filename
+     * @param proxyHost proxy host
+     * @param proxyPort proxy port
+     * @param isDisabledSSL true to disable the SSL certificate checking otherwise false
+     */
+    public ProxySPNegoHttpClient(final String userId,
+            final String keytabFileName,
+            final String ticketCacheFileName, final String proxyHost, final int proxyPort,
+            final boolean isDisabledSSL) {
+        this(userId, keytabFileName, ticketCacheFileName, null, proxyHost, proxyPort, isDisabledSSL);
     }
 
     /**
@@ -254,36 +363,100 @@ public final class ProxySPNegoHttpClient implements Closeable {
             final String ticketCacheFileName, final String krbConfPath, final String proxyHost,
             final int proxyPort) {
         this(userId, keytabFileName, ticketCacheFileName, krbConfPath,
-                new HttpHost(proxyHost, proxyPort, HttpHost.DEFAULT_SCHEME_NAME));
+                new HttpHost(proxyHost, proxyPort, HttpHost.DEFAULT_SCHEME_NAME), false);
     }
 
     /**
      * Creates a http client that crosses a proxy using SPNego with a cache on the file system.
+     *
+     * Setting to true the isDisabledSSL parameter is insecure.
+     *
+     * @param userId user ID
+     * @param keytabFileName keytab filename
+     * @param ticketCacheFileName ticket cache filename
+     * @param krbConfPath krb conf path
+     * @param proxyHost proxy host
+     * @param proxyPort proxy port
+     * @param isDisabledSSL true to disable the SSL certificate checking otherwise false
+     */
+    public ProxySPNegoHttpClient(final String userId,
+            final String keytabFileName,
+            final String ticketCacheFileName, final String krbConfPath, final String proxyHost,
+            final int proxyPort, final boolean isDisabledSSL) {
+        this(userId, keytabFileName, ticketCacheFileName, krbConfPath,
+                new HttpHost(proxyHost, proxyPort, HttpHost.DEFAULT_SCHEME_NAME), isDisabledSSL);
+    }
+
+    /**
+     * Creates a http client that crosses a proxy using SPNego with a cache on the file system.
+     *
+     * Setting to true the isDisabledSSL parameter is insecure.
      *
      * @param userId user ID
      * @param keytabFileName keytab filename
      * @param ticketCacheFileName ticket cache filename
      * @param krbConfPath krb conf path
      * @param proxy proxy
+     * @param isDisabledSSL true to disable the SSL certificate checking otherwise false
      */
     public ProxySPNegoHttpClient(final String userId,
             final String keytabFileName,
-            final String ticketCacheFileName, final String krbConfPath, final HttpHost proxy) {
+            final String ticketCacheFileName, final String krbConfPath, final HttpHost proxy,
+            final boolean isDisabledSSL) {
         LOG.traceEntry("Parameters : {}", userId, keytabFileName, ticketCacheFileName, krbConfPath,
                 proxy);
-        final String defaultKrbConf = (Files.isReadable(Paths.get(System.getenv(ENV_KRB5)))) ? 
-                System.getenv(ENV_KRB5) : KRB_CONF_PATH;
-        final String krbConf = (krbConfPath == null) ? defaultKrbConf : krbConfPath;
-        final String spn = "HTTP@" + proxy.getHostName();
+        final String krbConf = getKrbConf(krbConfPath);
+        final String spn = getSPN(proxy.getHostName());
         HttpClientBuilder builder = HttpClients.custom()
                 .setDefaultCredentialsProvider(createCredsProvider(proxy))
                 .setDefaultAuthSchemeRegistry(registerSPNegoProvider(
-                        userId, keytabFileName,ticketCacheFileName, krbConf, spn)
-                )
-                .setSSLContext(disableSSLCertificateChecking())
-                .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
+                        userId, keytabFileName, ticketCacheFileName, krbConf, spn)
+                );
+        if (isDisabledSSL) {
+            LOG.warn("SSL Certificate checking is disabled. The connection is insecured.");
+            builder = builder.setSSLContext(disableSSLCertificateChecking())
+                    .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
+        }
         this.httpClient = builder.build();
         setProxy(proxy);
+    }
+
+    /**
+     * Creates KRB configuration file location.
+     *
+     * @param krbConfPath KRB configuration file location from user.
+     * @return KRB configuration file location
+     */
+    private String getKrbConf(final String krbConfPath) {
+        LOG.traceEntry("Parameter: {}", krbConfPath);
+        final String defaultKrbConf;
+        if (Files.isReadable(Paths.get(System.getenv(ENV_KRB5)))) {
+            LOG.debug("default KRB conf is set to {}", ENV_KRB5);
+            defaultKrbConf = System.getenv(ENV_KRB5);
+        } else {
+            LOG.warn("environment variable {} is not set or not a readable file, "
+                    + "setting defaultKrbConf to {}", ENV_KRB5, KRB_CONF_PATH);
+            defaultKrbConf = KRB_CONF_PATH;
+        }
+        final String conf;
+        if (krbConfPath == null) {
+            conf = defaultKrbConf;
+        } else {
+            conf = KRB_CONF_PATH;
+        }
+        LOG.info("Loading krbConf : {}", conf);
+        return LOG.traceExit(conf);
+    }
+
+    /**
+     * Returns the Service Principal Name (SPN).
+     *
+     * @param hostname hostname
+     * @return the Service Principal Name (SPN)
+     */
+    private String getSPN(final String hostname) {
+        LOG.traceEntry("Parameter: {}", hostname);
+        return LOG.traceExit("HTTP@" + hostname);
     }
 
     /**
@@ -297,25 +470,20 @@ public final class ProxySPNegoHttpClient implements Closeable {
         this.request.setConfig(config);
         LOG.traceExit();
     }
-    
+
+    /**
+     * Disables the SSL certificate checking.
+     * @return the SSL context
+     * @throws RuntimeException When a NoSuchAlgorithmException or KeyManagementException happens
+     */
     private SSLContext disableSSLCertificateChecking() {
         try {
-            SSLContext sslCtx = SSLContext.getInstance("TLS");
-            sslCtx.init(null, new TrustManager[] { TRUST_MANAGER }, null);
+            final SSLContext sslCtx = SSLContext.getInstance("TLS");
+            sslCtx.init(null, new TrustManager[]{TRUST_MANAGER}, null);
             return sslCtx;
         } catch (NoSuchAlgorithmException | KeyManagementException ex) {
             throw LOG.throwing(new RuntimeException(ex));
         }
-    }
-
-    /**
-     * Return the http proxy.
-     *
-     * @return the http proxy
-     */
-    public HttpHost getProxy() {
-        LOG.traceEntry();
-        return LOG.traceExit(this.request.getConfig().getProxy());
     }
 
     /**
@@ -346,7 +514,7 @@ public final class ProxySPNegoHttpClient implements Closeable {
             final String keytabFileName, final String ticketCacheFileName,
             final String krbConfPath, final String spn) {
         LOG.traceEntry("Parameters: {}", userId, keytabFileName, ticketCacheFileName, krbConfPath,
-                spn);        
+                spn);
         // init an registerSPNegoProviderDefaultHttp a SPNEGO auth scheme
         final GSSClient gssClient = new GSSClient(userId, keytabFileName,
                 ticketCacheFileName, new File(krbConfPath));
@@ -400,6 +568,16 @@ public final class ProxySPNegoHttpClient implements Closeable {
             }
         });
         return LOG.traceExit(authSchemeRegistry);
+    }
+
+    /**
+     * Return the http proxy.
+     *
+     * @return the http proxy
+     */
+    public HttpHost getProxy() {
+        LOG.traceEntry();
+        return LOG.traceExit(this.request.getConfig().getProxy());
     }
 
     /**
@@ -496,7 +674,8 @@ public final class ProxySPNegoHttpClient implements Closeable {
 
     /**
      * Close the http connection.
-     * @throws IOException 
+     *
+     * @throws IOException
      */
     @Override
     public void close() throws IOException {
@@ -505,4 +684,3 @@ public final class ProxySPNegoHttpClient implements Closeable {
         LOG.traceExit();
     }
 }
-

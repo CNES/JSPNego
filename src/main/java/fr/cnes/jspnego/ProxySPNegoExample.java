@@ -36,8 +36,8 @@ import org.apache.logging.log4j.Logger;
  */
 public class ProxySPNegoExample {
 
-    /** 
-     * Get actual class name to be printed on 
+    /**
+     * Get actual class name to be printed on
      */
     private static final Logger LOG = LogManager.getLogger(ProxySPNegoExample.class.getName());
 
@@ -52,7 +52,7 @@ public class ProxySPNegoExample {
         if (args.length < 3) {
             System.out.println(
                     "Usage: ProxySPNegoExample <proxyHost> <proxyPort> <userId> (<keytabFilePath>) "
-                            + "(<ticketCachePath>)");
+                    + "(<ticketCachePath>)");
             System.exit(1);
         }
 
@@ -73,6 +73,27 @@ public class ProxySPNegoExample {
         try (
                 ProxySPNegoHttpClient httpclient = new ProxySPNegoHttpClient(
                         userId, keytabPath, ticketCachePath, proxyHost, proxyPort
+                )) {
+
+            HttpHost target = new HttpHost("www.google.com", 443, "https");
+            HttpResponse response = httpclient.execute(target);
+            LOG.info("---------------------------------\n{}", response.getStatusLine());
+
+            target = new HttpHost("www.nasa.gov", 443, "https");
+            response = httpclient.execute(target);
+            LOG.info("-----------------------------------\n{}", response.getStatusLine());
+
+            target = new HttpHost("www.larousse.fr", 80, "http");
+            response = httpclient.execute(target);
+            LOG.info("----------------------------------------\n{}", response.getStatusLine());
+
+        } catch (IOException e) {
+            LOG.error(e.toString());
+        }
+
+        try (
+                ProxySPNegoHttpClient httpclient = new ProxySPNegoHttpClient(
+                        userId, keytabPath, ticketCachePath, proxyHost, proxyPort, true
                 )) {
 
             HttpHost target = new HttpHost("www.google.com", 443, "https");

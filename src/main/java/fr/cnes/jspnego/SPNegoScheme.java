@@ -72,8 +72,8 @@ public class SPNegoScheme extends AuthSchemeBase {
         FAILED,
     }
 
-    /** 
-     * Get actual class name to be printed on 
+    /**
+     * Get actual class name to be printed on
      */
     private static final Logger LOG = LogManager.getLogger(SPNegoScheme.class.getName());
 
@@ -261,7 +261,7 @@ public class SPNegoScheme extends AuthSchemeBase {
 
     /**
      * (non-Javadoc)
-     * 
+     *
      * @param buffer
      * @param beginIndex
      * @param endIndex
@@ -310,6 +310,7 @@ public class SPNegoScheme extends AuthSchemeBase {
 
     /**
      * Returns the scheme name.
+     *
      * @return Negotiate
      */
     @Override

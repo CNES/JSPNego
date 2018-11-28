@@ -176,14 +176,14 @@ public class GSSClient {
         final NegotiateContextAction negotiationAction = new NegotiateContextAction(context,
                 negotiationToken);
 
+        if (negotiationAction.getGSSException() != null) {
+            throw LOG.throwing(negotiationAction.getGSSException());
+        }
+        
         // Run the negotiation as the initiator
         // The service ticket will then be cached in the Subject's private credentials,
         // as the subject.
-        final byte[] token = (byte[]) Subject.doAs(subject, negotiationAction);
-
-        if (negotiationAction != null && negotiationAction.getGSSException() != null) {
-            throw LOG.throwing(negotiationAction.getGSSException());
-        }
+        final byte[] token = (byte[]) Subject.doAs(subject, negotiationAction);        
 
         return LOG.traceExit(token);
     }

@@ -38,12 +38,12 @@ import javax.security.auth.login.Configuration;
  * @author S. ETCHEVERRY
  */
 public class KerberosConfiguration extends Configuration {
-    
+
     /**
      * True as string.
      */
     private static final String STR_TRUE = "true";
-    
+
     /**
      * Login module.
      */
@@ -153,7 +153,7 @@ public class KerberosConfiguration extends Configuration {
     public void setKeytab(final String keytabFilename) {
         final String useKeyTabVal = (keytabFilename == null) ? "false" : DEFAULT_USE_KEY_TAB;
         options.put(USE_KEY_TAB, useKeyTabVal);
-        if(Boolean.parseBoolean(useKeyTabVal)) {
+        if (Boolean.parseBoolean(useKeyTabVal)) {
             options.put(KEY_TAB, keytabFilename);
         }
         options.put(DO_NOT_PROMPT, DEFAULT_DO_NOT_PROMPT);
@@ -172,7 +172,7 @@ public class KerberosConfiguration extends Configuration {
                 || !Files.isReadable(Paths.get(ticketCacheFileName)))
                 ? "false" : DEFAULT_USE_TICKET_CACHE;
         options.put(USE_TICKET_CACHE, useTicketCacheVal);
-        if(Boolean.parseBoolean(useTicketCacheVal)) {
+        if (Boolean.parseBoolean(useTicketCacheVal)) {
             options.put(TICKET_CACHE, ticketCacheFileName);
         }
     }

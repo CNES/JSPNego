@@ -29,6 +29,7 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.logging.Level;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
@@ -697,12 +698,15 @@ public final class ProxySPNegoHttpClient implements Closeable {
     /**
      * Close the http connection.
      *
-     * @throws IOException
      */
     @Override
-    public void close() throws IOException {
+    public void close() {
         LOG.traceEntry();
-        this.httpClient.close();
-        LOG.traceExit();
+        try {
+            this.httpClient.close();
+        } catch (IOException ex) {
+            LOG.error(ex);
+        }
+        LOG.traceExit();        
     }
 }

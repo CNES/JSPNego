@@ -99,7 +99,7 @@ import org.ietf.jgss.GSSException;
 public class GSSClient {
 
     /**
-     * Get actual class name to be printed on
+     * Get actual class name to be printed on.
      */
     private static final Logger LOG = LogManager.getLogger(GSSClient.class.getName());
 

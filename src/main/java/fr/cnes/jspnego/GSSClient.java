@@ -186,8 +186,12 @@ public class GSSClient {
 
         try {
             final KerberosConfiguration config = createGssKerberosConfiguration();
-            config.setKeytab(this.clientKeytabFileName.toString());
-            config.setTicketCache(this.ticketCacheFileName.toString());
+            if(this.clientKeytabFileName != null) {
+                config.setKeytab(this.clientKeytabFileName.toString());
+            }
+            if(this.ticketCacheFileName != null) {
+                config.setTicketCache(this.ticketCacheFileName.toString());
+            }
             config.initialize();
 
             final LoginContext loginContext = new LoginContext("other");

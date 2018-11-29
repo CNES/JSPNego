@@ -84,6 +84,7 @@ public class ProxySPNegoHttpClientTest {
 
     @Test
     public void testRequestHttps() throws Exception {
+        LOG.info("Running one https request");
         checkInputParameters();
         HttpResponse response;
         ProxySPNegoHttpClient httpclient = null;
@@ -108,6 +109,7 @@ public class ProxySPNegoHttpClientTest {
 
     @Test
     public void testRequestHttp() throws Exception {
+        LOG.info("Running one http request");
         checkInputParameters();
         HttpResponse response;
         ProxySPNegoHttpClient httpclient = null;
@@ -132,11 +134,12 @@ public class ProxySPNegoHttpClientTest {
 
     @Test
     public void testRequests() throws IOException, Exception {
+        LOG.info("Running several requests");
         checkInputParameters();
         int sum = 0;
         ProxySPNegoHttpClient httpclient = new ProxySPNegoHttpClient(
                 userID, new File(keytabFilePath), new File(ticketCachePath), proxyHost,
-                Integer.parseInt(proxyPort)
+                Integer.parseInt(proxyPort), true
         );
 
         HttpHost target = new HttpHost("www.larousse.fr", 80, "http");

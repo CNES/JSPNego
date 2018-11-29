@@ -1,13 +1,13 @@
 # JSPNego
+This JAVA library is built to make HTTP requests through a proxy using a Single Sign On (SSO).        
+The SSO uses <i>The Simple and Protected GSS-API Negotiation Mechanism (IETF RFC 2478)</i> 
+(<b>SPNEGO</b>) as authentication protocol.
 
-This library implements an SPNego protocol to use an HTTP proxy with Kerberos authentication via a 
-keytab or a cache to authenticate access on the SIS Web Gateway. A keytab file contains one or more 
-pairs of identifiers plus encrypted key, derived from the Kerberos password.
 
 ### Synopsis
 
 This document provides the motivation of the project and the different instructions to both install
-and use the DOI-Server. 
+and use the JSPNego. 
 
 ### Motivation
 
@@ -57,16 +57,8 @@ export KRB5CCNAME=DIR:$HOME/.krb/
  * Create a keytab
 
 ```
-ipa-getkeytab -p <username>@SIS.CNES.FR -k <username>.keytab -P
+ipa-getkeytab -p <username>@<server> -k <keytabFileName> -P
 ```
-
-
-//Show what the library does as concisely as possible, developers should be able to figure out **how** your project solves their problem by looking at the code example. Make sure the API you are showing off is obvious, and that your code is short and concise.
-
-## API Reference
-
-Depending on the size of the project, if it is small and simple enough the reference docs can be added to the README. For medium size to larger projects it is important to at least provide a link to where the API reference docs live.
-
 
 ## Built With
 * Maven

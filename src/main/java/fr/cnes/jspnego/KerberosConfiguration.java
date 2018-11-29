@@ -34,7 +34,6 @@ import javax.security.auth.login.Configuration;
  * com.sun.security.auth.module.Krb5LoginModule to be used for JAAS login for Kerberos client
  * (initiators).
  *
- * @see com.sun.security.auth.module.Krb5LoginModule
  * @author S. ETCHEVERRY
  */
 public class KerberosConfiguration extends Configuration {
@@ -145,8 +144,8 @@ public class KerberosConfiguration extends Configuration {
 
     /**
      * Sets up kerberos configuration to use a keytab to initiate a ticket-granting ticket (TGT).
-     * When keytabFilename is null, {@value #USE_KEY_TAB} is set to false otherwise
-     * {@value #DEFAULT_USE_KEY_TAB}
+     * When keytabFilename is null, {@value KerberosConfiguration#USE_KEY_TAB} is set to false
+     * otherwise {@value KerberosConfiguration#DEFAULT_USE_KEY_TAB}
      *
      * @param keytabFilename The path of the keytab file
      */
@@ -154,6 +153,7 @@ public class KerberosConfiguration extends Configuration {
         final String useKeyTabVal = (keytabFilename == null) ? "false" : DEFAULT_USE_KEY_TAB;
         options.put(USE_KEY_TAB, useKeyTabVal);
         if (Boolean.parseBoolean(useKeyTabVal)) {
+            // null value is not allowed in ConcurrentHashMap
             options.put(KEY_TAB, keytabFilename);
         }
         options.put(DO_NOT_PROMPT, DEFAULT_DO_NOT_PROMPT);
@@ -161,8 +161,9 @@ public class KerberosConfiguration extends Configuration {
 
     /**
      * Sets up kerberos configuration to use the ticket cache file to retrieve TGT from cache. When
-     * ticketCacheFileName is null or ticketCacheFileName not readable, {@value #USE_TICKET_CACHE}
-     * is set to false otherwise {@value #DEFAULT_USE_TICKET_CACHE}
+     * ticketCacheFileName is null or ticketCacheFileName not readable,
+     * {@value KerberosConfiguration#USE_TICKET_CACHE} is set to false otherwise
+     * {@value KerberosConfiguration#DEFAULT_USE_TICKET_CACHE}
      *
      * @param ticketCacheFileName The path of the ticket cache file
      */
@@ -173,14 +174,15 @@ public class KerberosConfiguration extends Configuration {
                 ? "false" : DEFAULT_USE_TICKET_CACHE;
         options.put(USE_TICKET_CACHE, useTicketCacheVal);
         if (Boolean.parseBoolean(useTicketCacheVal)) {
+            // null value is not allowed in ConcurrentHashMap
             options.put(TICKET_CACHE, ticketCacheFileName);
         }
     }
 
     /**
      * Initialize the kerberos configuration. These parameters
-     * {@value #DEBUG}, {@value #PRINCIPAL}, {@value #REFRESH_KRB5_CONFIG} are inititialized to
-     * true.
+     * {@value KerberosConfiguration#DEBUG}, {@value KerberosConfiguration#PRINCIPAL}, 
+     * {@value KerberosConfiguration#REFRESH_KRB5_CONFIG} are initialized to true.
      */
     public void initialize() {
 

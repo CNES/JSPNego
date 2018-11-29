@@ -20,6 +20,7 @@ package fr.cnes.jspnego;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301  USA
  */
+import java.io.File;
 import java.io.IOException;
 
 import org.apache.http.HttpHost;
@@ -60,14 +61,14 @@ public class ProxySPNegoExample {
         final int proxyPort = Integer.parseInt(args[1]);
         final String userId = args[2];
 
-        String keytabPath = null;
+        File keytabPath = null;
         if (args.length > 3) {
-            keytabPath = args[3];
+            keytabPath = new File(args[3]);
         }
 
-        String ticketCachePath = null;
+        File ticketCachePath = null;
         if (args.length > 4) {
-            ticketCachePath = args[4];
+            ticketCachePath = new File(args[4]);
         }
 
         try (

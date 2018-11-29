@@ -26,6 +26,7 @@ import org.apache.http.Header;
 import org.apache.http.HttpRequest;
 import org.apache.http.auth.AUTH;
 import org.apache.http.auth.AuthenticationException;
+import org.apache.http.auth.ContextAwareAuthScheme;
 import org.apache.http.auth.Credentials;
 import org.apache.http.auth.InvalidCredentialsException;
 import org.apache.http.auth.MalformedChallengeException;
@@ -73,7 +74,7 @@ public class SPNegoScheme extends AuthSchemeBase {
     }
 
     /**
-     * Get actual class name to be printed on
+     * Get actual class name to be printed on.
      */
     private static final Logger LOG = LogManager.getLogger(SPNegoScheme.class.getName());
 
@@ -84,17 +85,17 @@ public class SPNegoScheme extends AuthSchemeBase {
     private static final String SPNEGO_OID = "1.3.6.1.5.5.2";
 
     /**
-     *
+     * Kerberos client.
      */
     private final GSSClient gssClient;
 
     /**
-     * the SPN (HTTP@proxy host)
+     * the SPN (HTTP@proxy host).
      */
     private final String servicePrincipalName;
 
     /**
-     * the oid representing the type of service name form
+     * the oid representing the type of service name form.
      */
     private final Oid servicePrincipalOid;
 
@@ -104,11 +105,11 @@ public class SPNegoScheme extends AuthSchemeBase {
     private final Base64 base64codec;
 
     /**
-     * Authentication process state
+     * Authentication process state.
      */
     private State state;
     /**
-     * base64 decoded challenge *
+     * base64 decoded challenge.
      */
     private byte[] token;
 
@@ -122,7 +123,9 @@ public class SPNegoScheme extends AuthSchemeBase {
     public SPNegoScheme(final GSSClient gssClient, final String servicePrincipalName,
             final Oid servicePrincipalOid) {
         super();
-        LOG.traceEntry("Init constructor with parameters : {}",
+        LOG.traceEntry("gssClient : {}\n"
+                + "servicePrincipalName: {}\n"
+                + "servicePrincipalOid: {}",
                 gssClient.getName(), servicePrincipalName, servicePrincipalOid);
         this.base64codec = new Base64();
         // sets the state to no initiated at the beginning.
@@ -133,16 +136,6 @@ public class SPNegoScheme extends AuthSchemeBase {
     }
 
     /**
-     * Returns the Generic Security Service manager.
-     *
-     * @return a GSSManager's instance
-     */
-    protected GSSManager getManager() {
-        LOG.traceEntry();
-        return LOG.traceExit(GSSManager.getInstance());
-    }
-
-    /**
      * Generate a Generic Security Service (GSS) Token.
      *
      * @param oid The universal object identifier
@@ -150,17 +143,23 @@ public class SPNegoScheme extends AuthSchemeBase {
      * @throws GSSException This exception is thrown whenever a GSS-API error occurs
      */
     protected byte[] generateGSSToken(final Oid oid) throws GSSException {
-        LOG.traceEntry("Parameters : {}", oid);
+        LOG.traceEntry("oid: {}", oid);
 
         LOG.debug("Init token for {}", servicePrincipalName);
 
         final byte[] tokenInit = new byte[0];
-        final GSSManager manager = getManager();
+
+        // Get the GSS-API
+        final GSSManager manager = GSSManager.getInstance();
+
+        // convert a servicePrincipalName from the specified namespace to a GSSName object
         final GSSName serverName = manager.createName(servicePrincipalName, servicePrincipalOid);
+
+        // Instantiate and initialize a security context that will be established with the server
         final GSSContext gssContext = manager.createContext(serverName.canonicalize(oid), oid, null,
                 GSSContext.DEFAULT_LIFETIME);
 
-        // Get client to login if not already done
+        // returns a service ticket, called token as well
         return LOG.traceExit(gssClient.negotiate(gssContext, tokenInit));
     }
 
@@ -177,18 +176,23 @@ public class SPNegoScheme extends AuthSchemeBase {
     }
 
     /**
+     * Produces SPNEGO authorization Proxy Header based on token created by processChallenge.
+     *
      * @param credentials (not used)
      * @param request the request being authenticated (not used)
      * @throws AuthenticationException if authentication string cannot be generated due to an
      * authentication failure
      * @return SPNEGO authentication Header
-     * @deprecated (4.2) Use {@link ContextAwareAuthScheme#authenticate}
+     * @deprecated (4.2) Use {@link ContextAwareAuthScheme#authenticate(org.apache.http.auth.Credentials, org.apache.http.HttpRequest, org.apache.http.protocol.HttpContext)
+     * }
      */
     @Deprecated
     @Override
     public Header authenticate(final Credentials credentials, final HttpRequest request)
             throws AuthenticationException {
-        LOG.traceEntry("Parameters {} : ", credentials, request);
+        LOG.traceEntry("credentials: {}\n"
+                + "request: {}",
+                credentials, request);
         return LOG.traceExit(authenticate(credentials, request, null));
     }
 
@@ -207,7 +211,10 @@ public class SPNegoScheme extends AuthSchemeBase {
     @Override
     public Header authenticate(final Credentials credentials, final HttpRequest request,
             final HttpContext context) throws AuthenticationException {
-        LOG.traceEntry("Parameters {} : ", credentials, request, context);
+        LOG.traceEntry("credentials: {}\n"
+                + "request: {}\n"
+                + "context: {}",
+                credentials, request, context);
         if (request == null) {
             throw LOG.throwing(new IllegalArgumentException("HTTP request may not be null"));
         }
@@ -250,6 +257,8 @@ public class SPNegoScheme extends AuthSchemeBase {
     }
 
     /**
+     * Returns the header that includes the token.
+     *
      * @return the basicHeader
      */
     private BasicHeader getBasicHeader() {
@@ -271,7 +280,10 @@ public class SPNegoScheme extends AuthSchemeBase {
     @Override
     protected void parseChallenge(final CharArrayBuffer buffer, final int beginIndex,
             final int endIndex) throws MalformedChallengeException {
-        LOG.traceEntry("Parameters {} : ", buffer, beginIndex, endIndex);
+        LOG.traceEntry("buffer: {}\n"
+                + "beginIndex: {}\n"
+                + "endIndex: {}",
+                buffer, beginIndex, endIndex);
         final String challenge = buffer.substringTrimmed(beginIndex, endIndex);
         LOG.debug("Received challenge {} from the auth server", challenge);
         if (state == State.UNINITIATED) {
@@ -302,7 +314,7 @@ public class SPNegoScheme extends AuthSchemeBase {
      */
     @Override
     public String getParameter(final String name) {
-        LOG.traceEntry("Parameter {} : ", name);
+        LOG.traceEntry("name: {}", name);
         Args.notNull(name, "Parameter name");
         LOG.traceExit("null");
         return null;

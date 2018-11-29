@@ -9,6 +9,8 @@ import java.io.File;
 import java.io.IOException;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
@@ -162,5 +164,59 @@ public class ProxySPNegoHttpClientTest {
         assertTrue("Testing http(s) requests: ", sum == 600);
 
     }
+    
+    @Test
+    public void testRequestHttpsDefaultHttpClient() throws Exception {
+        LOG_TITLE.info(" --- Running one https request for Default HttpClient---");
+        checkInputParameters();
+        DefaultHttpClient defaultHttpClient = new DefaultHttpClient();
+        HttpResponse response;        
+        ProxySPNegoHttpClient httpclient = null;
+        try {
+            httpclient = new ProxySPNegoHttpClient(
+                    userID, new File(keytabFilePath), new File(ticketCachePath), proxyHost,
+                    Integer.parseInt(proxyPort), defaultHttpClient
+            );
+
+            HttpHost target = new HttpHost("www.google.com", 443, "https");
+            response = httpclient.execute(target);
+
+        } catch (IOException e) {
+            LOG.error(e);
+            response = null;
+        } finally {
+            if (httpclient != null) {
+                httpclient.close();
+            }
+        }
+        assertTrue("Testing https request:", response != null && response.getStatusLine().getStatusCode() == 200);
+    }
+
+    @Test
+    public void testRequestHttpDefaultHttpClient() throws Exception {
+        LOG_TITLE.info(" --- Running one http request for defaultHttpClient ---");
+        checkInputParameters();
+        HttpResponse response;
+        DefaultHttpClient defaultHttpClient = new DefaultHttpClient();
+        ProxySPNegoHttpClient httpclient = null;
+        try {
+            httpclient = new ProxySPNegoHttpClient(
+                    userID, new File(keytabFilePath), new File(ticketCachePath), proxyHost,
+                    Integer.parseInt(proxyPort), defaultHttpClient
+            );
+
+            HttpHost target = new HttpHost("www.larousse.fr", 80, "http");
+            response = httpclient.execute(target);
+
+        } catch (IOException e) {
+            LOG.error(e);
+            response = null;
+        } finally {
+            if (httpclient != null) {
+                httpclient.close();
+            }
+        }
+        assertTrue("Testing http request: ",response != null && response.getStatusLine().getStatusCode() == 200);
+    }    
 
 }

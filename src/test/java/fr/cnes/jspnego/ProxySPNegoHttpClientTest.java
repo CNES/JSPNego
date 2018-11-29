@@ -28,7 +28,8 @@ public class ProxySPNegoHttpClientTest {
     /**
      * Get actual class name to be printed on.
      */
-    private static final Logger LOG = LogManager.getLogger(ProxySPNegoHttpClientTest.class.getName());    
+    private static final Logger LOG = LogManager.getLogger(ProxySPNegoHttpClientTest.class.getName());
+    private static final Logger LOG_TITLE = LogManager.getLogger("testTitle");    
 
     private static final String proxyHost = System.getProperty("proxyHost");
     private static final String proxyPort = System.getProperty("proxyPort");
@@ -84,7 +85,7 @@ public class ProxySPNegoHttpClientTest {
 
     @Test
     public void testRequestHttps() throws Exception {
-        LOG.info("Running one https request");
+        LOG_TITLE.info(" --- Running one https request ---");
         checkInputParameters();
         HttpResponse response;
         ProxySPNegoHttpClient httpclient = null;
@@ -98,18 +99,19 @@ public class ProxySPNegoHttpClientTest {
             response = httpclient.execute(target);
 
         } catch (IOException e) {
+            LOG.error(e);
             response = null;
         } finally {
             if (httpclient != null) {
                 httpclient.close();
             }
         }
-        assertTrue(response != null && response.getStatusLine().getStatusCode() == 200);
+        assertTrue("Testing https request:", response != null && response.getStatusLine().getStatusCode() == 200);
     }
 
     @Test
     public void testRequestHttp() throws Exception {
-        LOG.info("Running one http request");
+        LOG_TITLE.info(" --- Running one http request ---");
         checkInputParameters();
         HttpResponse response;
         ProxySPNegoHttpClient httpclient = null;
@@ -123,18 +125,19 @@ public class ProxySPNegoHttpClientTest {
             response = httpclient.execute(target);
 
         } catch (IOException e) {
+            LOG.error(e);
             response = null;
         } finally {
             if (httpclient != null) {
                 httpclient.close();
             }
         }
-        assertTrue(response != null && response.getStatusLine().getStatusCode() == 200);
+        assertTrue("Testing http request: ",response != null && response.getStatusLine().getStatusCode() == 200);
     }
 
     @Test
-    public void testRequests() throws IOException, Exception {
-        LOG.info("Running several requests");
+    public void testRequests() throws Exception {
+        LOG_TITLE.info(" --- Running several requests ---");
         checkInputParameters();
         int sum = 0;
         ProxySPNegoHttpClient httpclient = new ProxySPNegoHttpClient(
@@ -156,7 +159,7 @@ public class ProxySPNegoHttpClientTest {
 
         httpclient.close();
         
-        assertTrue(sum == 600);
+        assertTrue("Testing http(s) requests: ", sum == 600);
 
     }
 

@@ -18,6 +18,7 @@ import org.junit.AfterClass;
 import static org.junit.Assert.assertTrue;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -166,6 +167,7 @@ public class ProxySPNegoHttpClientTest {
     }
     
     @Test
+    @Ignore
     public void testRequestHttpsDefaultHttpClient() throws Exception {
         LOG_TITLE.info(" --- Running one https request for Default HttpClient---");
         checkInputParameters();
@@ -193,6 +195,7 @@ public class ProxySPNegoHttpClientTest {
     }
 
     @Test
+    @Ignore
     public void testRequestHttpDefaultHttpClient() throws Exception {
         LOG_TITLE.info(" --- Running one http request for defaultHttpClient ---");
         checkInputParameters();

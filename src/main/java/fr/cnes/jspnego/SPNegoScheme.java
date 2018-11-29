@@ -271,10 +271,11 @@ public class SPNegoScheme extends AuthSchemeBase {
     /**
      * (non-Javadoc)
      *
-     * @param buffer
-     * @param beginIndex
-     * @param endIndex
-     * @throws org.apache.http.auth.MalformedChallengeException
+     * @param buffer buffer
+     * @param beginIndex begin index
+     * @param endIndex end index
+     * @throws org.apache.http.auth.MalformedChallengeException Signals that authentication 
+     * challenge is in some way invalid or illegal in the given context
      * @see org.apache.http.impl.auth.AuthSchemeBase#parseChallenge
      */
     @Override

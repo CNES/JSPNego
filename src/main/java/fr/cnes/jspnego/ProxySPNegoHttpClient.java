@@ -70,7 +70,7 @@ import org.ietf.jgss.GSSName;
  * The SSO uses <i>The Simple and Protected GSS-API Negotiation Mechanism 
  * (IETF RFC 2478)</i> (<b>SPNEGO</b>) as protocol.
  * <br>
- * <img src="https://cdn.ttgtmedia.com/digitalguide/images/Misc/kerberos_1.gif">
+ * <img src="https://cdn.ttgtmedia.com/digitalguide/images/Misc/kerberos_1.gif" alt="Kerberos">
  *
  * @author S. ETCHEVERRY
  * @author Jean-Christophe Malapert
@@ -644,7 +644,7 @@ public final class ProxySPNegoHttpClient implements Closeable {
      * connection is released back to the connection manager automatically in all cases relieving
      * individual ResponseHandlers from having to manage resource deallocation internally.
      *
-     * @param <T>
+     * @param <T> generic type
      * @param target the target host for the request. Implementations may accept null if they can
      * still determine a route, for example to a default target or by inspecting the request.
      * @param responseHandler the response handler
@@ -671,7 +671,7 @@ public final class ProxySPNegoHttpClient implements Closeable {
      * connection is released back to the connection manager automatically in all cases relieving
      * individual ResponseHandlers from having to manage resource deallocation internally.
      *
-     * @param <T>
+     * @param <T> generic type
      * @param target the target host for the request. Implementations may accept null if they can
      * still determine a route, for example to a default target or by inspecting the request.
      * @param responseHandler the response handler

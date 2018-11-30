@@ -29,34 +29,31 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.logging.Level;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import org.apache.http.HttpHost;
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScheme;
-import org.apache.http.auth.AuthSchemeFactory;
 
 import org.apache.http.auth.AuthSchemeProvider;
-import org.apache.http.auth.AuthSchemeRegistry;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.KerberosCredentials;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.config.AuthSchemes;
 import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.params.AuthPolicy;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
-import org.apache.http.conn.scheme.Scheme;
+import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
-import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.params.HttpParams;
@@ -67,16 +64,16 @@ import org.ietf.jgss.GSSName;
 
 /**
  * The client makes HTTP requests via a proxy for which the client is authenticated through a SSO.
- * 
- * The SSO uses <i>The Simple and Protected GSS-API Negotiation Mechanism 
- * (IETF RFC 2478)</i> (<b>SPNEGO</b>) as protocol.
+ *
+ * The SSO uses <i>The Simple and Protected GSS-API Negotiation Mechanism (IETF RFC 2478)</i>
+ * (<b>SPNEGO</b>) as protocol.
  * <br>
  * <img src="https://cdn.ttgtmedia.com/digitalguide/images/Misc/kerberos_1.gif" alt="Kerberos">
  *
  * @author S. ETCHEVERRY
  * @author Jean-Christophe Malapert
  */
-public final class ProxySPNegoHttpClient implements Closeable {
+public final class ProxySPNegoHttpClient implements HttpClient, Closeable {
 
     /**
      * Get actual class name to be printed on.
@@ -98,8 +95,9 @@ public final class ProxySPNegoHttpClient implements Closeable {
     private static final TrustManager TRUST_MANAGER = new X509TrustManager() {
 
         /**
-         * Given the partial or complete certificate chain provided by the peer, 
-         * ignores the certificate checking.
+         * Given the partial or complete certificate chain provided by the peer, ignores the
+         * certificate checking.
+         *
          * @param chain the peer certificate chain
          * @param authType the authentication type based on the client certificate
          */
@@ -111,11 +109,12 @@ public final class ProxySPNegoHttpClient implements Closeable {
         }
 
         /**
-         * Given the partial or complete certificate chain provided by the peer, 
-         * ignores the certificate checking.
+         * Given the partial or complete certificate chain provided by the peer, ignores the
+         * certificate checking.
+         *
          * @param chain the peer certificate chain
          * @param authType the authentication type based on the client certificate
-         * @throws CertificateException 
+         * @throws CertificateException
          */
         @Override
         public void checkServerTrusted(final X509Certificate[] chain, final String authType) throws
@@ -127,6 +126,7 @@ public final class ProxySPNegoHttpClient implements Closeable {
 
         /**
          * Return null, everybody is trusted.
+         *
          * @return null
          */
         @Override
@@ -141,160 +141,10 @@ public final class ProxySPNegoHttpClient implements Closeable {
     private final CloseableHttpClient httpClient;
 
     /**
-     * proxy.
+     * configuration for proxy.
      */
-    private final HttpGet request = new HttpGet("/");
-
-    /**
-     * Updates a HttpClient for crossing a proxy using SPNego.
-     *
-     * @param userId User ID for authentication to authentication service
-     * @param keytabFileName Keytab filename that contains the kerberos ticket
-     * @param proxyHost proxy host
-     * @param proxyPort proxy port
-     * @param httpClient http client
-     */
-    public ProxySPNegoHttpClient(final String userId,
-            final File keytabFileName, final String proxyHost, final int proxyPort,
-            final DefaultHttpClient httpClient) {
-        this(userId, keytabFileName, null, null, proxyHost, proxyPort, httpClient, false);
-    }
-
-    /**
-     * Updates an HttpClient for crossing a proxy using SPNego.
-     *
-     * Setting to true the isDisabledSSL parameter is insecure.
-     *
-     * @param userId User ID for authentication to authentication service
-     * @param keytabFileName Keytab filename that contains the kerberos ticket
-     * @param proxyHost proxy host
-     * @param proxyPort proxy port
-     * @param httpClient http client
-     * @param isDisabledSSL true to disable the SSL certificate checking otherwise false
-     */
-    public ProxySPNegoHttpClient(final String userId,
-            final File keytabFileName, final String proxyHost, final int proxyPort,
-            final DefaultHttpClient httpClient, final boolean isDisabledSSL) {
-        this(userId, keytabFileName, null, null, proxyHost, proxyPort, httpClient, isDisabledSSL);
-    }
-
-    /**
-     * Updates an HttpClient for crossing a proxy using SPNego with a cache on file system.
-     *
-     * @param userId User ID for authentication to authentication service
-     * @param keytabFileName Keytab filename that contains the kerberos ticket
-     * @param ticketCacheFileName ticket cache filename
-     * @param proxyHost proxy host
-     * @param proxyPort proxy port
-     * @param httpClient http client
-     */
-    public ProxySPNegoHttpClient(final String userId,
-            final File keytabFileName,
-            final File ticketCacheFileName, final String proxyHost, final int proxyPort,
-            final DefaultHttpClient httpClient) {
-        this(userId, keytabFileName, ticketCacheFileName, null, proxyHost, proxyPort,
-                httpClient, false);
-    }
-
-    /**
-     * Updates an HttpClient for crossing a proxy using SPNego with a cache on file system.
-     *
-     * Setting to true the isDisabledSSL parameter is insecure.
-     *
-     * @param userId User ID for authentication to authentication service
-     * @param keytabFileName Keytab filename that contains the kerberos ticket
-     * @param ticketCacheFileName ticket cache filename
-     * @param proxyHost proxy host
-     * @param proxyPort proxy port
-     * @param httpClient http client
-     * @param isDisabledSSL true to disable the SSL certificate checking otherwise false
-     */
-    public ProxySPNegoHttpClient(final String userId,
-            final File keytabFileName,
-            final File ticketCacheFileName, final String proxyHost, final int proxyPort,
-            final DefaultHttpClient httpClient, final boolean isDisabledSSL) {
-        this(userId, keytabFileName, ticketCacheFileName, null, proxyHost, proxyPort,
-                httpClient, isDisabledSSL);
-    }
-
-    /**
-     * Updates an HttpClient for crossing a proxy using SPNego with a cache on file system and a
-     * specific configuration file for kerberos.
-     *
-     * @param userId User ID for authentication to authentication service
-     * @param keytabFileName Keytab filename that contains the kerberos ticket
-     * @param ticketCacheFileName ticket cache filename
-     * @param krbConfPath krb conf path
-     * @param proxyHost proxy host
-     * @param proxyPort proxy port
-     * @param httpClient http client
-     */
-    public ProxySPNegoHttpClient(final String userId,
-            final File keytabFileName,
-            final File ticketCacheFileName, final File krbConfPath, final String proxyHost,
-            final int proxyPort, final DefaultHttpClient httpClient) {
-        this(userId, keytabFileName, ticketCacheFileName, krbConfPath,
-                new HttpHost(proxyHost, proxyPort, HttpHost.DEFAULT_SCHEME_NAME),
-                httpClient, false);
-    }
-
-    /**
-     * Updates an HttpClient for crossing a proxy using SPNego with a cache on file system and a
-     * specific configuration file for kerberos.
-     *
-     * Setting to true the isDisabledSSL parameter is insecure.
-     *
-     * @param userId User ID for authentication to authentication service
-     * @param keytabFileName Keytab filename that contains the kerberos ticket
-     * @param ticketCacheFileName ticket cache filename
-     * @param krbConfPath krb conf path
-     * @param proxyHost proxy host
-     * @param proxyPort proxy port
-     * @param httpClient http client
-     * @param isDisabledSSL true to disable the SSL certificate checking otherwise false
-     */
-    public ProxySPNegoHttpClient(final String userId,
-            final File keytabFileName,
-            final File ticketCacheFileName, final File krbConfPath, final String proxyHost,
-            final int proxyPort, final DefaultHttpClient httpClient, final boolean isDisabledSSL) {
-        this(userId, keytabFileName, ticketCacheFileName, krbConfPath,
-                new HttpHost(proxyHost, proxyPort, HttpHost.DEFAULT_SCHEME_NAME),
-                httpClient, isDisabledSSL);
-    }
-
-    /**
-     * Updates an HttpClient for crossing a proxy using SPNego with a cache on file system and a
-     * specific configuration file for kerberos.
-     *
-     * Setting to true the isDisabledSSL parameter is insecure.
-     *
-     * @param userId User ID for authentication to authentication service
-     * @param keytabFileName Keytab filename that contains the kerberos ticket
-     * @param ticketCacheFileName ticket cache filename
-     * @param krbConfPath krb conf path
-     * @param proxy proxy
-     * @param httpClient http client
-     * @param isDisabledSSL true to disable the SSL certificate checking otherwise false
-     */
-    public ProxySPNegoHttpClient(final String userId,
-            final File keytabFileName,
-            final File ticketCacheFileName, final File krbConfPath, final HttpHost proxy,
-            final DefaultHttpClient httpClient, final boolean isDisabledSSL) {
-        final File krbConf = getKrbConf(krbConfPath);
-        final String spn = getSPN(proxy.getHostName());
-        httpClient.setCredentialsProvider(createCredsProvider(proxy));
-        httpClient.setAuthSchemes(registerSPNegoProviderDefaultHttp(userId, keytabFileName,
-                ticketCacheFileName, krbConf, spn));
-        this.httpClient = httpClient;
-        if (isDisabledSSL) {
-            LOG.warn("SSL Certificate checking is disabled. The connection is insecured.");
-            final SSLSocketFactory sslSocket = new SSLSocketFactory(disableSSLCertificateChecking());
-            final Scheme httpsScheme = new Scheme("https", 443, sslSocket);
-            this.httpClient.getConnectionManager().getSchemeRegistry().register(httpsScheme);
-        }
-        setProxy(proxy);
-    }
-
+    private RequestConfig config;
+    
     /**
      * Creates a http client that crosses a proxy using SPNego.
      *
@@ -406,7 +256,7 @@ public final class ProxySPNegoHttpClient implements Closeable {
                 + "keytabFileName: {}\n"
                 + "ticketCache: {}\n"
                 + "krb5: {}\n"
-                + "proxy: {}", 
+                + "proxy: {}",
                 userId, keytabFileName, ticketCacheFileName, krbConfPath, proxy);
         final File krbConf = getKrbConf(krbConfPath);
         final String spn = getSPN(proxy.getHostName());
@@ -421,7 +271,7 @@ public final class ProxySPNegoHttpClient implements Closeable {
                     .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
         }
         this.httpClient = builder.build();
-        setProxy(proxy);
+        setProxyConfiguration(proxy);
     }
 
     /**
@@ -453,10 +303,10 @@ public final class ProxySPNegoHttpClient implements Closeable {
 
     /**
      * Returns the Service Principal Name (SPN) based on the proxy host name.
-     * 
-     * The SPN is a unique identifier of a service instance. SPNs are used by Kerberos 
-     * authentication to associate a service instance with a service logon account. This allows a 
-     * client application to request that the service authenticate an account even if the client 
+     *
+     * The SPN is a unique identifier of a service instance. SPNs are used by Kerberos
+     * authentication to associate a service instance with a service logon account. This allows a
+     * client application to request that the service authenticate an account even if the client
      * does not have the account name.
      *
      * @param hostname hostname
@@ -468,19 +318,19 @@ public final class ProxySPNegoHttpClient implements Closeable {
     }
 
     /**
-     * Sets the proxy
+     * Sets the proxy configuration.
      *
      * @param proxy http proxy
      */
-    private void setProxy(final HttpHost proxy) {
+    private void setProxyConfiguration(final HttpHost proxy) {
         LOG.traceEntry("proxy : {}", proxy);
-        final RequestConfig config = RequestConfig.custom().setProxy(proxy).build();
-        this.request.setConfig(config);
+        this.config = RequestConfig.custom().setProxy(proxy).build();
         LOG.traceExit();
     }
 
     /**
      * Disables the SSL certificate checking.
+     *
      * @return the SSL context
      * @throws RuntimeException When a NoSuchAlgorithmException or KeyManagementException happens
      */
@@ -525,7 +375,7 @@ public final class ProxySPNegoHttpClient implements Closeable {
                 + "keytabFileName: {}\n"
                 + "ticketCache: {}\n"
                 + "krb5: {}\n"
-                + "spn: {}", 
+                + "spn: {}",
                 userId, keytabFileName, ticketCacheFileName, krbConfPath, spn);
         // init an registerSPNegoProviderDefaultHttp a SPNEGO auth scheme
         final GSSClient gssClient = new GSSClient(userId, keytabFileName,
@@ -549,151 +399,105 @@ public final class ProxySPNegoHttpClient implements Closeable {
     }
 
     /**
-     * Registers the SPNego scheme based on defaultHttpClient.
-     *
-     * @param userId User ID for authentication to authentication service
-     * @param keytabFileName Keytab filename that contains the kerberos ticket
-     * @param ticketCacheFileName ticket cache filename
-     * @param krbConfPath krb conf path
-     * @param spn Service Principal Name
-     * @return the registry
-     */
-    private AuthSchemeRegistry registerSPNegoProviderDefaultHttp(final String userId,
-            final File keytabFileName, final File ticketCacheFileName,
-            final File krbConfPath, final String spn) {
-        LOG.traceEntry("userId: {}\n"
-                + "keytabFileName: {}\n"
-                + "ticketCache: {}\n"
-                + "krb5: {}\n"
-                + "spn: {}", 
-                userId, keytabFileName, ticketCacheFileName, krbConfPath, spn);
-        final GSSClient gssClient = new GSSClient(userId, keytabFileName,
-                ticketCacheFileName, krbConfPath);
-
-        final AuthSchemeRegistry authSchemeRegistry = new AuthSchemeRegistry();
-        authSchemeRegistry.register(AuthPolicy.SPNEGO, new AuthSchemeFactory() {
-            /**
-             * Creates an authentication scheme.
-             *
-             * @param params http parameters
-             * @return the authentication scheme
-             */
-            @Override
-            public AuthScheme newInstance(final HttpParams params) {
-                return new SPNegoScheme(gssClient, spn, GSSName.NT_HOSTBASED_SERVICE);
-            }
-        });
-        return LOG.traceExit(authSchemeRegistry);
-    }
-
-    /**
      * Return the http proxy.
      *
      * @return the http proxy
      */
-    public HttpHost getProxy() {
+    public HttpHost getProxyConfiguration() {
         LOG.traceEntry();
-        return LOG.traceExit(this.request.getConfig().getProxy());
+        return LOG.traceExit(this.config.getProxy());
     }
 
-    /**
-     * Executes HTTP request using the given context.
-     *
-     * @param target target
-     * @param context context
-     * @return the response to the request. This is always a final response, never an intermediate
-     * response with an 1xx status code. Whether redirects or authentication challenges will be
-     * returned or handled automatically depends on the implementation and configuration of this
-     * client.
-     * @throws IOException in case of a problem or the connection was aborted
-     * @throws ClientProtocolException in case of an http protocol error
-     */
-    public CloseableHttpResponse execute(final HttpHost target, final HttpContext context)
-            throws IOException, ClientProtocolException {
-        LOG.traceEntry("target : {}\n"
+    @Override
+    public HttpParams getParams() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public ClientConnectionManager getConnectionManager() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public HttpResponse execute(HttpUriRequest request) throws IOException, ClientProtocolException {
+        return this.execute(request, new HttpClientContext());
+    }
+
+    @Override
+    public HttpResponse execute(HttpUriRequest request, HttpContext context) throws IOException,
+            ClientProtocolException {
+        LOG.traceEntry("request : {}\n"
                 + "context: {}",
-                target, context);
-        LOG.info("Executing request to {} via {}:{}",
-                target, this.getProxy().getHostName(), this.getProxy().getPort());
-        return LOG.traceExit(this.httpClient.execute(target, this.request, context));
+                request, context);
+        LOG.info("Executing request to {}  via {}:{}", request.getRequestLine(), this.getProxyConfiguration().getHostName(),
+                this.getProxyConfiguration().getPort());        
+        if(config != null) {
+            context.setAttribute(HttpClientContext.REQUEST_CONFIG, config);
+        }
+        return this.httpClient.execute(request, context);
     }
 
-    /**
-     * Executes HTTP request using the default context.
-     *
-     * @param target target
-     * @return the response to the request. This is always a final response, never an intermediate
-     * response with an 1xx status code. Whether redirects or authentication challenges will be
-     * returned or handled automatically depends on the implementation and configuration of this
-     * client.
-     * @throws IOException in case of a problem or the connection was aborted
-     * @throws ClientProtocolException in case of an http protocol error
-     */
-    public CloseableHttpResponse execute(final HttpHost target) throws IOException,
+    @Override
+    public HttpResponse execute(HttpHost target, HttpRequest request) throws IOException,
             ClientProtocolException {
-        LOG.traceEntry("target : {}", target);
-        LOG.info("Executing request to {}  via {}:{}", 
-                target, this.getProxy().getHostName(), this.getProxy().getPort());
-        return LOG.traceExit(this.httpClient.execute(target, this.request));
+        return this.execute(target, request, new HttpClientContext());
     }
 
-    /**
-     * Executes a request using the default context and processes the response using the given
-     * response handler.
-     *
-     * The content entity associated with the response is fully consumed and the underlying
-     * connection is released back to the connection manager automatically in all cases relieving
-     * individual ResponseHandlers from having to manage resource deallocation internally.
-     *
-     * @param <T> generic type
-     * @param target the target host for the request. Implementations may accept null if they can
-     * still determine a route, for example to a default target or by inspecting the request.
-     * @param responseHandler the response handler
-     * @return the response object as generated by the response handler.
-     * @throws IOException in case of a problem or the connection was aborted
-     * @throws ClientProtocolException in case of an http protocol error
-     */
-    public <T extends Object> T execute(final HttpHost target,
-            final ResponseHandler<? extends T> responseHandler) throws IOException,
-            ClientProtocolException {
+    @Override
+    public HttpResponse execute(HttpHost target, HttpRequest request, HttpContext context) throws
+            IOException, ClientProtocolException {
         LOG.traceEntry("target : {}\n"
-                + "responseHandler: {}", 
-                target, responseHandler);
-        LOG.info("Executing request to {}  via {}:{}", 
-                target, this.getProxy().getHostName(), this.getProxy().getPort());
-        return LOG.traceExit(this.httpClient.execute(target, this.request, responseHandler));
+                + "request: {}\n"
+                + "context: {}",
+                target, request, context);      
+        context.setAttribute(HttpClientContext.REQUEST_CONFIG, config);        
+        LOG.info("Executing request to {}  via {}:{}", target, this.getProxyConfiguration().getHostName(),
+                this.getProxyConfiguration().getPort());          
+        return LOG.traceExit(this.httpClient.execute(target, request, context));
     }
 
-    /**
-     * Executes a request using a given context and processes the response using the given response
-     * handler.
-     *
-     * The content entity associated with the response is fully consumed and the underlying
-     * connection is released back to the connection manager automatically in all cases relieving
-     * individual ResponseHandlers from having to manage resource deallocation internally.
-     *
-     * @param <T> generic type
-     * @param target the target host for the request. Implementations may accept null if they can
-     * still determine a route, for example to a default target or by inspecting the request.
-     * @param responseHandler the response handler
-     * @param context context
-     * @return the response object as generated by the response handler.
-     * @throws IOException in case of a problem or the connection was aborted
-     * @throws ClientProtocolException in case of an http protocol error
-     */
-    public <T extends Object> T execute(final HttpHost target,
-            final ResponseHandler<? extends T> responseHandler, final HttpContext context) throws
-            IOException,
+    @Override
+    public <T> T execute(HttpUriRequest request,
+            ResponseHandler<? extends T> responseHandler) throws IOException,
+            ClientProtocolException {
+        return this.execute(request, responseHandler, new HttpClientContext());
+    }
+
+    @Override
+    public <T> T execute(HttpUriRequest request,
+            ResponseHandler<? extends T> responseHandler, HttpContext context) throws IOException,
+            ClientProtocolException {
+        LOG.traceEntry("request : {}\n"
+                + "responseHandler: {}\n"
+                + "context: {}",
+                request, responseHandler, context);       
+        context.setAttribute(HttpClientContext.REQUEST_CONFIG, config);        
+        LOG.info("Executing request to {}  via {}:{}", request.getRequestLine(), this.getProxyConfiguration().getHostName(),
+                this.getProxyConfiguration().getPort());         
+        return LOG.traceExit(this.httpClient.execute(request, responseHandler, context));
+    }
+
+    @Override
+    public <T> T execute(HttpHost target, HttpRequest request,
+            ResponseHandler<? extends T> responseHandler) throws IOException,
+            ClientProtocolException {
+        return this.execute(target, request, responseHandler, new HttpClientContext());
+    }
+
+    @Override
+    public <T> T execute(HttpHost target, HttpRequest request,
+            ResponseHandler<? extends T> responseHandler, HttpContext context) throws IOException,
             ClientProtocolException {
         LOG.traceEntry("target : {}\n"
                 + "responseHandler: {}\n"
-                + "context: {}", 
-                target, responseHandler, context);        
-        LOG.info("Executing request to {}  via {}:{}", target, this.getProxy().getHostName(),
-                this.getProxy().getPort());
-        return LOG.
-                traceExit(this.httpClient.execute(target, this.request, responseHandler, context));
+                + "context: {}",
+                target, responseHandler, context);               
+        context.setAttribute(HttpClientContext.REQUEST_CONFIG, config);
+        LOG.info("Executing request to {}  via {}:{}", target, this.getProxyConfiguration().getHostName(),
+                this.getProxyConfiguration().getPort());        
+        return LOG.traceExit(this.httpClient.execute(target, request, responseHandler, context));
     }
+    
 
     /**
      * Close the http connection.
@@ -707,6 +511,6 @@ public final class ProxySPNegoHttpClient implements Closeable {
         } catch (IOException ex) {
             LOG.error(ex);
         }
-        LOG.traceExit();        
-    }
+        LOG.traceExit();
+    }    
 }

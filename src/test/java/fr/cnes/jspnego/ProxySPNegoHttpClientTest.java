@@ -6,6 +6,7 @@
 package fr.cnes.jspnego;
 
 import java.util.Arrays;
+import java.util.logging.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
@@ -62,7 +63,12 @@ public class ProxySPNegoHttpClientTest {
 
     @Before
     public void setUp() {
-
+        try {
+            checkInputParameters();
+        } catch (Exception ex) {
+            java.util.logging.Logger.getLogger(ProxySPNegoHttpClientTest.class.getName()).
+                    log(Level.SEVERE, null, ex);
+        }
     }
 
     @After
@@ -182,8 +188,7 @@ public class ProxySPNegoHttpClientTest {
 //    }
     
     @Test
-    public void clientResourceHttp() throws Exception {
-        checkInputParameters();
+    public void clientResourceHttp() throws Exception {        
         ClientResource cl = new ClientResource("http://www.larousse.fr");
         Representation rep = cl.get();
         String txt = rep.getText();
@@ -193,8 +198,8 @@ public class ProxySPNegoHttpClientTest {
     }
     
     @Test
-    public void clientResourceHttps() throws Exception {
-        checkInputParameters();
+    public void clientResourceHttps() throws Exception {    
+        //Engine.getInstance().getRegisteredClients().get(0).getContext()
         ClientResource cl = new ClientResource("https://www.google.com");
         Representation rep = cl.get();
         String txt = rep.getText();

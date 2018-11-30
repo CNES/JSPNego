@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.util.logging.Level;
 import org.apache.http.client.HttpClient;
 import org.restlet.Client;
+import org.restlet.Context;
 import org.restlet.Request;
 import org.restlet.data.Parameter;
 import org.restlet.data.Protocol;
@@ -32,6 +33,14 @@ public class HttpClientHelper extends org.restlet.engine.connector.HttpClientHel
         getProtocols().add(Protocol.HTTPS);
         this.httpClient = null;
     }
+
+    @Override
+    public void setHelped(Client helpedRestlet) {
+        super.setHelped(helpedRestlet); //To change body of generated methods, choose Tools | Templates.
+        Context.setCurrent(helpedRestlet.getContext());
+    }
+    
+    
 
     @Override
     public Series<Parameter> getHelpedParameters() {
@@ -72,6 +81,7 @@ public class HttpClientHelper extends org.restlet.engine.connector.HttpClientHel
 
     @Override
     public synchronized void start() throws Exception {
+        getHelpedParameters();
         super.start();        
     }
 

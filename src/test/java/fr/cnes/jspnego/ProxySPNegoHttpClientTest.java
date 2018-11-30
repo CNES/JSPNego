@@ -5,11 +5,7 @@
  */
 package fr.cnes.jspnego;
 
-import java.io.File;
-import java.io.IOException;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpUriRequest;
+import java.util.Arrays;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
@@ -20,6 +16,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.restlet.Client;
+import org.restlet.Context;
+import org.restlet.data.Protocol;
 import org.restlet.engine.Engine;
 import org.restlet.engine.connector.ConnectorHelper;
 import org.restlet.ext.httpclient4.HttpClientHelper;
@@ -94,8 +92,13 @@ public class ProxySPNegoHttpClientTest {
         }  
         
         ConnectorHelper<Client> connClient = Engine.getInstance().getRegisteredClients().get(0);
-        HttpClientHelper http = (HttpClientHelper) connClient;
-        http.setKerberosProxy(userID, new File(keytabFilePath), proxyHost, Integer.parseInt(proxyPort));       
+        Context ctx = new Context();
+        ctx.getParameters().add("proxyHost", proxyHost);
+        ctx.getParameters().add("proxyPort", proxyPort);
+        ctx.getParameters().add("userID", userID);
+        ctx.getParameters().add("keytabFilePath", keytabFilePath);
+        Client client = new Client(ctx, Arrays.asList(Protocol.HTTP, Protocol.HTTPS));
+        connClient.setHelped(client);
     }
 
 //    @Test

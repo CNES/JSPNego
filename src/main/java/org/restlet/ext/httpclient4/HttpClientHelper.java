@@ -8,13 +8,17 @@ package org.restlet.ext.httpclient4;
 import fr.cnes.jspnego.ProxySPNegoHttpClient;
 import java.io.File;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.http.client.HttpClient;
 import org.restlet.Client;
 import org.restlet.Request;
+import org.restlet.data.Parameter;
 import org.restlet.data.Protocol;
 import org.restlet.engine.adapter.ClientCall;
 import org.restlet.engine.util.ReferenceUtils;
+import org.restlet.util.Series;
 
 /**
  *
@@ -23,10 +27,6 @@ import org.restlet.engine.util.ReferenceUtils;
 public class HttpClientHelper extends org.restlet.engine.connector.HttpClientHelper {
     
     private volatile HttpClient httpClient;
-    private volatile String userID;
-    private volatile File keytabFileName;
-    private volatile String proxyHost;
-    private volatile int proxyPort;
 
     public HttpClientHelper(Client client) {
         super(client);
@@ -34,13 +34,17 @@ public class HttpClientHelper extends org.restlet.engine.connector.HttpClientHel
         getProtocols().add(Protocol.HTTPS);
         this.httpClient = null;
     }
-    
-    public void setKerberosProxy(final String userId, final File keytabFileName, final String proxyHost, final int proxyPort) {
-        this.userID = userId;
-        this.keytabFileName = keytabFileName;
-        this.proxyHost = proxyHost;
-        this.proxyPort = proxyPort;
-    }
+
+    @Override
+    public Series<Parameter> getHelpedParameters() {
+        Series<Parameter> params = super.getHelpedParameters();
+        final String userID = params.getFirstValue("userID");
+        final File keytabFilePath = new File(params.getFirstValue("keytabFilePath"));
+        final String proxyHost = params.getFirstValue("proxyHost");
+        final int proxyPort = Integer.parseInt(params.getFirstValue("proxyPort"));
+        this.httpClient = new ProxySPNegoHttpClient(userID, keytabFilePath, proxyHost, proxyPort);
+        return params;
+    }       
     
 
     @Override
@@ -70,16 +74,12 @@ public class HttpClientHelper extends org.restlet.engine.connector.HttpClientHel
 
     @Override
     public synchronized void start() throws Exception {
-        super.start();
-        System.out.println("-------- start -------");
-        this.httpClient = new ProxySPNegoHttpClient(userID, keytabFileName, proxyHost, proxyPort);
-        
+        super.start();        
     }
 
     @Override
     public synchronized void stop() throws Exception {
         super.stop();
-        System.out.println("-------- stop -------");
         if(this.httpClient != null) {
             this.getHttpClient().close();
             this.httpClient = null;

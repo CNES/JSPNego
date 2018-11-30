@@ -95,88 +95,88 @@ public class ProxySPNegoHttpClientTest {
         
         ConnectorHelper<Client> connClient = Engine.getInstance().getRegisteredClients().get(0);
         HttpClientHelper http = (HttpClientHelper) connClient;
-        http.setKerberosProxy(userID, new File(keytabFilePath), proxyHost, Integer.parseInt(proxyPort));
+        http.setKerberosProxy(userID, new File(keytabFilePath), proxyHost, Integer.parseInt(proxyPort));       
     }
 
-    @Test
-    public void testRequestHttps() throws Exception {
-        LOG_TITLE.info(" --- Running one https request ---");
-        checkInputParameters();
-        HttpResponse response;
-        ProxySPNegoHttpClient httpclient = null;
-        try {
-            httpclient = new ProxySPNegoHttpClient(
-                    userID, new File(keytabFilePath), new File(ticketCachePath), proxyHost,
-                    Integer.parseInt(proxyPort)
-            );
-            
-            HttpUriRequest request = new HttpGet("https://www.google.com");           
-            response = httpclient.execute(request);
-
-        } catch (IOException e) {
-            LOG.error(e);
-            response = null;
-        } finally {
-            if (httpclient != null) {
-                httpclient.close();
-            }
-        }
-        assertTrue("Testing https request:", response != null && response.getStatusLine().getStatusCode() == 200);
-    }
-
-    @Test
-    public void testRequestHttp() throws Exception {
-        LOG_TITLE.info(" --- Running one http request ---");
-        checkInputParameters();
-        HttpResponse response;
-        ProxySPNegoHttpClient httpclient = null;
-        try {
-            httpclient = new ProxySPNegoHttpClient(
-                    userID, new File(keytabFilePath), new File(ticketCachePath), proxyHost,
-                    Integer.parseInt(proxyPort)
-            );
-
-            HttpUriRequest request = new HttpGet("http://www.larousse.fr");
-            response = httpclient.execute(request);
-
-        } catch (IOException e) {
-            LOG.error(e);
-            response = null;
-        } finally {
-            if (httpclient != null) {
-                httpclient.close();
-            }
-        }
-        assertTrue("Testing http request: ",response != null && response.getStatusLine().getStatusCode() == 200);
-    }
-
-    @Test
-    public void testRequests() throws Exception {
-        LOG_TITLE.info(" -HttpHost-- Running several requests ---");
-        checkInputParameters();
-        int sum = 0;
-        ProxySPNegoHttpClient httpclient = new ProxySPNegoHttpClient(
-                userID, new File(keytabFilePath), new File(ticketCachePath), proxyHost,
-                Integer.parseInt(proxyPort), true
-        );
-
-        HttpUriRequest request = new HttpGet("http://www.larousse.fr");
-        HttpResponse response = httpclient.execute(request);
-        sum += response.getStatusLine().getStatusCode();
-
-        request = new HttpGet("https://www.nasa.gov");
-        response = httpclient.execute(request);
-        sum += response.getStatusLine().getStatusCode();
-
-        request = new HttpGet("https://www.google.com");
-        response = httpclient.execute(request);
-        sum += response.getStatusLine().getStatusCode();
-
-        httpclient.close();
-        
-        assertTrue("Testing http(s) requests: ", sum == 600);
-
-    }
+//    @Test
+//    public void testRequestHttps() throws Exception {
+//        LOG_TITLE.info(" --- Running one https request ---");
+//        checkInputParameters();
+//        HttpResponse response;
+//        ProxySPNegoHttpClient httpclient = null;
+//        try {
+//            httpclient = new ProxySPNegoHttpClient(
+//                    userID, new File(keytabFilePath), new File(ticketCachePath), proxyHost,
+//                    Integer.parseInt(proxyPort)
+//            );
+//            
+//            HttpUriRequest request = new HttpGet("https://www.google.com");           
+//            response = httpclient.execute(request);
+//
+//        } catch (IOException e) {
+//            LOG.error(e);
+//            response = null;
+//        } finally {
+//            if (httpclient != null) {
+//                httpclient.close();
+//            }
+//        }
+//        assertTrue("Testing https request:", response != null && response.getStatusLine().getStatusCode() == 200);
+//    }
+//
+//    @Test
+//    public void testRequestHttp() throws Exception {
+//        LOG_TITLE.info(" --- Running one http request ---");
+//        checkInputParameters();
+//        HttpResponse response;
+//        ProxySPNegoHttpClient httpclient = null;
+//        try {
+//            httpclient = new ProxySPNegoHttpClient(
+//                    userID, new File(keytabFilePath), new File(ticketCachePath), proxyHost,
+//                    Integer.parseInt(proxyPort)
+//            );
+//
+//            HttpUriRequest request = new HttpGet("http://www.larousse.fr");
+//            response = httpclient.execute(request);
+//
+//        } catch (IOException e) {
+//            LOG.error(e);
+//            response = null;
+//        } finally {
+//            if (httpclient != null) {
+//                httpclient.close();
+//            }
+//        }
+//        assertTrue("Testing http request: ",response != null && response.getStatusLine().getStatusCode() == 200);
+//    }
+//
+//    @Test
+//    public void testRequests() throws Exception {
+//        LOG_TITLE.info(" -HttpHost-- Running several requests ---");
+//        checkInputParameters();
+//        int sum = 0;
+//        ProxySPNegoHttpClient httpclient = new ProxySPNegoHttpClient(
+//                userID, new File(keytabFilePath), new File(ticketCachePath), proxyHost,
+//                Integer.parseInt(proxyPort), true
+//        );
+//
+//        HttpUriRequest request = new HttpGet("http://www.larousse.fr");
+//        HttpResponse response = httpclient.execute(request);
+//        sum += response.getStatusLine().getStatusCode();
+//
+//        request = new HttpGet("https://www.nasa.gov");
+//        response = httpclient.execute(request);
+//        sum += response.getStatusLine().getStatusCode();
+//
+//        request = new HttpGet("https://www.google.com");
+//        response = httpclient.execute(request);
+//        sum += response.getStatusLine().getStatusCode();
+//
+//        httpclient.close();
+//        
+//        assertTrue("Testing http(s) requests: ", sum == 600);
+//
+//    }
     
     @Test
     public void clientResourceHttp() throws Exception {

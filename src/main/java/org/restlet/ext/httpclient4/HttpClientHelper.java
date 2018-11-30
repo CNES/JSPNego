@@ -57,8 +57,8 @@ public class HttpClientHelper extends org.restlet.engine.connector.HttpClientHel
      * 
      * @return The wrapped Apache HTTP Client.
      */
-    public HttpClient getHttpClient() {
-        return this.httpClient;
+    public ProxySPNegoHttpClient getHttpClient() {
+        return (ProxySPNegoHttpClient) this.httpClient;
     }    
     
 }

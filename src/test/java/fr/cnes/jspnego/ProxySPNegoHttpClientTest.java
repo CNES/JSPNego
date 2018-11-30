@@ -19,6 +19,12 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.restlet.Client;
+import org.restlet.engine.Engine;
+import org.restlet.engine.connector.ConnectorHelper;
+import org.restlet.ext.httpclient4.HttpClientHelper;
+import org.restlet.representation.Representation;
+import org.restlet.resource.ClientResource;
 
 /**
  * @author malapert
@@ -37,6 +43,10 @@ public class ProxySPNegoHttpClientTest {
     private static final String userID = System.getProperty("userID");
     private static final String keytabFilePath = System.getProperty("keytabFilePath");
     private static final String ticketCachePath = System.getProperty("ticketCachePath");
+    
+    static {
+        Engine.getInstance().getRegisteredClients().add(0, new HttpClientHelper(null));
+    }
 
     public ProxySPNegoHttpClientTest() {
 
@@ -81,7 +91,11 @@ public class ProxySPNegoHttpClientTest {
         }
         if (error > 0) {
             throw new Exception("Missing input parameters");
-        }        
+        }  
+        
+        ConnectorHelper<Client> connClient = Engine.getInstance().getRegisteredClients().get(0);
+        HttpClientHelper http = (HttpClientHelper) connClient;
+        http.setKerberosProxy(userID, new File(keytabFilePath), proxyHost, Integer.parseInt(proxyPort));
     }
 
     @Test
@@ -163,4 +177,28 @@ public class ProxySPNegoHttpClientTest {
         assertTrue("Testing http(s) requests: ", sum == 600);
 
     }
+    
+    @Test
+    public void clientResourceHttp() throws Exception {
+        checkInputParameters();
+        ClientResource cl = new ClientResource("http://www.larousse.fr");
+        Representation rep = cl.get();
+        String txt = rep.getText();
+        System.out.println(txt);
+        cl.release();
+        assertTrue("Testing http restlet: ", txt.length()!=0);
+    }
+    
+    @Test
+    public void clientResourceHttps() throws Exception {
+        checkInputParameters();
+        ClientResource cl = new ClientResource("https://www.google.com");
+        Representation rep = cl.get();
+        String txt = rep.getText();
+        System.out.println(txt);
+        cl.release();
+        assertTrue("Testing https restlet: ", txt.length()!=0);
+    }    
+    
+    
 }

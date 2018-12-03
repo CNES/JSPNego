@@ -24,17 +24,20 @@ import fr.cnes.jspnego.SPNegoScheme;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import org.apache.http.HttpException;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
@@ -55,11 +58,14 @@ import org.apache.http.config.Lookup;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.conn.routing.HttpRoute;
+import org.apache.http.conn.routing.HttpRoutePlanner;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.HttpContext;
 import org.apache.logging.log4j.LogManager;
@@ -77,7 +83,7 @@ import org.apache.logging.log4j.Logger;
  * @author Jean-Christophe Malapert
  */
 public final class ProxySPNegoHttpClient implements HttpClient, Closeable {
-    
+
     public enum DefaultConfiguration {
         HTTP_HOST("http.host", ""),
         HTTP_PORT("http.port", ""),
@@ -92,7 +98,7 @@ public final class ProxySPNegoHttpClient implements HttpClient, Closeable {
         PRINCIPAL("principal", ""),
         IS_INITIATOR("isInitiator", "true"),
         SERVICE_PROVIDER_NAME("spn", "");
-        
+
         private final String key;
         private final String value;
 
@@ -104,11 +110,11 @@ public final class ProxySPNegoHttpClient implements HttpClient, Closeable {
         public String getKey() {
             return this.key;
         }
-        
+
         public String getValue() {
             return this.value;
         }
-        
+
         public static Map<String, String> getConfig() {
             final Map<String, String> map = new ConcurrentHashMap<>();
             final DefaultConfiguration[] confs = DefaultConfiguration.values();
@@ -117,7 +123,7 @@ public final class ProxySPNegoHttpClient implements HttpClient, Closeable {
             }
             return map;
         }
-        
+
     }
 
     /**
@@ -188,18 +194,19 @@ public final class ProxySPNegoHttpClient implements HttpClient, Closeable {
     /**
      * configuration for proxy.
      */
-    private RequestConfig config;    
+    private RequestConfig config;
 
-    public ProxySPNegoHttpClient(final File jassConf, final String hostName, final int hostPort, final String servicePrincipalName, final File krbConfPath, final boolean isDisabledSSL) {
+    public ProxySPNegoHttpClient(final File jassConf, final String hostName, final int hostPort,
+            final String servicePrincipalName, final File krbConfPath, final boolean isDisabledSSL) {
         final File krbConf = getKrbConf(krbConfPath);
         final HttpHost proxy = new HttpHost(hostName, hostPort);
         HttpClientBuilder builder = HttpClients.custom()
                 .setDefaultCredentialsProvider(createCredsProvider(proxy))
                 .setDefaultAuthSchemeRegistry(
                         registerSPNegoProvider(
-                            jassConf,
-                            servicePrincipalName,
-                            krbConf
+                                jassConf,
+                                servicePrincipalName,
+                                krbConf
                         )
                 );
         if (isDisabledSSL) {
@@ -208,29 +215,31 @@ public final class ProxySPNegoHttpClient implements HttpClient, Closeable {
                     .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
         }
         this.httpClient = builder.build();
-        setProxyConfiguration(proxy);        
+        setProxyConfiguration(proxy);
     }
-    
+
     public ProxySPNegoHttpClient(final Map<String, String> config) {
         this(config, null, false);
     }
-    
+
     public ProxySPNegoHttpClient(final Map<String, String> config, final boolean isDisabledSSL) {
         this(config, null, isDisabledSSL);
     }
-    
-    public ProxySPNegoHttpClient(final Map<String, String> config, final File krbConfPath, final boolean isDisabledSSL) {
+
+    public ProxySPNegoHttpClient(final Map<String, String> config, final File krbConfPath,
+            final boolean isDisabledSSL) {
         final File krbConf = getKrbConf(krbConfPath);
         final HttpHost proxy = new HttpHost(
-                config.get(DefaultConfiguration.HTTP_HOST.getKey()), 
+                config.get(DefaultConfiguration.HTTP_HOST.getKey()),
                 Integer.parseInt(config.get(DefaultConfiguration.HTTP_PORT.getKey()))
         );
         HttpClientBuilder builder = HttpClients.custom()
                 .setDefaultCredentialsProvider(createCredsProvider(proxy))
+                .setRoutePlanner(configureRouterPlanner(proxy))
                 .setDefaultAuthSchemeRegistry(
                         registerSPNegoProvider(
-                            config,
-                            krbConf
+                                config,
+                                krbConf
                         )
                 );
         if (isDisabledSSL) {
@@ -239,7 +248,7 @@ public final class ProxySPNegoHttpClient implements HttpClient, Closeable {
                     .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
         }
         this.httpClient = builder.build();
-        setProxyConfiguration(proxy);                
+        setProxyConfiguration(proxy);
     }
 
     /**
@@ -345,8 +354,9 @@ public final class ProxySPNegoHttpClient implements HttpClient, Closeable {
                     }
                 }).build());
     }
-    
-    private Registry<AuthSchemeProvider> registerSPNegoProvider(File jassConf, String servicePrincipalName,
+
+    private Registry<AuthSchemeProvider> registerSPNegoProvider(File jassConf,
+            String servicePrincipalName,
             File krbConfPath) {
         return LOG.traceExit(RegistryBuilder.
                 <AuthSchemeProvider>create()
@@ -362,8 +372,41 @@ public final class ProxySPNegoHttpClient implements HttpClient, Closeable {
                         return new SPNegoScheme(jassConf, servicePrincipalName, krbConfPath);
                     }
                 }).build());
-    }    
-    
+    }
+
+    private HttpRoutePlanner configureRouterPlanner(HttpHost proxy) {
+
+        HttpRoutePlanner routePlanner = new DefaultProxyRoutePlanner(proxy) {
+
+            @Override
+            public HttpRoute determineRoute(HttpHost host, HttpRequest request,
+                    HttpContext context) throws HttpException {
+                final HttpClientContext clientContext = HttpClientContext.adapt(context);
+                final RequestConfig config = clientContext.getRequestConfig();
+                final InetAddress local = config.getLocalAddress();
+                HttpHost proxy = config.getProxy();
+
+                final HttpHost target;
+                if (host.getPort() > 0
+                        && (host.getSchemeName().equalsIgnoreCase("http")
+                        && host.getPort() == 80
+                        || host.getSchemeName().equalsIgnoreCase("https")
+                        && host.getPort() == 443)) {
+                    target = new HttpHost(host.getHostName(), -1, host.getSchemeName());
+                } else {
+                    target = host;
+                }
+                final boolean secure = target.getSchemeName().equalsIgnoreCase("https");
+                if (Arrays.asList("localhost").contains(host.getHostName())) {
+                    return new HttpRoute(target, local, secure);
+                } else {
+                    return new HttpRoute(target, local, proxy, secure);
+                }
+            }
+        };
+
+        return routePlanner;
+    }
 
     /**
      * Return the http proxy.
@@ -396,9 +439,10 @@ public final class ProxySPNegoHttpClient implements HttpClient, Closeable {
         LOG.traceEntry("request : {}\n"
                 + "context: {}",
                 request, context);
-        LOG.info("Executing request to {}  via {}:{}", request.getRequestLine(), this.getProxyConfiguration().getHostName(),
-                this.getProxyConfiguration().getPort());        
-        if(config != null) {
+        LOG.info("Executing request to {}  via {}:{}", request.getRequestLine(), this.
+                getProxyConfiguration().getHostName(),
+                this.getProxyConfiguration().getPort());
+        if (config != null) {
             context.setAttribute(HttpClientContext.REQUEST_CONFIG, config);
         }
         return this.httpClient.execute(request, context);
@@ -416,10 +460,11 @@ public final class ProxySPNegoHttpClient implements HttpClient, Closeable {
         LOG.traceEntry("target : {}\n"
                 + "request: {}\n"
                 + "context: {}",
-                target, request, context);      
-        context.setAttribute(HttpClientContext.REQUEST_CONFIG, config);        
-        LOG.info("Executing request to {}  via {}:{}", target, this.getProxyConfiguration().getHostName(),
-                this.getProxyConfiguration().getPort());          
+                target, request, context);
+        context.setAttribute(HttpClientContext.REQUEST_CONFIG, config);
+        LOG.info("Executing request to {}  via {}:{}", target, this.getProxyConfiguration().
+                getHostName(),
+                this.getProxyConfiguration().getPort());
         return LOG.traceExit(this.httpClient.execute(target, request, context));
     }
 
@@ -437,10 +482,11 @@ public final class ProxySPNegoHttpClient implements HttpClient, Closeable {
         LOG.traceEntry("request : {}\n"
                 + "responseHandler: {}\n"
                 + "context: {}",
-                request, responseHandler, context);       
-        context.setAttribute(HttpClientContext.REQUEST_CONFIG, config);        
-        LOG.info("Executing request to {}  via {}:{}", request.getRequestLine(), this.getProxyConfiguration().getHostName(),
-                this.getProxyConfiguration().getPort());         
+                request, responseHandler, context);
+        context.setAttribute(HttpClientContext.REQUEST_CONFIG, config);
+        LOG.info("Executing request to {}  via {}:{}", request.getRequestLine(), this.
+                getProxyConfiguration().getHostName(),
+                this.getProxyConfiguration().getPort());
         return LOG.traceExit(this.httpClient.execute(request, responseHandler, context));
     }
 
@@ -458,13 +504,13 @@ public final class ProxySPNegoHttpClient implements HttpClient, Closeable {
         LOG.traceEntry("target : {}\n"
                 + "responseHandler: {}\n"
                 + "context: {}",
-                target, responseHandler, context);               
+                target, responseHandler, context);
         context.setAttribute(HttpClientContext.REQUEST_CONFIG, config);
-        LOG.info("Executing request to {}  via {}:{}", target, this.getProxyConfiguration().getHostName(),
-                this.getProxyConfiguration().getPort());        
+        LOG.info("Executing request to {}  via {}:{}", target, this.getProxyConfiguration().
+                getHostName(),
+                this.getProxyConfiguration().getPort());
         return LOG.traceExit(this.httpClient.execute(target, request, responseHandler, context));
     }
-    
 
     /**
      * Close the http connection.
@@ -479,5 +525,5 @@ public final class ProxySPNegoHttpClient implements HttpClient, Closeable {
             LOG.error(ex);
         }
         LOG.traceExit();
-    }    
+    }
 }

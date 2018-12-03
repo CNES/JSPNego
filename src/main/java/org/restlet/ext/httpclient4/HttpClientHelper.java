@@ -8,6 +8,7 @@ package org.restlet.ext.httpclient4;
 import fr.cnes.jspnego.ProxySPNegoHttpClient;
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 import java.util.logging.Level;
 import org.apache.http.client.HttpClient;
 import org.restlet.Client;
@@ -46,10 +47,17 @@ public class HttpClientHelper extends org.restlet.engine.connector.HttpClientHel
     public Series<Parameter> getHelpedParameters() {
         Series<Parameter> params = super.getHelpedParameters();
         final String userID = params.getFirstValue("userID");
-        final File keytabFilePath = new File(params.getFirstValue("keytabFilePath"));
+        final String keytabFilePath = params.getFirstValue("keytabFilePath");
         final String proxyHost = params.getFirstValue("proxyHost");
-        final int proxyPort = Integer.parseInt(params.getFirstValue("proxyPort"));
-        this.httpClient = new ProxySPNegoHttpClient(userID, keytabFilePath, proxyHost, proxyPort);
+        final String proxyPort = params.getFirstValue("proxyPort");
+        Map<String, String> conf = ProxySPNegoHttpClient.DefaultConfiguration.getConfig();
+        conf.put(ProxySPNegoHttpClient.DefaultConfiguration.PRINCIPAL.getKey(), userID);
+        conf.put(ProxySPNegoHttpClient.DefaultConfiguration.USE_KEYTAB.getKey(),"true");
+        conf.put(ProxySPNegoHttpClient.DefaultConfiguration.KEY_TAB.getKey(),keytabFilePath);
+        conf.put(ProxySPNegoHttpClient.DefaultConfiguration.HTTP_HOST.getKey(), proxyHost);
+        conf.put(ProxySPNegoHttpClient.DefaultConfiguration.HTTP_PORT.getKey(), proxyPort);
+        conf.put(ProxySPNegoHttpClient.DefaultConfiguration.SERVICE_PROVIDER_NAME.getKey(), "HTTP@"+proxyHost);
+        this.httpClient = new ProxySPNegoHttpClient(conf, null, false);
         return params;
     }       
     

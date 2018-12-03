@@ -29,6 +29,8 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
@@ -74,6 +76,48 @@ import org.ietf.jgss.GSSName;
  * @author Jean-Christophe Malapert
  */
 public final class ProxySPNegoHttpClient implements HttpClient, Closeable {
+    
+    public enum DefaultConfiguration {
+        HTTP_HOST("http.host", ""),
+        HTTP_PORT("http.port", ""),
+        REFRESH_KRB5_CONFIG("refreshKrb5Config", "true"),
+        USE_TICKET_CACHE("useTicketCache", "false"),
+        TICKET_CACHE("ticketCache", ""),
+        RENEW_TGT("renewTGT", ""),
+        DO_NOT_PROMPT("doNotPrompt", "true"),
+        USE_KEYTAB("useKeyTab", "false"),
+        KEY_TAB("keyTab", ""),
+        STORE_KEY("storeKey", "true"),
+        PRINCIPAL("principal", ""),
+        IS_INITIATOR("isInitiator", "true"),
+        SERVICE_PROVIDER_NAME("spn", "");
+        
+        private final String key;
+        private final String value;
+
+        DefaultConfiguration(final String key, final String value) {
+            this.key = key;
+            this.value = value;
+        }
+
+        public String getKey() {
+            return this.key;
+        }
+        
+        public String getValue() {
+            return this.value;
+        }
+        
+        public static Map<String, String> getConfig() {
+            final Map<String, String> map = new ConcurrentHashMap<>();
+            final DefaultConfiguration[] confs = DefaultConfiguration.values();
+            for (DefaultConfiguration conf : confs) {
+                map.put(conf.getKey(), conf.getValue());
+            }
+            return map;
+        }
+        
+    }
 
     /**
      * Get actual class name to be printed on.
@@ -143,127 +187,30 @@ public final class ProxySPNegoHttpClient implements HttpClient, Closeable {
     /**
      * configuration for proxy.
      */
-    private RequestConfig config;
+    private RequestConfig config;    
+
     
-    /**
-     * Creates a http client that crosses a proxy using SPNego.
-     *
-     * @param userId User ID for authentication to authentication service
-     * @param keytabFileName Keytab filename that contains the kerberos ticket
-     * @param proxyHost proxy host
-     * @param proxyPort proxy port
-     */
-    public ProxySPNegoHttpClient(final String userId,
-            final File keytabFileName, final String proxyHost, final int proxyPort) {
-        this(userId, keytabFileName, null, null, proxyHost, proxyPort, false);
+    public ProxySPNegoHttpClient(final Map<String, String> config) {
+        this(config, null, false);
     }
-
-    /**
-     * Creates a http client that crosses a proxy using SPNego with a cache on the file system.
-     *
-     * Setting to true the isDisabledSSL parameter is insecure.
-     *
-     * @param userId User ID for authentication to authentication service
-     * @param keytabFileName Keytab filename that contains the kerberos ticket
-     * @param ticketCacheFileName ticket cache filename
-     * @param proxyHost proxy host
-     * @param proxyPort proxy port
-     */
-    public ProxySPNegoHttpClient(final String userId,
-            final File keytabFileName,
-            final File ticketCacheFileName, final String proxyHost, final int proxyPort) {
-        this(userId, keytabFileName, ticketCacheFileName, null, proxyHost, proxyPort, false);
+    
+    public ProxySPNegoHttpClient(final Map<String, String> config, final boolean isDisabledSSL) {
+        this(config, null, isDisabledSSL);
     }
-
-    /**
-     * Creates a http client that crosses a proxy using SPNego with a cache on the file system.
-     *
-     * Setting to true the isDisabledSSL parameter is insecure.
-     *
-     * @param userId User ID for authentication to authentication service
-     * @param keytabFileName Keytab filename that contains the kerberos ticket
-     * @param ticketCacheFileName ticket cache filename
-     * @param proxyHost proxy host
-     * @param proxyPort proxy port
-     * @param isDisabledSSL true to disable the SSL certificate checking otherwise false
-     */
-    public ProxySPNegoHttpClient(final String userId,
-            final File keytabFileName,
-            final File ticketCacheFileName, final String proxyHost, final int proxyPort,
-            final boolean isDisabledSSL) {
-        this(userId, keytabFileName, ticketCacheFileName, null, proxyHost, proxyPort, isDisabledSSL);
-    }
-
-    /**
-     * Creates a http client that crosses a proxy using SPNego with a cache on the file system and a
-     * specific configuration file for kerberos.
-     *
-     * @param userId User ID for authentication to authentication service
-     * @param keytabFileName Keytab filename that contains the kerberos ticket
-     * @param ticketCacheFileName ticket cache filename
-     * @param krbConfPath krb conf path
-     * @param proxyHost proxy host
-     * @param proxyPort proxy port
-     */
-    public ProxySPNegoHttpClient(final String userId,
-            final File keytabFileName,
-            final File ticketCacheFileName, final File krbConfPath, final String proxyHost,
-            final int proxyPort) {
-        this(userId, keytabFileName, ticketCacheFileName, krbConfPath,
-                new HttpHost(proxyHost, proxyPort, HttpHost.DEFAULT_SCHEME_NAME), false);
-    }
-
-    /**
-     * Creates a http client that crosses a proxy using SPNego with a cache on the file system and a
-     * specific configuration file for kerberos.
-     *
-     * Setting to true the isDisabledSSL parameter is insecure.
-     *
-     * @param userId User ID for authentication to authentication service
-     * @param keytabFileName Keytab filename that contains the kerberos ticket
-     * @param ticketCacheFileName ticket cache filename
-     * @param krbConfPath krb conf path
-     * @param proxyHost proxy host
-     * @param proxyPort proxy port
-     * @param isDisabledSSL true to disable the SSL certificate checking otherwise false
-     */
-    public ProxySPNegoHttpClient(final String userId,
-            final File keytabFileName,
-            final File ticketCacheFileName, final File krbConfPath, final String proxyHost,
-            final int proxyPort, final boolean isDisabledSSL) {
-        this(userId, keytabFileName, ticketCacheFileName, krbConfPath,
-                new HttpHost(proxyHost, proxyPort, HttpHost.DEFAULT_SCHEME_NAME), isDisabledSSL);
-    }
-
-    /**
-     * Creates a http client that crosses a proxy using SPNego with a cache on the file system and a
-     * specific configuration file for kerberos.
-     *
-     * Setting to true the isDisabledSSL parameter is insecure.
-     *
-     * @param userId User ID for authentication to authentication service
-     * @param keytabFileName Keytab filename that contains the kerberos ticket
-     * @param ticketCacheFileName ticket cache filename
-     * @param krbConfPath krb conf path
-     * @param proxy proxy
-     * @param isDisabledSSL true to disable the SSL certificate checking otherwise false
-     */
-    public ProxySPNegoHttpClient(final String userId,
-            final File keytabFileName,
-            final File ticketCacheFileName, final File krbConfPath, final HttpHost proxy,
-            final boolean isDisabledSSL) {
-        LOG.traceEntry("userId: {}\n"
-                + "keytabFileName: {}\n"
-                + "ticketCache: {}\n"
-                + "krb5: {}\n"
-                + "proxy: {}",
-                userId, keytabFileName, ticketCacheFileName, krbConfPath, proxy);
+    
+    public ProxySPNegoHttpClient(final Map<String, String> config, final File krbConfPath, final boolean isDisabledSSL) {
         final File krbConf = getKrbConf(krbConfPath);
-        final String spn = getSPN(proxy.getHostName());
+        final HttpHost proxy = new HttpHost(
+                config.get(DefaultConfiguration.HTTP_HOST.getKey()), 
+                Integer.parseInt(config.get(DefaultConfiguration.HTTP_PORT.getKey()))
+        );
         HttpClientBuilder builder = HttpClients.custom()
                 .setDefaultCredentialsProvider(createCredsProvider(proxy))
-                .setDefaultAuthSchemeRegistry(registerSPNegoProvider(
-                        userId, keytabFileName, ticketCacheFileName, krbConf, spn)
+                .setDefaultAuthSchemeRegistry(
+                        registerSPNegoProvider(
+                            config,
+                            krbConf
+                        )
                 );
         if (isDisabledSSL) {
             LOG.warn("SSL Certificate checking is disabled. The connection is insecured.");
@@ -271,7 +218,8 @@ public final class ProxySPNegoHttpClient implements HttpClient, Closeable {
                     .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
         }
         this.httpClient = builder.build();
-        setProxyConfiguration(proxy);
+        setProxyConfiguration(proxy);        
+        
     }
 
     /**
@@ -299,22 +247,6 @@ public final class ProxySPNegoHttpClient implements HttpClient, Closeable {
         }
         LOG.info("Loading krbConf : {}", conf);
         return LOG.traceExit(new File(conf));
-    }
-
-    /**
-     * Returns the Service Principal Name (SPN) based on the proxy host name.
-     *
-     * The SPN is a unique identifier of a service instance. SPNs are used by Kerberos
-     * authentication to associate a service instance with a service logon account. This allows a
-     * client application to request that the service authenticate an account even if the client
-     * does not have the account name.
-     *
-     * @param hostname hostname
-     * @return the Service Principal Name (SPN)
-     */
-    private String getSPN(final String hostname) {
-        LOG.traceEntry("hostname: {}", hostname);
-        return LOG.traceExit("HTTP@" + hostname);
     }
 
     /**
@@ -368,18 +300,16 @@ public final class ProxySPNegoHttpClient implements HttpClient, Closeable {
      * @param spn Service Principal Name
      * @return the registry
      */
-    private Registry<AuthSchemeProvider> registerSPNegoProvider(final String userId,
-            final File keytabFileName, final File ticketCacheFileName,
-            final File krbConfPath, final String spn) {
-        LOG.traceEntry("userId: {}\n"
-                + "keytabFileName: {}\n"
-                + "ticketCache: {}\n"
-                + "krb5: {}\n"
-                + "spn: {}",
-                userId, keytabFileName, ticketCacheFileName, krbConfPath, spn);
+    private Registry<AuthSchemeProvider> registerSPNegoProvider(final Map<String, String> config,
+            final File krbConfPath) {
+//        LOG.traceEntry("userId: {}\n"
+//                + "keytabFileName: {}\n"
+//                + "ticketCache: {}\n"
+//                + "krb5: {}\n"
+//                + "spn: {}",
+//                userId, keytabFileName, ticketCacheFileName, krbConfPath, spn);
         // init an registerSPNegoProviderDefaultHttp a SPNEGO auth scheme
-        final GSSClient gssClient = new GSSClient(userId, keytabFileName,
-                ticketCacheFileName, krbConfPath);
+
         return LOG.traceExit(RegistryBuilder.
                 <AuthSchemeProvider>create()
                 .register(AuthSchemes.SPNEGO, new AuthSchemeProvider() {
@@ -391,9 +321,7 @@ public final class ProxySPNegoHttpClient implements HttpClient, Closeable {
                      */
                     @Override
                     public AuthScheme create(final HttpContext context) {
-                        return new SPNegoScheme(
-                                gssClient, spn, GSSName.NT_HOSTBASED_SERVICE
-                        );
+                        return new SPNegoScheme(config, krbConfPath);
                     }
                 }).build());
     }

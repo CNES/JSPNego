@@ -41,6 +41,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.Map;
 import java.util.Set;
 
 import javax.security.auth.Subject;
@@ -53,6 +54,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.ietf.jgss.GSSContext;
 import org.ietf.jgss.GSSException;
+import org.ietf.jgss.GSSManager;
+import org.ietf.jgss.GSSName;
+import org.ietf.jgss.Oid;
 
 /**
  * Creates a Kerberos client and manages the logging into the Kerberos The <i>key distribution
@@ -102,6 +106,12 @@ public class GSSClient {
      * Get actual class name to be printed on.
      */
     private static final Logger LOG = LogManager.getLogger(GSSClient.class.getName());
+    
+    /**
+     * Mechanism OID assigned to the pseudo-mechanism SPNEGO to negotiate the best common GSS-API
+     * mechanism between two communication peers.
+     */
+    private static final String SPNEGO_OID = "1.3.6.1.5.5.2";         
 
     /**
      * The initiator subject. This object will hold the TGT and all service tickets in its private
@@ -126,39 +136,21 @@ public class GSSClient {
      * The path of the ticket cache file
      */
     private final File ticketCacheFileName;
-
-    /**
-     * Init a Generic Security Services client using a cache.
-     *
-     * @param clientPrincipalName username for which the kerberos token should be generated
-     * @param clientKeytabFileName the path of the keytab file
-     * @param ticketCacheFileName the path of the ticket cache file
-     * @param krb5ConfFile the path of the krb conf file
-     */
-    public GSSClient(final String clientPrincipalName, final File clientKeytabFileName,
-            final File ticketCacheFileName, final File krb5ConfFile) {
-        LOG.traceEntry("clientPrincipalName: {}\n"
-                + "Key tab: {}\n "
-                + "ticketCache: {}\n"
-                + "krb5: {}",
-                clientPrincipalName, clientKeytabFileName, ticketCacheFileName, krb5ConfFile);
+    
+    private final String servicePrincipalName;    
+    
+    public GSSClient(final Map<String, String> config, final File krb5ConfFile) {
+//        LOG.traceEntry("clientPrincipalName: {}\n"
+//                + "Key tab: {}\n "
+//                + "ticketCache: {}\n"
+//                + "krb5: {}",
+//                clientPrincipalName, clientKeytabFileName, ticketCacheFileName, krb5ConfFile);
         System.setProperty("java.security.krb5.conf", krb5ConfFile.toString());
-        this.clientPrincipalName = clientPrincipalName;
-        this.clientKeytabFileName = clientKeytabFileName;
-        this.ticketCacheFileName = ticketCacheFileName;
-    }
-
-    /**
-     * Init a Generic Security Services client.
-     *
-     * @param clientPrincipalName userID
-     * @param clientKeytabFileName the path of the keytab file
-     * @param krb5ConfFile the path of the krb conf file
-     */
-    public GSSClient(final String clientPrincipalName, final File clientKeytabFileName,
-            final File krb5ConfFile) {
-        this(clientPrincipalName, clientKeytabFileName, null, krb5ConfFile);
-    }
+        this.clientPrincipalName = config.get(ProxySPNegoHttpClient.DefaultConfiguration.PRINCIPAL.getKey());
+        this.clientKeytabFileName = new File(config.get(ProxySPNegoHttpClient.DefaultConfiguration.KEY_TAB.getKey()));
+        this.ticketCacheFileName = new File(config.get(ProxySPNegoHttpClient.DefaultConfiguration.TICKET_CACHE.getKey()));
+        this.servicePrincipalName = config.get(ProxySPNegoHttpClient.DefaultConfiguration.SERVICE_PROVIDER_NAME.getKey());        
+    }    
 
     /**
      * Returns the user ID.
@@ -252,19 +244,30 @@ public class GSSClient {
      * @return a kerberos token as a byte array
      * @throws GSSException This exception is thrown whenever a GSS-API error occurs
      */
-    public byte[] negotiate(final GSSContext context, final byte[] negotiationToken) throws
+    public byte[] generateGSSToken() throws
             GSSException {
-        LOG.traceEntry("context: {}\n"
-                + "negotiationToken: {}",
-                context, negotiationToken);
+        
+        final Oid oid = new Oid(SPNEGO_OID);
+        
+        final byte[] tokenInit = new byte[0];
+
+        // Get the GSS-API
+        final GSSManager manager = GSSManager.getInstance();
+
+        // convert a servicePrincipalName from the specified namespace to a GSSName object
+        final GSSName serverName = manager.createName(servicePrincipalName, GSSName.NT_HOSTBASED_SERVICE);
+
+        // Instantiate and initialize a security context that will be established with the server
+        final GSSContext gssContext = manager.createContext(serverName.canonicalize(oid), oid, null,
+                GSSContext.DEFAULT_LIFETIME);        
 
         if (this.isNotLogged()) {
             loginViaJAAS(); // throw GSSException if fail to login
         }
 
         // If we do not have the service ticket it will be retrieved from the TGS
-        final NegotiateContextAction negotiationAction = new NegotiateContextAction(context,
-                negotiationToken);
+        final NegotiateContextAction negotiationAction = new NegotiateContextAction(gssContext,
+                tokenInit);
 
         if (negotiationAction.getGSSException() != null) {
             throw LOG.throwing(negotiationAction.getGSSException());
@@ -275,7 +278,7 @@ public class GSSClient {
         final byte[] token = (byte[]) Subject.doAs(subject, negotiationAction);
 
         return LOG.traceExit(token);
-    }
+    }   
 
     /**
      * Negotiate the token.

@@ -190,7 +190,7 @@ public final class ProxySPNegoHttpClient implements HttpClient, Closeable {
      */
     private RequestConfig config;    
 
-    public ProxySPNegoHttpClient(final File jassConf, final String hostName, final int hostPort, final String servicePrincipalName, final String principal, final File krbConfPath, final boolean isDisabledSSL) {
+    public ProxySPNegoHttpClient(final File jassConf, final String hostName, final int hostPort, final String servicePrincipalName, final File krbConfPath, final boolean isDisabledSSL) {
         final File krbConf = getKrbConf(krbConfPath);
         final HttpHost proxy = new HttpHost(hostName, hostPort);
         HttpClientBuilder builder = HttpClients.custom()
@@ -199,7 +199,6 @@ public final class ProxySPNegoHttpClient implements HttpClient, Closeable {
                         registerSPNegoProvider(
                             jassConf,
                             servicePrincipalName,
-                            principal,
                             krbConf
                         )
                 );
@@ -348,7 +347,7 @@ public final class ProxySPNegoHttpClient implements HttpClient, Closeable {
     }
     
     private Registry<AuthSchemeProvider> registerSPNegoProvider(File jassConf, String servicePrincipalName,
-            String principal, File krbConfPath) {
+            File krbConfPath) {
         return LOG.traceExit(RegistryBuilder.
                 <AuthSchemeProvider>create()
                 .register(AuthSchemes.SPNEGO, new AuthSchemeProvider() {
@@ -360,7 +359,7 @@ public final class ProxySPNegoHttpClient implements HttpClient, Closeable {
                      */
                     @Override
                     public AuthScheme create(final HttpContext context) {
-                        return new SPNegoScheme(jassConf, servicePrincipalName, principal, krbConfPath);
+                        return new SPNegoScheme(jassConf, servicePrincipalName, krbConfPath);
                     }
                 }).build());
     }    

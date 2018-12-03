@@ -159,11 +159,11 @@ public class GSSClient {
                 ProxySPNegoHttpClient.DefaultConfiguration.SERVICE_PROVIDER_NAME.getKey());
     }
 
-    public GSSClient(File jassConf, String servicePrincipalName, String principal, File krb5ConfFile) {
+    public GSSClient(File jassConf, String servicePrincipalName, File krb5ConfFile) {
         System.setProperty("java.security.krb5.conf", krb5ConfFile.toString());
         System.setProperty("java.security.auth.login.config", jassConf.toString());
         this.servicePrincipalName = servicePrincipalName;
-        this.clientPrincipalName = principal;
+        this.clientPrincipalName = null;
     }
 
     /**

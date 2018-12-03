@@ -110,9 +110,9 @@ public class SPNegoScheme extends AuthSchemeBase {
         this.gssClient = new GSSClient(config, kr5Conf);
     }
     
-    public SPNegoScheme(File jassConf, String servicePrincipalName, String principal, File krbConfPath) {
+    public SPNegoScheme(File jassConf, String servicePrincipalName, File krbConfPath) {
         this.state = State.UNINITIATED;
-        this.gssClient = new GSSClient(jassConf, servicePrincipalName, principal, krbConfPath);
+        this.gssClient = new GSSClient(jassConf, servicePrincipalName, krbConfPath);
     }    
 
     /**

@@ -118,11 +118,11 @@ public class ProxySPNegoHttpClientTest {
     public void testRequestHttps() throws Exception {
         LOG_TITLE.info(" --- Running one https request ---");
         File jaas = new File("/tmp/jaas.conf");
-        checkInputParameters();
+        //checkInputParameters();
         HttpResponse response;
         HttpClient httpclient = null;
         try {
-            httpclient = new ProxySPNegoHttpClient(jaas,proxyHost, Integer.parseInt(proxyPort), "HTTP@"+proxyHost,  userID, new File(keytabFilePath), false);
+            httpclient = new ProxySPNegoHttpClient(jaas, proxyHost, Integer.parseInt(proxyPort), "HTTP@"+proxyHost, null, false);
             HttpUriRequest request = new HttpGet("https://www.google.com");           
             response = httpclient.execute(request);
 

@@ -51,6 +51,7 @@ import org.apache.http.client.config.AuthSchemes;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.config.Lookup;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.ClientConnectionManager;
@@ -63,7 +64,6 @@ import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.HttpContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.ietf.jgss.GSSName;
 
 /**
  * The client makes HTTP requests via a proxy for which the client is authenticated through a SSO.
@@ -190,6 +190,27 @@ public final class ProxySPNegoHttpClient implements HttpClient, Closeable {
      */
     private RequestConfig config;    
 
+    public ProxySPNegoHttpClient(final File jassConf, final String hostName, final int hostPort, final String servicePrincipalName, final String principal, final File krbConfPath, final boolean isDisabledSSL) {
+        final File krbConf = getKrbConf(krbConfPath);
+        final HttpHost proxy = new HttpHost(hostName, hostPort);
+        HttpClientBuilder builder = HttpClients.custom()
+                .setDefaultCredentialsProvider(createCredsProvider(proxy))
+                .setDefaultAuthSchemeRegistry(
+                        registerSPNegoProvider(
+                            jassConf,
+                            servicePrincipalName,
+                            principal,
+                            krbConf
+                        )
+                );
+        if (isDisabledSSL) {
+            LOG.warn("SSL Certificate checking is disabled. The connection is insecured.");
+            builder = builder.setSSLContext(disableSSLCertificateChecking())
+                    .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
+        }
+        this.httpClient = builder.build();
+        setProxyConfiguration(proxy);        
+    }
     
     public ProxySPNegoHttpClient(final Map<String, String> config) {
         this(config, null, false);
@@ -219,8 +240,7 @@ public final class ProxySPNegoHttpClient implements HttpClient, Closeable {
                     .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
         }
         this.httpClient = builder.build();
-        setProxyConfiguration(proxy);        
-        
+        setProxyConfiguration(proxy);                
     }
 
     /**
@@ -326,6 +346,25 @@ public final class ProxySPNegoHttpClient implements HttpClient, Closeable {
                     }
                 }).build());
     }
+    
+    private Registry<AuthSchemeProvider> registerSPNegoProvider(File jassConf, String servicePrincipalName,
+            String principal, File krbConfPath) {
+        return LOG.traceExit(RegistryBuilder.
+                <AuthSchemeProvider>create()
+                .register(AuthSchemes.SPNEGO, new AuthSchemeProvider() {
+                    /**
+                     * Creates an authentication scheme.
+                     *
+                     * @param context context
+                     * @return the authentication scheme
+                     */
+                    @Override
+                    public AuthScheme create(final HttpContext context) {
+                        return new SPNegoScheme(jassConf, servicePrincipalName, principal, krbConfPath);
+                    }
+                }).build());
+    }    
+    
 
     /**
      * Return the http proxy.

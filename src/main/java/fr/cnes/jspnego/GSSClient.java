@@ -192,8 +192,8 @@ public class GSSClient {
 
         try {
             final LoginContext loginContext;
-            if (System.getenv("java.security.krb5.conf") != null && Files.isReadable(Paths.get(
-                    System.getenv("java.security.krb5.conf")))) {
+            if (System.getProperty("java.security.auth.login.config") != null && Files.isReadable(Paths.get(
+                    System.getProperty("java.security.auth.login.config")))) {
                 loginContext = new LoginContext("KRB5");
             } else {
                 final KerberosConfiguration config = createGssKerberosConfiguration();

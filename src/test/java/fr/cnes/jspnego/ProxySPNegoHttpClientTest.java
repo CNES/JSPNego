@@ -70,12 +70,12 @@ public class ProxySPNegoHttpClientTest {
 
     @Before
     public void setUp() {
-        try {
-            checkInputParameters();
-        } catch (Exception ex) {
-            java.util.logging.Logger.getLogger(ProxySPNegoHttpClientTest.class.getName()).
-                    log(Level.SEVERE, null, ex);
-        }
+        //try {
+        //    checkInputParameters();
+        //} catch (Exception ex) {
+        //    java.util.logging.Logger.getLogger(ProxySPNegoHttpClientTest.class.getName()).
+        //            log(Level.SEVERE, null, ex);
+        //}
     }
 
     @After
@@ -114,7 +114,7 @@ public class ProxySPNegoHttpClientTest {
         connClient.setHelped(client);
     }
 
-    @Test
+    @Test   
     public void testRequestHttps() throws Exception {
         LOG_TITLE.info(" --- Running one https request ---");
         File jaas = new File("/tmp/jaas.conf");
@@ -191,7 +191,7 @@ public class ProxySPNegoHttpClientTest {
 //
 //    }
     
-    @Test
+    //@Test
     public void clientResourceHttp() throws Exception {  
         ClientResource cl = new ClientResource("http://www.larousse.fr");
         Representation rep = cl.get();
@@ -201,7 +201,7 @@ public class ProxySPNegoHttpClientTest {
         assertTrue("Testing http restlet: ", txt.length()!=0);
     }
     
-    @Test
+    //@Test
     public void clientResourceHttps() throws Exception {    
         //Engine.getInstance().getRegisteredClients().get(0).getContext()
         ClientResource cl = new ClientResource("https://www.google.com");

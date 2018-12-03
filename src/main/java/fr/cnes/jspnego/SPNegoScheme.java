@@ -84,7 +84,7 @@ public class SPNegoScheme extends AuthSchemeBase {
     /**
      * Provides Base64 encoding and decoding as defined by RFC 2045.
      */
-    private final Base64 base64codec;
+    private final Base64 base64codec = new Base64();
 
     /**
      * Authentication process state.
@@ -105,11 +105,15 @@ public class SPNegoScheme extends AuthSchemeBase {
 //                + "servicePrincipalName: {}\n"
 //                + "servicePrincipalOid: {}",
 //                gssClient.getName(), servicePrincipalName, servicePrincipalOid);
-        this.base64codec = new Base64();
         // sets the state to no initiated at the beginning.
         this.state = State.UNINITIATED;
         this.gssClient = new GSSClient(config, kr5Conf);
     }
+    
+    public SPNegoScheme(File jassConf, String servicePrincipalName, String principal, File krbConfPath) {
+        this.state = State.UNINITIATED;
+        this.gssClient = new GSSClient(jassConf, servicePrincipalName, principal, krbConfPath);
+    }    
 
     /**
      * (non-Javadoc)

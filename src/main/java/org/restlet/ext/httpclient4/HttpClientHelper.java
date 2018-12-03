@@ -5,7 +5,7 @@
  */
 package org.restlet.ext.httpclient4;
 
-import fr.cnes.jspnego.ProxySPNegoHttpClient;
+import fr.cnes.httpclient.ProxySPNegoHttpClient;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;

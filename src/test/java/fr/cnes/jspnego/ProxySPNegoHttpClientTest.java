@@ -5,8 +5,15 @@
  */
 package fr.cnes.jspnego;
 
+import fr.cnes.httpclient.ProxySPNegoHttpClient;
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.logging.Level;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
@@ -107,31 +114,28 @@ public class ProxySPNegoHttpClientTest {
         connClient.setHelped(client);
     }
 
-//    @Test
-//    public void testRequestHttps() throws Exception {
-//        LOG_TITLE.info(" --- Running one https request ---");
-//        checkInputParameters();
-//        HttpResponse response;
-//        ProxySPNegoHttpClient httpclient = null;
-//        try {
-//            httpclient = new ProxySPNegoHttpClient(
-//                    userID, new File(keytabFilePath), new File(ticketCachePath), proxyHost,
-//                    Integer.parseInt(proxyPort)
-//            );
-//            
-//            HttpUriRequest request = new HttpGet("https://www.google.com");           
-//            response = httpclient.execute(request);
-//
-//        } catch (IOException e) {
-//            LOG.error(e);
-//            response = null;
-//        } finally {
-//            if (httpclient != null) {
-//                httpclient.close();
-//            }
-//        }
-//        assertTrue("Testing https request:", response != null && response.getStatusLine().getStatusCode() == 200);
-//    }
+    @Test
+    public void testRequestHttps() throws Exception {
+        LOG_TITLE.info(" --- Running one https request ---");
+        File jaas = new File("/tmp/jaas.conf");
+        checkInputParameters();
+        HttpResponse response;
+        HttpClient httpclient = null;
+        try {
+            httpclient = new ProxySPNegoHttpClient(jaas,proxyHost, Integer.parseInt(proxyPort), "HTTP@"+proxyHost,  userID, new File(keytabFilePath), false);
+            HttpUriRequest request = new HttpGet("https://www.google.com");           
+            response = httpclient.execute(request);
+
+        } catch (IOException e) {
+            LOG.error(e);
+            response = null;
+        } finally {
+            if (httpclient != null) {
+                //httpclient.close();
+            }
+        }
+        assertTrue("Testing https request:", response != null && response.getStatusLine().getStatusCode() == 200);
+    }
 //
 //    @Test
 //    public void testRequestHttp() throws Exception {
@@ -188,7 +192,7 @@ public class ProxySPNegoHttpClientTest {
 //    }
     
     @Test
-    public void clientResourceHttp() throws Exception {        
+    public void clientResourceHttp() throws Exception {  
         ClientResource cl = new ClientResource("http://www.larousse.fr");
         Representation rep = cl.get();
         String txt = rep.getText();

@@ -35,10 +35,13 @@ package fr.cnes.jspnego;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301  USA
  */
+import fr.cnes.httpclient.ProxySPNegoHttpClient;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Map;
@@ -106,12 +109,12 @@ public class GSSClient {
      * Get actual class name to be printed on.
      */
     private static final Logger LOG = LogManager.getLogger(GSSClient.class.getName());
-    
+
     /**
      * Mechanism OID assigned to the pseudo-mechanism SPNEGO to negotiate the best common GSS-API
      * mechanism between two communication peers.
      */
-    private static final String SPNEGO_OID = "1.3.6.1.5.5.2";         
+    private static final String SPNEGO_OID = "1.3.6.1.5.5.2";
 
     /**
      * The initiator subject. This object will hold the TGT and all service tickets in its private
@@ -130,15 +133,15 @@ public class GSSClient {
      * The keytab file enables a trust link between the CAS server and the Key Distribution Center
      * (KDC).
      */
-    private final File clientKeytabFileName;
+    private File clientKeytabFileName;
 
     /**
      * The path of the ticket cache file
      */
-    private final File ticketCacheFileName;
-    
-    private final String servicePrincipalName;    
-    
+    private File ticketCacheFileName;
+
+    private final String servicePrincipalName;
+
     public GSSClient(final Map<String, String> config, final File krb5ConfFile) {
 //        LOG.traceEntry("clientPrincipalName: {}\n"
 //                + "Key tab: {}\n "
@@ -146,11 +149,22 @@ public class GSSClient {
 //                + "krb5: {}",
 //                clientPrincipalName, clientKeytabFileName, ticketCacheFileName, krb5ConfFile);
         System.setProperty("java.security.krb5.conf", krb5ConfFile.toString());
-        this.clientPrincipalName = config.get(ProxySPNegoHttpClient.DefaultConfiguration.PRINCIPAL.getKey());
-        this.clientKeytabFileName = new File(config.get(ProxySPNegoHttpClient.DefaultConfiguration.KEY_TAB.getKey()));
-        this.ticketCacheFileName = new File(config.get(ProxySPNegoHttpClient.DefaultConfiguration.TICKET_CACHE.getKey()));
-        this.servicePrincipalName = config.get(ProxySPNegoHttpClient.DefaultConfiguration.SERVICE_PROVIDER_NAME.getKey());        
-    }    
+        this.clientPrincipalName = config.get(ProxySPNegoHttpClient.DefaultConfiguration.PRINCIPAL.
+                getKey());
+        this.clientKeytabFileName = new File(config.get(
+                ProxySPNegoHttpClient.DefaultConfiguration.KEY_TAB.getKey()));
+        this.ticketCacheFileName = new File(config.get(
+                ProxySPNegoHttpClient.DefaultConfiguration.TICKET_CACHE.getKey()));
+        this.servicePrincipalName = config.get(
+                ProxySPNegoHttpClient.DefaultConfiguration.SERVICE_PROVIDER_NAME.getKey());
+    }
+
+    public GSSClient(File jassConf, String servicePrincipalName, String principal, File krb5ConfFile) {
+        System.setProperty("java.security.krb5.conf", krb5ConfFile.toString());
+        System.setProperty("java.security.auth.login.config", jassConf.toString());
+        this.servicePrincipalName = servicePrincipalName;
+        this.clientPrincipalName = principal;
+    }
 
     /**
      * Returns the user ID.
@@ -177,16 +191,21 @@ public class GSSClient {
         LOG.traceEntry();
 
         try {
-            final KerberosConfiguration config = createGssKerberosConfiguration();
-            if(this.clientKeytabFileName != null) {
-                config.setKeytab(this.clientKeytabFileName.toString());
-            }
-            if(this.ticketCacheFileName != null) {
-                config.setTicketCache(this.ticketCacheFileName.toString());
-            }
-            config.initialize();
-
-            final LoginContext loginContext = new LoginContext("other");
+            final LoginContext loginContext;
+            if (System.getenv("java.security.krb5.conf") != null && Files.isReadable(Paths.get(
+                    System.getenv("java.security.krb5.conf")))) {
+                loginContext = new LoginContext("KRB5");
+            } else {
+                final KerberosConfiguration config = createGssKerberosConfiguration();
+                if (this.clientKeytabFileName != null) {
+                    config.setKeytab(this.clientKeytabFileName.toString());
+                }
+                if (this.ticketCacheFileName != null) {
+                    config.setTicketCache(this.ticketCacheFileName.toString());
+                }
+                config.initialize();
+                loginContext = new LoginContext("other");
+            }            
             loginContext.login();
 
             // Subject will be populated with the Kerberos Principal name and the TGT.
@@ -246,20 +265,21 @@ public class GSSClient {
      */
     public byte[] generateGSSToken() throws
             GSSException {
-        
+
         final Oid oid = new Oid(SPNEGO_OID);
-        
+
         final byte[] tokenInit = new byte[0];
 
         // Get the GSS-API
         final GSSManager manager = GSSManager.getInstance();
 
         // convert a servicePrincipalName from the specified namespace to a GSSName object
-        final GSSName serverName = manager.createName(servicePrincipalName, GSSName.NT_HOSTBASED_SERVICE);
+        final GSSName serverName = manager.createName(servicePrincipalName,
+                GSSName.NT_HOSTBASED_SERVICE);
 
         // Instantiate and initialize a security context that will be established with the server
         final GSSContext gssContext = manager.createContext(serverName.canonicalize(oid), oid, null,
-                GSSContext.DEFAULT_LIFETIME);        
+                GSSContext.DEFAULT_LIFETIME);
 
         if (this.isNotLogged()) {
             loginViaJAAS(); // throw GSSException if fail to login
@@ -278,7 +298,7 @@ public class GSSClient {
         final byte[] token = (byte[]) Subject.doAs(subject, negotiationAction);
 
         return LOG.traceExit(token);
-    }   
+    }
 
     /**
      * Negotiate the token.

@@ -1,4 +1,4 @@
-package fr.cnes.jspnego;
+package fr.cnes.httpclient;
 
 /*
  * Copyright (C) 2017-2018 Centre National d'Etudes Spatiales (CNES).
@@ -20,6 +20,7 @@ package fr.cnes.jspnego;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301  USA
  */
+import fr.cnes.jspnego.SPNegoScheme;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;

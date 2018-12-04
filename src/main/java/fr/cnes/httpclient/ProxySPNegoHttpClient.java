@@ -21,52 +21,40 @@ package fr.cnes.httpclient;
  * MA 02110-1301  USA
  */
 import fr.cnes.jspnego.SPNegoScheme;
-import java.io.Closeable;
 import java.io.File;
-import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 import org.apache.http.HttpException;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScheme;
 
 import org.apache.http.auth.AuthSchemeProvider;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.KerberosCredentials;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.config.AuthSchemes;
 import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.config.Lookup;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
-import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.conn.routing.HttpRoute;
 import org.apache.http.conn.routing.HttpRoutePlanner;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
-import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.HttpContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -82,14 +70,19 @@ import org.apache.logging.log4j.Logger;
  * @author S. ETCHEVERRY
  * @author Jean-Christophe Malapert
  */
-public final class ProxySPNegoHttpClient implements HttpClient, Closeable {
+public final class ProxySPNegoHttpClient extends AbstractProxyHttpClient {
+    
+    /**
+     * Get actual class name to be printed on.
+     */
+    private static final Logger LOG = LogManager.getLogger(ProxySPNegoHttpClient.class.getName());    
 
     public enum DefaultConfiguration {
-        HTTP_HOST("http.host", ""),
-        HTTP_PORT("http.port", ""),
+        HTTP_PROXY("http_proxy", System.getenv("http_proxy")),
+        NO_PROXY("no_proxy", System.getenv("no_proxy")),
         REFRESH_KRB5_CONFIG("refreshKrb5Config", "true"),
         USE_TICKET_CACHE("useTicketCache", "false"),
-        TICKET_CACHE("ticketCache", ""),
+        TICKET_CACHE("ticketCache", System.getenv("KRB5CCNAME")),
         RENEW_TGT("renewTGT", ""),
         DO_NOT_PROMPT("doNotPrompt", "true"),
         USE_KEYTAB("useKeyTab", "false"),
@@ -127,10 +120,6 @@ public final class ProxySPNegoHttpClient implements HttpClient, Closeable {
     }
 
     /**
-     * Get actual class name to be printed on.
-     */
-    private static final Logger LOG = LogManager.getLogger(ProxySPNegoHttpClient.class.getName());
-    /**
      * Default Kerberos configuration file {@value #KRB_CONF_PATH}.
      */
     private static final String KRB_CONF_PATH = "/etc/krb5.conf";
@@ -141,67 +130,18 @@ public final class ProxySPNegoHttpClient implements HttpClient, Closeable {
     private static final String ENV_KRB5 = "KRB5CCNAME";
 
     /**
-     * Disable SSL certificate checking.
-     */
-    private static final TrustManager TRUST_MANAGER = new X509TrustManager() {
-
-        /**
-         * Given the partial or complete certificate chain provided by the peer, ignores the
-         * certificate checking.
-         *
-         * @param chain the peer certificate chain
-         * @param authType the authentication type based on the client certificate
-         */
-        @Override
-        public void checkClientTrusted(final X509Certificate[] chain, final String authType) {
-            // This will never throw an exception.
-            // this doesn't check anything at all
-            // it is insecure            
-        }
-
-        /**
-         * Given the partial or complete certificate chain provided by the peer, ignores the
-         * certificate checking.
-         *
-         * @param chain the peer certificate chain
-         * @param authType the authentication type based on the client certificate
-         * @throws CertificateException
-         */
-        @Override
-        public void checkServerTrusted(final X509Certificate[] chain, final String authType) throws
-                CertificateException {
-            // This will never throw an exception.
-            // this doesn't check anything at all
-            // it is insecure
-        }
-
-        /**
-         * Return null, everybody is trusted.
-         *
-         * @return null
-         */
-        @Override
-        public X509Certificate[] getAcceptedIssuers() {
-            return null;
-        }
-    };
-
-    /**
-     * http client.
-     */
-    private final CloseableHttpClient httpClient;
-
-    /**
      * configuration for proxy.
      */
     private RequestConfig config;
 
-    public ProxySPNegoHttpClient(final File jassConf, final String hostName, final int hostPort,
+    public ProxySPNegoHttpClient(final File jassConf, final HttpHost proxy, final String noProxy,
             final String servicePrincipalName, final File krbConfPath, final boolean isDisabledSSL) {
         final File krbConf = getKrbConf(krbConfPath);
-        final HttpHost proxy = new HttpHost(hostName, hostPort);
+        final List<String> excludedHosts = new ArrayList<>();
+        Collections.addAll(excludedHosts, noProxy.split("\\s*,\\s*"));         
         HttpClientBuilder builder = HttpClients.custom()
                 .setDefaultCredentialsProvider(createCredsProvider(proxy))
+                .setRoutePlanner(configureRouterPlanner(proxy, excludedHosts))
                 .setDefaultAuthSchemeRegistry(
                         registerSPNegoProvider(
                                 jassConf,
@@ -214,7 +154,7 @@ public final class ProxySPNegoHttpClient implements HttpClient, Closeable {
             builder = builder.setSSLContext(disableSSLCertificateChecking())
                     .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
         }
-        this.httpClient = builder.build();
+        setHttpClient(builder.build());
         setProxyConfiguration(proxy);
     }
 
@@ -229,13 +169,13 @@ public final class ProxySPNegoHttpClient implements HttpClient, Closeable {
     public ProxySPNegoHttpClient(final Map<String, String> config, final File krbConfPath,
             final boolean isDisabledSSL) {
         final File krbConf = getKrbConf(krbConfPath);
-        final HttpHost proxy = new HttpHost(
-                config.get(DefaultConfiguration.HTTP_HOST.getKey()),
-                Integer.parseInt(config.get(DefaultConfiguration.HTTP_PORT.getKey()))
-        );
+        final HttpHost proxy = new HttpHost(config.get(DefaultConfiguration.HTTP_PROXY.getKey()));
+        final List<String> excludedHosts = new ArrayList<>();
+        Collections.addAll(excludedHosts, config.get(DefaultConfiguration.NO_PROXY.getKey()).split(
+                "\\s*,\\s*"));        
         HttpClientBuilder builder = HttpClients.custom()
                 .setDefaultCredentialsProvider(createCredsProvider(proxy))
-                .setRoutePlanner(configureRouterPlanner(proxy))
+                .setRoutePlanner(configureRouterPlanner(proxy, excludedHosts))
                 .setDefaultAuthSchemeRegistry(
                         registerSPNegoProvider(
                                 config,
@@ -247,7 +187,7 @@ public final class ProxySPNegoHttpClient implements HttpClient, Closeable {
             builder = builder.setSSLContext(disableSSLCertificateChecking())
                     .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
         }
-        this.httpClient = builder.build();
+        setHttpClient(builder.build());
         setProxyConfiguration(proxy);
     }
 
@@ -276,33 +216,6 @@ public final class ProxySPNegoHttpClient implements HttpClient, Closeable {
         }
         LOG.info("Loading krbConf : {}", conf);
         return LOG.traceExit(new File(conf));
-    }
-
-    /**
-     * Sets the proxy configuration.
-     *
-     * @param proxy http proxy
-     */
-    private void setProxyConfiguration(final HttpHost proxy) {
-        LOG.traceEntry("proxy : {}", proxy);
-        this.config = RequestConfig.custom().setProxy(proxy).build();
-        LOG.traceExit();
-    }
-
-    /**
-     * Disables the SSL certificate checking.
-     *
-     * @return the SSL context
-     * @throws RuntimeException When a NoSuchAlgorithmException or KeyManagementException happens
-     */
-    private SSLContext disableSSLCertificateChecking() {
-        try {
-            final SSLContext sslCtx = SSLContext.getInstance("TLS");
-            sslCtx.init(null, new TrustManager[]{TRUST_MANAGER}, null);
-            return sslCtx;
-        } catch (NoSuchAlgorithmException | KeyManagementException ex) {
-            throw LOG.throwing(new RuntimeException(ex));
-        }
     }
 
     /**
@@ -372,158 +285,5 @@ public final class ProxySPNegoHttpClient implements HttpClient, Closeable {
                         return new SPNegoScheme(jassConf, servicePrincipalName, krbConfPath);
                     }
                 }).build());
-    }
-
-    private HttpRoutePlanner configureRouterPlanner(HttpHost proxy) {
-
-        HttpRoutePlanner routePlanner = new DefaultProxyRoutePlanner(proxy) {
-
-            @Override
-            public HttpRoute determineRoute(HttpHost host, HttpRequest request,
-                    HttpContext context) throws HttpException {
-                final HttpClientContext clientContext = HttpClientContext.adapt(context);
-                final RequestConfig config = clientContext.getRequestConfig();
-                final InetAddress local = config.getLocalAddress();
-                HttpHost proxy = config.getProxy();
-
-                final HttpHost target;
-                if (host.getPort() > 0
-                        && (host.getSchemeName().equalsIgnoreCase("http")
-                        && host.getPort() == 80
-                        || host.getSchemeName().equalsIgnoreCase("https")
-                        && host.getPort() == 443)) {
-                    target = new HttpHost(host.getHostName(), -1, host.getSchemeName());
-                } else {
-                    target = host;
-                }
-                final boolean secure = target.getSchemeName().equalsIgnoreCase("https");
-                if (Arrays.asList("localhost").contains(host.getHostName())) {
-                    return new HttpRoute(target, local, secure);
-                } else {
-                    return new HttpRoute(target, local, proxy, secure);
-                }
-            }
-        };
-
-        return routePlanner;
-    }
-
-    /**
-     * Return the http proxy.
-     *
-     * @return the http proxy
-     */
-    public HttpHost getProxyConfiguration() {
-        LOG.traceEntry();
-        return LOG.traceExit(this.config.getProxy());
-    }
-
-    @Override
-    public HttpParams getParams() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public ClientConnectionManager getConnectionManager() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public HttpResponse execute(HttpUriRequest request) throws IOException, ClientProtocolException {
-        return this.execute(request, new HttpClientContext());
-    }
-
-    @Override
-    public HttpResponse execute(HttpUriRequest request, HttpContext context) throws IOException,
-            ClientProtocolException {
-        LOG.traceEntry("request : {}\n"
-                + "context: {}",
-                request, context);
-        LOG.info("Executing request to {}  via {}:{}", request.getRequestLine(), this.
-                getProxyConfiguration().getHostName(),
-                this.getProxyConfiguration().getPort());
-        if (config != null) {
-            context.setAttribute(HttpClientContext.REQUEST_CONFIG, config);
-        }
-        return this.httpClient.execute(request, context);
-    }
-
-    @Override
-    public HttpResponse execute(HttpHost target, HttpRequest request) throws IOException,
-            ClientProtocolException {
-        return this.execute(target, request, new HttpClientContext());
-    }
-
-    @Override
-    public HttpResponse execute(HttpHost target, HttpRequest request, HttpContext context) throws
-            IOException, ClientProtocolException {
-        LOG.traceEntry("target : {}\n"
-                + "request: {}\n"
-                + "context: {}",
-                target, request, context);
-        context.setAttribute(HttpClientContext.REQUEST_CONFIG, config);
-        LOG.info("Executing request to {}  via {}:{}", target, this.getProxyConfiguration().
-                getHostName(),
-                this.getProxyConfiguration().getPort());
-        return LOG.traceExit(this.httpClient.execute(target, request, context));
-    }
-
-    @Override
-    public <T> T execute(HttpUriRequest request,
-            ResponseHandler<? extends T> responseHandler) throws IOException,
-            ClientProtocolException {
-        return this.execute(request, responseHandler, new HttpClientContext());
-    }
-
-    @Override
-    public <T> T execute(HttpUriRequest request,
-            ResponseHandler<? extends T> responseHandler, HttpContext context) throws IOException,
-            ClientProtocolException {
-        LOG.traceEntry("request : {}\n"
-                + "responseHandler: {}\n"
-                + "context: {}",
-                request, responseHandler, context);
-        context.setAttribute(HttpClientContext.REQUEST_CONFIG, config);
-        LOG.info("Executing request to {}  via {}:{}", request.getRequestLine(), this.
-                getProxyConfiguration().getHostName(),
-                this.getProxyConfiguration().getPort());
-        return LOG.traceExit(this.httpClient.execute(request, responseHandler, context));
-    }
-
-    @Override
-    public <T> T execute(HttpHost target, HttpRequest request,
-            ResponseHandler<? extends T> responseHandler) throws IOException,
-            ClientProtocolException {
-        return this.execute(target, request, responseHandler, new HttpClientContext());
-    }
-
-    @Override
-    public <T> T execute(HttpHost target, HttpRequest request,
-            ResponseHandler<? extends T> responseHandler, HttpContext context) throws IOException,
-            ClientProtocolException {
-        LOG.traceEntry("target : {}\n"
-                + "responseHandler: {}\n"
-                + "context: {}",
-                target, responseHandler, context);
-        context.setAttribute(HttpClientContext.REQUEST_CONFIG, config);
-        LOG.info("Executing request to {}  via {}:{}", target, this.getProxyConfiguration().
-                getHostName(),
-                this.getProxyConfiguration().getPort());
-        return LOG.traceExit(this.httpClient.execute(target, request, responseHandler, context));
-    }
-
-    /**
-     * Close the http connection.
-     *
-     */
-    @Override
-    public void close() {
-        LOG.traceEntry();
-        try {
-            this.httpClient.close();
-        } catch (IOException ex) {
-            LOG.error(ex);
-        }
-        LOG.traceExit();
     }
 }

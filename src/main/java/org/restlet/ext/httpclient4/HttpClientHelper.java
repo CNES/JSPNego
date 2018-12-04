@@ -54,8 +54,7 @@ public class HttpClientHelper extends org.restlet.engine.connector.HttpClientHel
         conf.put(ProxySPNegoHttpClient.DefaultConfiguration.PRINCIPAL.getKey(), userID);
         conf.put(ProxySPNegoHttpClient.DefaultConfiguration.USE_KEYTAB.getKey(),"true");
         conf.put(ProxySPNegoHttpClient.DefaultConfiguration.KEY_TAB.getKey(),keytabFilePath);
-        conf.put(ProxySPNegoHttpClient.DefaultConfiguration.HTTP_HOST.getKey(), proxyHost);
-        conf.put(ProxySPNegoHttpClient.DefaultConfiguration.HTTP_PORT.getKey(), proxyPort);
+        conf.put(ProxySPNegoHttpClient.DefaultConfiguration.HTTP_PROXY.getKey(), proxyHost+":"+proxyPort);
         conf.put(ProxySPNegoHttpClient.DefaultConfiguration.SERVICE_PROVIDER_NAME.getKey(), "HTTP@"+proxyHost);
         this.httpClient = new ProxySPNegoHttpClient(conf, null, false);
         return params;

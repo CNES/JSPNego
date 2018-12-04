@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.logging.Level;
+import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -122,7 +123,7 @@ public class ProxySPNegoHttpClientTest {
         HttpResponse response;
         HttpClient httpclient = null;
         try {
-            httpclient = new ProxySPNegoHttpClient(jaas, proxyHost, Integer.parseInt(proxyPort), "HTTP@"+proxyHost, null, false);
+            httpclient = new ProxySPNegoHttpClient(jaas, new HttpHost(proxyHost, Integer.parseInt(proxyPort)), "", "HTTP@"+proxyHost, null, false);
             HttpUriRequest request = new HttpGet("https://www.google.com");           
             response = httpclient.execute(request);
 

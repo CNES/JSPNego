@@ -35,7 +35,9 @@ package fr.cnes.jspnego;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301  USA
  */
-import fr.cnes.httpclient.ProxySPNegoHttpClient;
+import fr.cnes.httpclient.HttpClientFactory.Type;
+import fr.cnes.httpclient.configuration.ProxySPNegoAPIConfiguration;
+import fr.cnes.httpclient.configuration.ProxySPNegoJAASConfiguration;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -44,7 +46,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.Map;
 import java.util.Set;
 
 import javax.security.auth.Subject;
@@ -125,7 +126,7 @@ public class GSSClient {
     /**
      * Username for which the kerberos token should be generated.
      */
-    private final String clientPrincipalName;
+    private String clientPrincipalName;
 
     /**
      * The location of the keytab.
@@ -140,31 +141,30 @@ public class GSSClient {
      */
     private File ticketCacheFileName;
 
-    private final String servicePrincipalName;
+    private String servicePrincipalName;
 
-    public GSSClient(final Map<String, String> config, final File krb5ConfFile) {
-//        LOG.traceEntry("clientPrincipalName: {}\n"
-//                + "Key tab: {}\n "
-//                + "ticketCache: {}\n"
-//                + "krb5: {}",
-//                clientPrincipalName, clientKeytabFileName, ticketCacheFileName, krb5ConfFile);
-        System.setProperty("java.security.krb5.conf", krb5ConfFile.toString());
-        this.clientPrincipalName = config.get(ProxySPNegoHttpClient.DefaultConfiguration.PRINCIPAL.
-                getKey());
-        this.clientKeytabFileName = new File(config.get(
-                ProxySPNegoHttpClient.DefaultConfiguration.KEY_TAB.getKey()));
-        this.ticketCacheFileName = new File(config.get(
-                ProxySPNegoHttpClient.DefaultConfiguration.TICKET_CACHE.getKey()));
-        this.servicePrincipalName = config.get(
-                ProxySPNegoHttpClient.DefaultConfiguration.SERVICE_PROVIDER_NAME.getKey());
+    public GSSClient(final Type type) {
+        switch (type) {
+            case PROXY_SPNEGO_JAAS:
+                System.setProperty("java.security.krb5.conf", ProxySPNegoJAASConfiguration.KRB5.
+                        getValue());
+                System.setProperty("java.security.auth.login.config", ProxySPNegoJAASConfiguration.JAAS.getValue());
+                this.servicePrincipalName = ProxySPNegoJAASConfiguration.SERVICE_PROVIDER_NAME.getValue();
+                this.clientPrincipalName = null;
+            case PROXY_SPNEGO_API:
+                System.setProperty("java.security.krb5.conf", ProxySPNegoAPIConfiguration.KRB5.
+                        getValue());
+                this.clientPrincipalName = ProxySPNegoAPIConfiguration.PRINCIPAL.getKey();
+                this.clientKeytabFileName = new File(ProxySPNegoAPIConfiguration.KEY_TAB.getValue());
+                this.ticketCacheFileName = new File(ProxySPNegoAPIConfiguration.TICKET_CACHE.getValue());
+                this.servicePrincipalName = ProxySPNegoAPIConfiguration.SERVICE_PROVIDER_NAME.getValue();
+                break;
+            default:
+                throw new IllegalArgumentException("Cannot support " + type.name());
+        }
+
     }
 
-    public GSSClient(File jassConf, String servicePrincipalName, File krb5ConfFile) {
-        System.setProperty("java.security.krb5.conf", krb5ConfFile.toString());
-        System.setProperty("java.security.auth.login.config", jassConf.toString());
-        this.servicePrincipalName = servicePrincipalName;
-        this.clientPrincipalName = null;
-    }
 
     /**
      * Returns the user ID.
@@ -192,9 +192,10 @@ public class GSSClient {
 
         try {
             final LoginContext loginContext;
-            if (System.getProperty("java.security.auth.login.config") != null && Files.isReadable(Paths.get(
-                    System.getProperty("java.security.auth.login.config")))) {
-                loginContext = new LoginContext("KRB5");
+            if (System.getProperty("java.security.auth.login.config") != null && Files.isReadable(
+                    Paths.get(
+                            System.getProperty("java.security.auth.login.config")))) {
+                loginContext = new LoginContext(ProxySPNegoJAASConfiguration.JAAS_CONTEXT.getValue());
             } else {
                 final KerberosConfiguration config = createGssKerberosConfiguration();
                 if (this.clientKeytabFileName != null) {
@@ -204,8 +205,8 @@ public class GSSClient {
                     config.setTicketCache(this.ticketCacheFileName.toString());
                 }
                 config.initialize();
-                loginContext = new LoginContext("other");
-            }            
+                loginContext = new LoginContext(ProxySPNegoAPIConfiguration.JAAS_CONTEXT.getValue());
+            }
             loginContext.login();
 
             // Subject will be populated with the Kerberos Principal name and the TGT.
@@ -256,10 +257,7 @@ public class GSSClient {
      * <li>Authentication exchange</li>
      * <li>Ticket granting, or authorization, exchange.</li>
      * </ul>
-     * The service ticket will then be cached in the Subject's private credentials as the subject.
-     *
-     * @param context the current GSS context
-     * @param negotiationToken a previous token
+     * The service ticket will then be cached in the Subject's private credentials as the subject.SS context
      * @return a kerberos token as a byte array
      * @throws GSSException This exception is thrown whenever a GSS-API error occurs
      */

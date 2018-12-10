@@ -20,9 +20,8 @@ package fr.cnes.jspnego;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301  USA
  */
-import java.io.File;
+import fr.cnes.httpclient.HttpClientFactory.Type;
 import java.nio.charset.Charset;
-import java.util.Map;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
 import org.apache.http.HttpRequest;
@@ -94,26 +93,19 @@ public class SPNegoScheme extends AuthSchemeBase {
      * base64 decoded challenge.
      */
     private byte[] token;
-
-    /**
-     * Init a Proxy SPNego Scheme
-     *
-     */
-    public SPNegoScheme(final Map<String, String> config, final File kr5Conf) {
-        super();
-//        LOG.traceEntry("gssClient : {}\n"
-//                + "servicePrincipalName: {}\n"
-//                + "servicePrincipalOid: {}",
-//                gssClient.getName(), servicePrincipalName, servicePrincipalOid);
-        // sets the state to no initiated at the beginning.
-        this.state = State.UNINITIATED;
-        this.gssClient = new GSSClient(config, kr5Conf);
-    }
     
-    public SPNegoScheme(File jassConf, String servicePrincipalName, File krbConfPath) {
+    public SPNegoScheme(final Type type) {        
+        switch(type) {
+            case PROXY_SPNEGO_API:                
+                break;
+            case PROXY_SPNEGO_JAAS:
+                break;
+            default:
+                throw new IllegalArgumentException("Cannot support "+type);
+        }
         this.state = State.UNINITIATED;
-        this.gssClient = new GSSClient(jassConf, servicePrincipalName, krbConfPath);
-    }    
+        this.gssClient = new GSSClient(type);        
+    } 
 
     /**
      * (non-Javadoc)

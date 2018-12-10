@@ -5,6 +5,8 @@
  */
 package fr.cnes.httpclient;
 
+import fr.cnes.httpclient.configuration.ProxyConfiguration;
+import fr.cnes.httpclient.configuration.ProxySPNegoAPIConfiguration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -15,14 +17,19 @@ import java.util.concurrent.ConcurrentHashMap;
 public class HttpClientFactory {
     
     public enum Type {
-        SPNEGO_PROXY(new ConcurrentHashMap<String, String>(){
+        PROXY_SPNEGO_JAAS(new ConcurrentHashMap<String, String>(){
             {
-                putAll(ProxySPNegoHttpClient.DefaultConfiguration.getConfig());
+                putAll(ProxySPNegoAPIConfiguration.getConfig());
             }
         }),
-        PROXY(new ConcurrentHashMap<String, String>(){
+        PROXY_SPNEGO_API(new ConcurrentHashMap<String, String>(){
             {
-                putAll(ProxyHttpClient.DefaultConfiguration.getConfig());
+                putAll(ProxySPNegoAPIConfiguration.getConfig());
+            }
+        }),        
+        PROXY_BASIC(new ConcurrentHashMap<String, String>(){
+            {
+                putAll(ProxyConfiguration.getConfig());
             }
         }),
         NO_PROXY(new ConcurrentHashMap<String, String>());
@@ -41,11 +48,12 @@ public class HttpClientFactory {
     public static HttpClient create(final Type type) {
         final HttpClient httpclient;
         switch (type) {
-            case SPNEGO_PROXY:
-                httpclient = new ProxySPNegoHttpClient(type.getOptions());
+            case PROXY_SPNEGO_JAAS:
+            case PROXY_SPNEGO_API:
+                httpclient = new ProxySPNegoHttpClient(type, false);
                 break;
-            case PROXY:
-                httpclient = new ProxyHttpClient(type.getOptions());
+            case PROXY_BASIC:
+                httpclient = new ProxyHttpClient(false);
                 break;
             case NO_PROXY:
                 httpclient = new HttpClient();

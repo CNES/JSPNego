@@ -5,11 +5,11 @@
  */
 package fr.cnes.httpclient;
 
+import fr.cnes.httpclient.configuration.ProxyConfiguration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -29,47 +29,10 @@ public class ProxyHttpClient extends AbstractProxyHttpClient {
     
     private static final Logger LOG = LogManager.getLogger(ProxyHttpClient.class.getName());
     
-    public enum DefaultConfiguration {
-        HTTP_PROXY("http_proxy", System.getenv("http_proxy")),
-        NO_PROXY("no_proxy", System.getenv("no_proxy")),
-        USERNAME("username", ""),
-        PASSWORD("password", "");
-
-        private final String key;
-        private final String value;
-
-        DefaultConfiguration(final String key, final String value) {
-            this.key = key;
-            this.value = value;
-        }
-
-        public String getKey() {
-            return this.key;
-        }
-
-        public String getValue() {
-            return this.value;
-        }
-
-        public static Map<String, String> getConfig() {
-            final Map<String, String> map = new ConcurrentHashMap<>();
-            final DefaultConfiguration[] confs = DefaultConfiguration.values();
-            for (DefaultConfiguration conf : confs) {
-                map.put(conf.getKey(), conf.getValue());
-            }
-            return map;
-        }
-
-    }
-    
-    public ProxyHttpClient(final Map<String, String> config) {
-        this(config, false);
-    }
-    
-    public ProxyHttpClient(final Map<String, String> config, final boolean isDisabledSSL) {
+    public ProxyHttpClient(final boolean isDisabledSSL) {
         final List<String> excludedHosts = new ArrayList<>();
-        final HttpHost proxy = new HttpHost(config.get(DefaultConfiguration.HTTP_PROXY.getKey()));
-        Collections.addAll(excludedHosts, config.get(DefaultConfiguration.NO_PROXY.getKey()).split("\\s*,\\s*"));         
+        final HttpHost proxy = new HttpHost(ProxyConfiguration.HTTP_PROXY.getValue());
+        Collections.addAll(excludedHosts, ProxyConfiguration.NO_PROXY.getValue().split("\\s*,\\s*"));         
         HttpClientBuilder builder = HttpClients.custom()
                 .setRoutePlanner(configureRouterPlanner(proxy, excludedHosts));
         if (isDisabledSSL) {
@@ -84,10 +47,10 @@ public class ProxyHttpClient extends AbstractProxyHttpClient {
     private CredentialsProvider createCredsProvider(final Map<String, String> config) {
         final CredentialsProvider credsProvider = new BasicCredentialsProvider();
         credsProvider.setCredentials(
-                new AuthScope(new HttpHost(config.get(DefaultConfiguration.HTTP_PROXY.getKey()))),
+                new AuthScope(new HttpHost(ProxyConfiguration.HTTP_PROXY.getValue())),
                 new UsernamePasswordCredentials(
-                        config.get(DefaultConfiguration.USERNAME.getKey()), 
-                        config.get(DefaultConfiguration.PASSWORD.getKey())
+                        ProxyConfiguration.USERNAME.getValue(), 
+                        ProxyConfiguration.PASSWORD.getValue()
                 )
         );
         return LOG.traceExit(credsProvider);

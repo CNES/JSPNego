@@ -5,7 +5,11 @@
  */
 package fr.cnes.jspnego;
 
+import fr.cnes.httpclient.HttpClientFactory;
+import fr.cnes.httpclient.HttpClientFactory.Type;
 import fr.cnes.httpclient.ProxySPNegoHttpClient;
+import fr.cnes.httpclient.configuration.ProxySPNegoAPIConfiguration;
+import fr.cnes.httpclient.configuration.ProxySPNegoJAASConfiguration;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -119,11 +123,15 @@ public class ProxySPNegoHttpClientTest {
     public void testRequestHttps() throws Exception {
         LOG_TITLE.info(" --- Running one https request ---");
         File jaas = new File("/tmp/jaas.conf");
+        ProxySPNegoJAASConfiguration.HTTP_PROXY.setValue(proxyHost+":"+proxyPort);
+        ProxySPNegoJAASConfiguration.JAAS_CONTEXT.setValue("KTB5");
+        ProxySPNegoJAASConfiguration.JAAS.setValue("/tmp/jaas.conf");
+        ProxySPNegoJAASConfiguration.SERVICE_PROVIDER_NAME.setValue("HTTP@"+proxyHost);
         //checkInputParameters();
         HttpResponse response;
         HttpClient httpclient = null;
         try {
-            httpclient = new ProxySPNegoHttpClient(jaas, new HttpHost(proxyHost, Integer.parseInt(proxyPort)), "", "HTTP@"+proxyHost, null, false);
+            httpclient = new ProxySPNegoHttpClient(Type.PROXY_SPNEGO_JAAS, false);
             HttpUriRequest request = new HttpGet("https://www.google.com");           
             response = httpclient.execute(request);
 
@@ -143,9 +151,9 @@ public class ProxySPNegoHttpClientTest {
 //        LOG_TITLE.info(" --- Running one http request ---");
 //        checkInputParameters();
 //        HttpResponse response;
-//        ProxySPNegoHttpClient httpclient = null;
+//        ProxySPNegoJAASHttpClient httpclient = null;
 //        try {
-//            httpclient = new ProxySPNegoHttpClient(
+//            httpclient = new ProxySPNegoJAASHttpClient(
 //                    userID, new File(keytabFilePath), new File(ticketCachePath), proxyHost,
 //                    Integer.parseInt(proxyPort)
 //            );
@@ -169,7 +177,7 @@ public class ProxySPNegoHttpClientTest {
 //        LOG_TITLE.info(" -HttpHost-- Running several requests ---");
 //        checkInputParameters();
 //        int sum = 0;
-//        ProxySPNegoHttpClient httpclient = new ProxySPNegoHttpClient(
+//        ProxySPNegoJAASHttpClient httpclient = new ProxySPNegoJAASHttpClient(
 //                userID, new File(keytabFilePath), new File(ticketCachePath), proxyHost,
 //                Integer.parseInt(proxyPort), true
 //        );

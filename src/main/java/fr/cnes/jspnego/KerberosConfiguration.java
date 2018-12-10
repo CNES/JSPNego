@@ -46,19 +46,16 @@ public class KerberosConfiguration extends Configuration {
      */
     private static final Logger LOG = LogManager.getLogger(KerberosConfiguration.class.getName());
 
-
     /**
      * Login module.
      */
     private static final String LOGIN_MODULE = com.sun.security.auth.module.Krb5LoginModule.class.
             getName();
    
-
     /**
      * Debug.
      */
     private static final String DEBUG = "debug";
-
 
     /**
      * Options.
@@ -78,10 +75,10 @@ public class KerberosConfiguration extends Configuration {
     }
 
     /**
-     * Initialize the kerberos configuration. These parameters null     {@value KerberosConfiguration#DEBUG}, {@value KerberosConfiguration#PRINCIPAL}, 
-     * {@value KerberosConfiguration#REFRESH_KRB5_CONFIG} are initialized to true.
+     * Initialize the kerberos configuration.
      */
     public void initialize() {
+        LOG.traceEntry();
         if (LOG.isDebugEnabled()) {
             options.put(DEBUG, "true");
         }
@@ -90,11 +87,12 @@ public class KerberosConfiguration extends Configuration {
         for (Entry<String, String> entry : entries) {
             if (entry.getKey().equals(ProxySPNegoAPIConfiguration.HTTP_PROXY.getKey())
                     || entry.getKey().equals(ProxySPNegoAPIConfiguration.NO_PROXY.getKey())) {
-                // skip the configuration for those elements
+                LOG.debug("Skip {} when recording in the Kerberos options", entry.getKey());
             } else if (entry.getValue().isEmpty()) {
-                // skip the configuration because there is no elements
+                LOG.debug("Skip {} when recording in the Kerberos options because the value is empty", entry.getKey());
             } else {
                 this.options.put(entry.getKey(), entry.getValue());
+                LOG.debug("Set {} = {} int the Kerberos options", entry.getKey(), entry.getValue());
             }
         }
         
@@ -108,6 +106,7 @@ public class KerberosConfiguration extends Configuration {
         // need a separate instance of this class, it gets set here, so next call
         // on the LoginContext will use this instance.
         setConfiguration(this);
+        LOG.traceExit();
     }
 
     /**
@@ -119,7 +118,8 @@ public class KerberosConfiguration extends Configuration {
      */
     @Override
     public AppConfigurationEntry[] getAppConfigurationEntry(final String arg0) {
-        return appConfigEntries == null ? null : appConfigEntries.clone();
+        LOG.traceEntry();
+        return LOG.traceExit(appConfigEntries == null ? null : appConfigEntries.clone());
     }
 
 }

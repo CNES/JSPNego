@@ -56,12 +56,12 @@ import org.apache.logging.log4j.Logger;
  * @author S. ETCHEVERRY
  * @author Jean-Christophe Malapert
  */
-public final class ProxySPNegoHttpClient extends AbstractProxyHttpClient {
+public final class ProxySPNegoHttpClientWithJAAS extends ProxyHttpClientWithoutAuth {
     
     /**
      * Get actual class name to be printed on.
      */
-    private static final Logger LOG = LogManager.getLogger(ProxySPNegoHttpClient.class.getName());    
+    private static final Logger LOG = LogManager.getLogger(ProxySPNegoHttpClientWithJAAS.class.getName());    
 
     /**
      * Default Kerberos configuration file {@value #KRB_CONF_PATH}.
@@ -74,26 +74,20 @@ public final class ProxySPNegoHttpClient extends AbstractProxyHttpClient {
     private static final String ENV_KRB5 = "KRB5CCNAME";
 
     
-    public ProxySPNegoHttpClient(Type type, final boolean isDisabledSSL) {
+    public ProxySPNegoHttpClientWithJAAS(final boolean isDisabledSSL) {
+        super(ProxySPNegoJAASConfiguration.HTTP_PROXY.getValue(), ProxySPNegoJAASConfiguration.NO_PROXY.getValue(), isDisabledSSL);
         //final File krbConf = getKrbConf(krbConfPath);
-        final String noProxy = getNoProxy(type);
-        final HttpHost proxy = getProxy(type);
-        final List<String> excludedHosts = new ArrayList<>();        
-        Collections.addAll(excludedHosts, noProxy.split("\\s*,\\s*"));         
-        HttpClientBuilder builder = HttpClients.custom()
-                .setDefaultCredentialsProvider(createCredsProvider(proxy))
-                .setRoutePlanner(configureRouterPlanner(proxy, excludedHosts))
-                .setDefaultAuthSchemeRegistry(registerSPNegoProvider(type));
-        if (isDisabledSSL) {
-            LOG.warn("SSL Certificate checking is disabled. The connection is insecured.");
-            builder = builder.setSSLContext(disableSSLCertificateChecking())
-                    .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
-        }
-        setHttpClient(builder.build());
-        setProxyConfiguration(proxy);
+//        final String noProxy = getNoProxy(type);
+//        final HttpHost proxy = getProxy(type);
+//        final List<String> excludedHosts = new ArrayList<>();        
+//        Collections.addAll(excludedHosts, noProxy.split("\\s*,\\s*")); 
+//        HttpClientBuilder builder = createBuilder(proxy, excludedHosts, isDisabledSSL);
+//        builder = builder.setDefaultAuthSchemeRegistry(registerSPNegoProvider(type));
+//        setHttpClient(builder.build());
+//        setProxyConfiguration(proxy);
     }
     
-    private String getNoProxy(Type type) {
+    private String getNoProxy(final Type type) {
         final String noProxy;
         switch(type) {
             case PROXY_SPNEGO_API:
@@ -108,7 +102,7 @@ public final class ProxySPNegoHttpClient extends AbstractProxyHttpClient {
         return noProxy;
     }
     
-    private HttpHost getProxy(Type type) {
+    private HttpHost getProxy(final Type type) {
         final HttpHost proxy;
         switch(type) {
             case PROXY_SPNEGO_API:
@@ -123,49 +117,14 @@ public final class ProxySPNegoHttpClient extends AbstractProxyHttpClient {
         return proxy;
     }
 
-    private HttpHost buildProxy(final String value) {
-        String[] proxyFragments = value.split(":");
-        return (proxyFragments.length == 2) 
-                ? new HttpHost(proxyFragments[0], Integer.parseInt(proxyFragments[1]))
-                : new HttpHost(proxyFragments[0]);
-                        
-    }
-
-
-//    /**
-//     * Creates KRB configuration file location.
-//     *
-//     * @param krbConfPath KRB configuration file location from user.
-//     * @return KRB configuration file location
-//     */
-//    private File getKrbConf(final File krbConfPath) {
-//        LOG.traceEntry("krbConfPath: {}", krbConfPath);
-//        final String defaultKrbConf;
-//        if (Files.isReadable(Paths.get(System.getenv(ENV_KRB5)))) {
-//            LOG.debug("default KRB conf is set to {}", ENV_KRB5);
-//            defaultKrbConf = System.getenv(ENV_KRB5);
-//        } else {
-//            LOG.warn("environment variable {} is not set or not a readable file, "
-//                    + "setting defaultKrbConf to {}", ENV_KRB5, KRB_CONF_PATH);
-//            defaultKrbConf = KRB_CONF_PATH;
-//        }
-//        final String conf;
-//        if (krbConfPath == null) {
-//            conf = defaultKrbConf;
-//        } else {
-//            conf = KRB_CONF_PATH;
-//        }
-//        LOG.info("Loading krbConf : {}", conf);
-//        return LOG.traceExit(new File(conf));
-//    }
-
     /**
      * Creates a dummy kerberos credential provider for the kerberized proxy.
      *
      * @param proxy proxy configuration
      * @return a dummy kerberos credential provider for the kerberized proxy
      */
-    private CredentialsProvider createCredsProvider(final HttpHost proxy) {
+    @Override
+    protected CredentialsProvider createCredsProvider(final HttpHost proxy) {
         LOG.traceEntry("proxy: {}", proxy);
         final CredentialsProvider credsProvider = new BasicCredentialsProvider();
         credsProvider.setCredentials(new AuthScope(proxy.getHostName(), proxy.getPort()),
@@ -173,19 +132,8 @@ public final class ProxySPNegoHttpClient extends AbstractProxyHttpClient {
         return LOG.traceExit(credsProvider);
     }
 
-    /**
-     * Registers the SPNego scheme.
-     * @return the registry
-     */
-    private Registry<AuthSchemeProvider> registerSPNegoProvider(final Type type) {
-//        LOG.traceEntry("userId: {}\n"
-//                + "keytabFileName: {}\n"
-//                + "ticketCache: {}\n"
-//                + "krb5: {}\n"
-//                + "spn: {}",
-//                userId, keytabFileName, ticketCacheFileName, krbConfPath, spn);
-        // init an registerSPNegoProviderDefaultHttp a SPNEGO auth scheme
-
+    @Override
+    protected Registry<AuthSchemeProvider> registerAuthSchemeProvider() {
         return LOG.traceExit(RegistryBuilder.
                 <AuthSchemeProvider>create()
                 .register(AuthSchemes.SPNEGO, new AuthSchemeProvider() {
@@ -197,9 +145,10 @@ public final class ProxySPNegoHttpClient extends AbstractProxyHttpClient {
                      */
                     @Override
                     public AuthScheme create(final HttpContext context) {
-                        return new SPNegoScheme(type);
+                        return new SPNegoScheme(Type.PROXY_SPNEGO_JAAS);
                     }
-                }).build());
+                }).build());        
     }
+
 
 }

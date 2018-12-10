@@ -5,11 +5,6 @@
  */
 package fr.cnes.httpclient;
 
-import fr.cnes.httpclient.configuration.ProxyConfiguration;
-import fr.cnes.httpclient.configuration.ProxySPNegoAPIConfiguration;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 /**
  *
  * @author malapert
@@ -24,14 +19,20 @@ public class HttpClientFactory {
     }    
     
     public static HttpClient create(final Type type) {
+        return HttpClientFactory.create(type, false);
+    } 
+
+    public static HttpClient create(final Type type, final boolean isDisabledSSL) {
         final HttpClient httpclient;
         switch (type) {
             case PROXY_SPNEGO_JAAS:
+                httpclient = new ProxySPNegoHttpClientWithJAAS(isDisabledSSL);
+                break;
             case PROXY_SPNEGO_API:
-                httpclient = new ProxySPNegoHttpClient(type, false);
+                httpclient = new ProxySPNegoHttpClientWithAPI(isDisabledSSL);
                 break;
             case PROXY_BASIC:
-                httpclient = new ProxyHttpClient(false);
+                httpclient = new ProxyHttpClientWithBasicAuth(isDisabledSSL);
                 break;
             case NO_PROXY:
                 httpclient = new HttpClient();
@@ -40,6 +41,6 @@ public class HttpClientFactory {
                 throw new IllegalArgumentException("Unknown httpclient type");
         }
         return httpclient;
-    }     
+    }      
     
 }

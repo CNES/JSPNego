@@ -7,7 +7,7 @@ package org.restlet.ext.httpclient4;
 
 import fr.cnes.httpclient.HttpClientFactory;
 import fr.cnes.httpclient.HttpClientFactory.Type;
-import fr.cnes.httpclient.ProxySPNegoHttpClient;
+import fr.cnes.httpclient.ProxySPNegoHttpClientWithJAAS;
 import fr.cnes.httpclient.configuration.ProxySPNegoAPIConfiguration;
 import java.io.File;
 import java.io.IOException;
@@ -58,7 +58,7 @@ public class HttpClientHelper extends org.restlet.engine.connector.HttpClientHel
         ProxySPNegoAPIConfiguration.KEY_TAB.setValue(keytabFilePath);
         ProxySPNegoAPIConfiguration.HTTP_PROXY.setValue(proxyHost+":"+proxyPort);
         ProxySPNegoAPIConfiguration.SERVICE_PROVIDER_NAME.setValue("HTTP@"+proxyHost);
-        this.httpClient = new ProxySPNegoHttpClient(Type.PROXY_SPNEGO_API, false);
+        this.httpClient = new ProxySPNegoHttpClientWithJAAS(false);
         return params;
     }       
     
@@ -84,8 +84,8 @@ public class HttpClientHelper extends org.restlet.engine.connector.HttpClientHel
      * 
      * @return The wrapped Apache HTTP Client.
      */
-    public ProxySPNegoHttpClient getHttpClient() {
-        return (ProxySPNegoHttpClient) this.httpClient;
+    public ProxySPNegoHttpClientWithJAAS getHttpClient() {
+        return (ProxySPNegoHttpClientWithJAAS) this.httpClient;
     }   
 
     @Override

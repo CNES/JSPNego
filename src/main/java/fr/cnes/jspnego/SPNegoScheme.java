@@ -94,17 +94,23 @@ public class SPNegoScheme extends AuthSchemeBase {
      */
     private byte[] token;
     
-    public SPNegoScheme(final Type type) {        
+    /**
+     * Scheme for SPNego protocol.
+     * @param type type of SPNego
+     */
+    public SPNegoScheme(final Type type) {   
+        LOG.traceEntry("Type: {}", type);
         switch(type) {
-            case PROXY_SPNEGO_API:                
-                break;
+            case PROXY_SPNEGO_API:               
             case PROXY_SPNEGO_JAAS:
                 break;
             default:
-                throw new IllegalArgumentException("Cannot support "+type);
-        }
+                throw LOG.throwing(new IllegalArgumentException("Cannot support "+type));
+        }        
         this.state = State.UNINITIATED;
-        this.gssClient = GSSClientFactory.create(type);        
+        LOG.debug("state: {}", this.state);
+        this.gssClient = GSSClientFactory.create(type);   
+        LOG.traceExit();
     } 
 
     /**
@@ -162,6 +168,7 @@ public class SPNegoScheme extends AuthSchemeBase {
         if (request == null) {
             throw LOG.throwing(new IllegalArgumentException("HTTP request may not be null"));
         }
+        LOG.debug("state: {}", state);
         switch (state) {
             case UNINITIATED:
                 throw LOG.throwing(new AuthenticationException(
@@ -238,16 +245,6 @@ public class SPNegoScheme extends AuthSchemeBase {
             LOG.debug("Authentication already attempted");
             state = State.FAILED;
         }
-    }
-
-    /**
-     * Token generation
-     *
-     * @return the token as a byte array
-     * @throws GSSException This exception is thrown whenever a GSS-API error occurs
-     */
-    protected byte[] generateToken() throws GSSException {
-        return gssClient.generateGSSToken();
     }
 
     /**

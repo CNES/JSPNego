@@ -1,7 +1,22 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright (C) 2017-2018 Centre National d'Etudes Spatiales (CNES).
+ *
+ * This file is part of DOI-server.
+ *
+ * This JSPNego is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3.0 of the License, or (at your option) any later version.
+ *
+ * JSPNego is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02110-1301  USA
  */
 package fr.cnes.jspnego;
 
@@ -23,10 +38,16 @@ import org.ietf.jgss.GSSName;
 import org.ietf.jgss.Oid;
 
 /**
- *
- * @author malapert
+ * GSS (Generic Security Service) client interface
+ * @author Jean-Christophe Malapert (jean-christophe.malapert@cnes.fr)
+ * @author S. ETCHEVERRY
  */
 public abstract class AbstractGSSClient {
+    
+    /**
+     * JAVA environment variable for Kerberos {@value #JAVA_SECURITY_KRB5_ENV}.
+     */
+    public static final String JAVA_SECURITY_KRB5_ENV = "java.security.krb5.conf";
     
     /**
      * Get actual class name to be printed on.
@@ -39,11 +60,17 @@ public abstract class AbstractGSSClient {
      */
     private static final String SPNEGO_OID = "1.3.6.1.5.5.2";    
 
+    /**
+     * A service principal name (SPN) is a unique identifier of a service instance. 
+     * SPNs are used by Kerberos authentication to associate a service instance with a service 
+     * logon account. This allows a client application to request that the service authenticate 
+     * an account even if the client does not have the account name.
+     */
     private String servicePrincipalName;
 
     /**
-     * The initiator subject. This object will hold the TGT and all service tickets in its private
-     * credentials cache.
+     * The initiator subject. 
+     * This object will hold the TGT and all service tickets in its private credentials cache.
      */
     private Subject subject;
     
@@ -53,38 +80,68 @@ public abstract class AbstractGSSClient {
      * @return true when the principal is already logged otherwise false
      */
     private boolean isNotLogged() {
-        return (this.subject == null);
+        LOG.traceEntry();
+        return LOG.traceExit(this.subject == null);
     }    
 
+    /**
+     * Login to KDC
+     * @return the subject
+     * @throws GSSException When an error happens with KDC 
+     */
     protected abstract Subject login() throws GSSException;
     
-    protected abstract void setServiceSpincipalName(final String servicePrincipalName);
+    /**
+     * Sets the SPN.
+     * @param servicePrincipalName SPN
+     */
+    protected void setServiceSpincipalName(final String servicePrincipalName) {
+        LOG.traceEntry();
+        this.servicePrincipalName = servicePrincipalName;
+        LOG.traceExit();
+    }
     
+    /**
+     * Returns the SPN.
+     * @return the SPN
+     */
     protected String getServicePrincipalName() {
-        return this.servicePrincipalName;
+        LOG.traceEntry();
+        return LOG.traceExit(this.servicePrincipalName);
     }
 
+    /**
+     * Generates the Kerberos token.
+     * @return the Kerberos token
+     * @throws GSSException 
+     */
     public byte[] generateGSSToken() throws GSSException {
+        LOG.traceEntry();
         final Oid oid = new Oid(SPNEGO_OID);
 
+        LOG.debug("Init token");
         final byte[] tokenInit = new byte[0];
 
-        // Get the GSS-API
+        LOG.debug("Get the GSS-API");
         final GSSManager manager = GSSManager.getInstance();
 
-        // convert a servicePrincipalName from the specified namespace to a GSSName object
+        LOG.debug("convert a SPN from the specified namespace to a GSSName object");
         final GSSName serverName = manager.createName(this.getServicePrincipalName(),
                 GSSName.NT_HOSTBASED_SERVICE);
 
-        // Instantiate and initialize a security context that will be established with the server
+        LOG.debug("Instantiate and initialize a security context that will be established with the "
+                + "server");
         final GSSContext gssContext = manager.createContext(serverName.canonicalize(oid), oid, null,
                 GSSContext.DEFAULT_LIFETIME);
 
+        LOG.debug("Am I already loggued ?");
         if (this.isNotLogged()) {
+            LOG.debug("No, so login");
             this.subject = login(); // throw GSSException if fail to login
         }
+        LOG.debug("I am loggued in");
 
-        // If we do not have the service ticket it will be retrieved from the TGS
+        LOG.debug("If we do not have the service ticket it will be retrieved from the TGS");
         final AbstractGSSClient.NegotiateContextAction negotiationAction = new AbstractGSSClient.NegotiateContextAction(gssContext,
                 tokenInit);
 
@@ -95,7 +152,8 @@ public abstract class AbstractGSSClient {
         // The service ticket will then be cached in the Subject's private credentials 
         // as the subject.
         final byte[] token = (byte[]) Subject.doAs(subject, negotiationAction);
-
+        LOG.debug("Token : {}", token);
+        
         return LOG.traceExit(token);
     }
     
@@ -105,7 +163,8 @@ public abstract class AbstractGSSClient {
      * @return the user ID
      */
     public String getName() {
-        return this.subject.getPrincipals().iterator().next().getName();
+        LOG.traceEntry();
+        return LOG.traceExit(this.subject.getPrincipals().iterator().next().getName());
     }    
     
 

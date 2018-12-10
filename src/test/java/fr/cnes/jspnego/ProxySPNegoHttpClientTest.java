@@ -7,7 +7,7 @@ package fr.cnes.jspnego;
 
 import fr.cnes.httpclient.HttpClientFactory;
 import fr.cnes.httpclient.HttpClientFactory.Type;
-import fr.cnes.httpclient.ProxySPNegoHttpClient;
+import fr.cnes.httpclient.ProxySPNegoHttpClientWithJAAS;
 import fr.cnes.httpclient.configuration.ProxySPNegoAPIConfiguration;
 import fr.cnes.httpclient.configuration.ProxySPNegoJAASConfiguration;
 import java.io.File;
@@ -131,7 +131,7 @@ public class ProxySPNegoHttpClientTest {
         HttpResponse response;
         HttpClient httpclient = null;
         try {
-            httpclient = new ProxySPNegoHttpClient(Type.PROXY_SPNEGO_JAAS, false);
+            httpclient = new ProxySPNegoHttpClientWithJAAS(false);
             HttpUriRequest request = new HttpGet("https://www.google.com");           
             response = httpclient.execute(request);
 

@@ -12,15 +12,21 @@ import org.apache.http.HttpException;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
+import org.apache.http.auth.AuthSchemeProvider;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.config.Registry;
 import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.conn.routing.HttpRoute;
 import org.apache.http.conn.routing.HttpRoutePlanner;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.HttpContext;
@@ -35,6 +41,35 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
     
     private static final Logger LOG = LogManager.getLogger(AbstractProxyHttpClient.class.getName());
    
+    protected final HttpClientBuilder createBuilder(final HttpHost proxy, final List<String> excludedHosts, final boolean isDisabledSSL) {
+        final CredentialsProvider crp = createCredsProvider(proxy);
+        final Registry<AuthSchemeProvider> regAuth = registerAuthSchemeProvider();
+        HttpClientBuilder builder = HttpClients.custom()   
+                .setRoutePlanner(configureRouterPlanner(proxy, excludedHosts));  
+        
+        if(crp != null) {
+            builder = builder.setDefaultCredentialsProvider(crp);
+        }
+        
+        if(regAuth != null) {
+            builder = builder.setDefaultAuthSchemeRegistry(regAuth);
+        }
+        
+        if (isDisabledSSL) {
+            LOG.warn("SSL Certificate checking is disabled. The connection is insecured.");
+            builder = builder.setSSLContext(disableSSLCertificateChecking())
+                    .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
+        }  
+        return builder;
+    }
+    
+    protected final HttpHost buildProxy(final String value) {
+        String[] proxyFragments = value.split(":");
+        return (proxyFragments.length == 2) 
+                ? new HttpHost(proxyFragments[0], Integer.parseInt(proxyFragments[1]))
+                : new HttpHost(proxyFragments[0]);
+                        
+    }    
     
     /**
      * http client.
@@ -65,7 +100,7 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
         return this.httpClient;
     }       
     
-    protected HttpRoutePlanner configureRouterPlanner(HttpHost proxy, List<String> excludedHosts) {
+    protected final HttpRoutePlanner configureRouterPlanner(HttpHost proxy, List<String> excludedHosts) {
 
         HttpRoutePlanner routePlanner = new DefaultProxyRoutePlanner(proxy) {
 
@@ -97,7 +132,11 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
         };
 
         return routePlanner;
-    }    
+    }  
+    
+    protected abstract CredentialsProvider createCredsProvider(final HttpHost proxy);
+    
+    protected abstract Registry<AuthSchemeProvider> registerAuthSchemeProvider();
     
     @Override
     public HttpParams getParams() {

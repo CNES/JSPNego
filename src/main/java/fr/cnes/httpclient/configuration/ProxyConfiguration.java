@@ -7,6 +7,7 @@ package fr.cnes.httpclient.configuration;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.restlet.engine.util.StringUtils;
 
 /**
  *
@@ -31,7 +32,7 @@ public enum ProxyConfiguration {
     }
 
     public String getValue() {
-        return this.value;
+        return this.value == null ? "" : this.value;
     }
     
     public void setValue(final String value) {
@@ -46,4 +47,15 @@ public enum ProxyConfiguration {
         }
         return map;
     }    
+
+    public static boolean isValid(StringBuilder error) {
+        boolean isValid = true;
+        final StringBuilder validation = new StringBuilder();
+        if(ProxyConfiguration.HTTP_PROXY.getValue().isEmpty()) {
+            validation.append(ProxyConfiguration.HTTP_PROXY.getKey()).append(" cannot be null or empty\n");
+            isValid = false;
+        }    
+        error.append(validation);
+        return isValid;
+    }
 }

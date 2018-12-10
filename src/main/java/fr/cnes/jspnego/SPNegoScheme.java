@@ -78,7 +78,7 @@ public class SPNegoScheme extends AuthSchemeBase {
     /**
      * Kerberos client.
      */
-    private final GSSClient gssClient;
+    private final AbstractGSSClient gssClient;
 
     /**
      * Provides Base64 encoding and decoding as defined by RFC 2045.
@@ -104,7 +104,7 @@ public class SPNegoScheme extends AuthSchemeBase {
                 throw new IllegalArgumentException("Cannot support "+type);
         }
         this.state = State.UNINITIATED;
-        this.gssClient = new GSSClient(type);        
+        this.gssClient = GSSClientFactory.create(type);        
     } 
 
     /**

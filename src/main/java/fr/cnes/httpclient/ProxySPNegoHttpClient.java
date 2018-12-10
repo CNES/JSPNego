@@ -94,7 +94,7 @@ public final class ProxySPNegoHttpClient extends AbstractProxyHttpClient {
     }
     
     private String getNoProxy(Type type) {
-        String noProxy;
+        final String noProxy;
         switch(type) {
             case PROXY_SPNEGO_API:
                 noProxy = ProxySPNegoAPIConfiguration.NO_PROXY.getValue();
@@ -109,19 +109,27 @@ public final class ProxySPNegoHttpClient extends AbstractProxyHttpClient {
     }
     
     private HttpHost getProxy(Type type) {
-        HttpHost proxy;
+        final HttpHost proxy;
         switch(type) {
             case PROXY_SPNEGO_API:
-                proxy = new HttpHost(ProxySPNegoAPIConfiguration.HTTP_PROXY.getValue());
+                proxy = buildProxy(ProxySPNegoAPIConfiguration.HTTP_PROXY.getValue());
                 break;
             case PROXY_SPNEGO_JAAS:
-                proxy = new HttpHost(ProxySPNegoJAASConfiguration.HTTP_PROXY.getValue());
+                proxy = buildProxy(ProxySPNegoJAASConfiguration.HTTP_PROXY.getValue());
                 break;
             default:
                 throw new IllegalArgumentException(type.name()+" is not supported");
         }
         return proxy;
-    }    
+    }
+
+    private HttpHost buildProxy(final String value) {
+        String[] proxyFragments = value.split(":");
+        return (proxyFragments.length == 2) 
+                ? new HttpHost(proxyFragments[0], Integer.parseInt(proxyFragments[1]))
+                : new HttpHost(proxyFragments[0]);
+                        
+    }
 
 
 //    /**

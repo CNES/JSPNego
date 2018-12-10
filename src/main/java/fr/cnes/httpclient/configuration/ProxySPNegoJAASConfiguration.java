@@ -5,6 +5,8 @@
  */
 package fr.cnes.httpclient.configuration;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -33,7 +35,7 @@ public enum ProxySPNegoJAASConfiguration {
     }
 
     public String getValue() {
-        return this.value;
+        return this.value == null ? "" : this.value;
     }
     
     public void setValue(final String value) {
@@ -47,6 +49,40 @@ public enum ProxySPNegoJAASConfiguration {
             map.put(conf.getKey(), conf.getValue());
         }
         return map;
+    }
+    
+    public static boolean isValid(StringBuilder error) {
+        boolean isValid = true;
+        final StringBuilder validation = new StringBuilder();
+        if(ProxySPNegoJAASConfiguration.HTTP_PROXY.getValue().isEmpty()) {
+            validation.append(ProxySPNegoJAASConfiguration.HTTP_PROXY.getKey()).append(" cannot be null or empty\n");
+            isValid = false;
+        } 
+        if(!Files.isReadable(Paths.get(ProxySPNegoJAASConfiguration.KRB5.getValue()))) {
+            validation.append("Kerberos configuration file must be readable");
+            isValid = false;
+        }
+        if(ProxySPNegoJAASConfiguration.SERVICE_PROVIDER_NAME.getValue().isEmpty()) {
+            validation.append(ProxySPNegoJAASConfiguration.SERVICE_PROVIDER_NAME.getKey()).append(" must be set");
+            isValid = false;
+        }         
+        if(ProxySPNegoJAASConfiguration.JAAS.getValue().isEmpty() || Files.isReadable(Paths.get(ProxySPNegoJAASConfiguration.JAAS.getValue()))) {
+            validation.append(ProxySPNegoJAASConfiguration.JAAS.getKey()).append(" must be a readable file\n");
+            isValid = false;            
+        }
+        if(ProxySPNegoJAASConfiguration.JAAS_CONTEXT.getValue().isEmpty()) {
+            validation.append(ProxySPNegoJAASConfiguration.JAAS_CONTEXT.getKey()).append(" cannot be null or empty\n");
+            isValid = false;            
+        }  
+        if(ProxySPNegoJAASConfiguration.KRB5.getValue().isEmpty() || Files.isReadable(Paths.get(ProxySPNegoJAASConfiguration.KRB5.getValue()))) {
+            validation.append(ProxySPNegoJAASConfiguration.KRB5.getKey()).append(" must be a readable file\n");            
+            isValid =  false;
+        }
+        if(ProxySPNegoJAASConfiguration.SERVICE_PROVIDER_NAME.getValue().isEmpty()) {
+            validation.append(ProxySPNegoJAASConfiguration.SERVICE_PROVIDER_NAME.getKey()).append(" cannot be null or empty\n");            
+            isValid =  false;            
+        }
+        return isValid;
     }
 
 }

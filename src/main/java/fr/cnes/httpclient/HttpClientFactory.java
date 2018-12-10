@@ -17,32 +17,10 @@ import java.util.concurrent.ConcurrentHashMap;
 public class HttpClientFactory {
     
     public enum Type {
-        PROXY_SPNEGO_JAAS(new ConcurrentHashMap<String, String>(){
-            {
-                putAll(ProxySPNegoAPIConfiguration.getConfig());
-            }
-        }),
-        PROXY_SPNEGO_API(new ConcurrentHashMap<String, String>(){
-            {
-                putAll(ProxySPNegoAPIConfiguration.getConfig());
-            }
-        }),        
-        PROXY_BASIC(new ConcurrentHashMap<String, String>(){
-            {
-                putAll(ProxyConfiguration.getConfig());
-            }
-        }),
-        NO_PROXY(new ConcurrentHashMap<String, String>());
-        
-        private final Map<String, String> options;
-        
-        Type(final Map<String, String> options) {
-            this.options = options;
-        }
-        
-        public Map<String, String> getOptions() {
-            return this.options;
-        }
+        PROXY_SPNEGO_JAAS,
+        PROXY_SPNEGO_API,        
+        PROXY_BASIC,
+        NO_PROXY;
     }    
     
     public static HttpClient create(final Type type) {

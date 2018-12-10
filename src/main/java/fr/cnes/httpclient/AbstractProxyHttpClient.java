@@ -5,17 +5,9 @@
  */
 package fr.cnes.httpclient;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.List;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 import org.apache.http.HttpException;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
@@ -42,52 +34,7 @@ import org.apache.logging.log4j.Logger;
 public abstract class AbstractProxyHttpClient extends HttpClient {
     
     private static final Logger LOG = LogManager.getLogger(AbstractProxyHttpClient.class.getName());
-    
-    /**
-     * Disable SSL certificate checking.
-     */
-    protected static final TrustManager TRUST_MANAGER = new X509TrustManager() {
-
-        /**
-         * Given the partial or complete certificate chain provided by the peer, ignores the
-         * certificate checking.
-         *
-         * @param chain the peer certificate chain
-         * @param authType the authentication type based on the client certificate
-         */
-        @Override
-        public void checkClientTrusted(final X509Certificate[] chain, final String authType) {
-            // This will never throw an exception.
-            // this doesn't check anything at all
-            // it is insecure            
-        }
-
-        /**
-         * Given the partial or complete certificate chain provided by the peer, ignores the
-         * certificate checking.
-         *
-         * @param chain the peer certificate chain
-         * @param authType the authentication type based on the client certificate
-         * @throws CertificateException
-         */
-        @Override
-        public void checkServerTrusted(final X509Certificate[] chain, final String authType) throws
-                CertificateException {
-            // This will never throw an exception.
-            // this doesn't check anything at all
-            // it is insecure
-        }
-
-        /**
-         * Return null, everybody is trusted.
-         *
-         * @return null
-         */
-        @Override
-        public X509Certificate[] getAcceptedIssuers() {
-            return null;
-        }
-    };
+   
     
     /**
      * http client.
@@ -95,7 +42,7 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
     private CloseableHttpClient httpClient;
     private RequestConfig config;        
     
-    protected void setHttpClient(final CloseableHttpClient httpClient) {
+    protected final void setHttpClient(final CloseableHttpClient httpClient) {
         this.httpClient = httpClient;
     }
     
@@ -104,7 +51,7 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
      *
      * @param proxy http proxy
      */
-    protected void setProxyConfiguration(final HttpHost proxy) {
+    protected final void setProxyConfiguration(final HttpHost proxy) {
         LOG.traceEntry("proxy : {}", proxy);
         this.config = RequestConfig.custom().setProxy(proxy).build();
         LOG.traceExit();
@@ -116,23 +63,7 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
     
     protected CloseableHttpClient getHttpClient() {
         return this.httpClient;
-    }
-    
-    /**
-     * Disables the SSL certificate checking.
-     *
-     * @return the SSL context
-     * @throws RuntimeException When a NoSuchAlgorithmException or KeyManagementException happens
-     */
-    protected SSLContext disableSSLCertificateChecking() {
-        try {
-            final SSLContext sslCtx = SSLContext.getInstance("TLS");
-            sslCtx.init(null, new TrustManager[]{TRUST_MANAGER}, null);
-            return sslCtx;
-        } catch (NoSuchAlgorithmException | KeyManagementException ex) {
-            throw LOG.throwing(new RuntimeException(ex));
-        }
-    }    
+    }       
     
     protected HttpRoutePlanner configureRouterPlanner(HttpHost proxy, List<String> excludedHosts) {
 

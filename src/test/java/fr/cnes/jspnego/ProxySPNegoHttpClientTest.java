@@ -122,7 +122,7 @@ public class ProxySPNegoHttpClientTest {
     @Test   
     public void testRequestHttps() throws Exception {
         LOG_TITLE.info(" --- Running one https request ---");
-        File jaas = new File("/tmp/jaas.conf");
+        //File jaas = new File("/tmp/jaas.conf");
         ProxySPNegoJAASConfiguration.HTTP_PROXY.setValue(proxyHost+":"+proxyPort);
         ProxySPNegoJAASConfiguration.JAAS_CONTEXT.setValue("KTB5");
         ProxySPNegoJAASConfiguration.JAAS.setValue("/tmp/jaas.conf");

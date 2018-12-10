@@ -138,6 +138,7 @@ public abstract class AbstractGSSClient {
         if (this.isNotLogged()) {
             LOG.debug("No, so login");
             this.subject = login(); // throw GSSException if fail to login
+            LOG.debug("subject: "+this.subject);
         }
         LOG.debug("I am loggued in");
 

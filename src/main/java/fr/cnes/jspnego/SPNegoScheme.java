@@ -114,10 +114,7 @@ public class SPNegoScheme extends AuthSchemeBase {
     } 
 
     /**
-     * (non-Javadoc)
-     *
-     * @return true if authentication process state is failed or token generated
-     * @see org.apache.http.auth.AuthScheme#isComplete()
+     * {@inheritDoc}
      */
     @Override
     public boolean isComplete() {

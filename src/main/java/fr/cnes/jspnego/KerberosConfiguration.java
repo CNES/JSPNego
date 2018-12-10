@@ -110,11 +110,7 @@ public class KerberosConfiguration extends Configuration {
     }
 
     /**
-     * (non-Javadoc)
-     *
-     * @param arg0 the name used as the index into the Configuration
-     * @return The appConfigEntries
-     * @see javax.security.auth.login.Configuration#getAppConfigurationEntry
+     * {@inheritDoc}
      */
     @Override
     public AppConfigurationEntry[] getAppConfigurationEntry(final String arg0) {

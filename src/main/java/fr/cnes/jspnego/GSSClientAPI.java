@@ -51,10 +51,13 @@ public final class GSSClientAPI extends AbstractGSSClient {
      * </ul>   
      */    
     public GSSClientAPI() {
+        LOG.traceEntry();
+        LOG.debug("{} = {}", JAVA_SECURITY_KRB5_ENV, ProxySPNegoAPIConfiguration.KRB5.
+                getValue());
         System.setProperty(JAVA_SECURITY_KRB5_ENV, ProxySPNegoAPIConfiguration.KRB5.
                 getValue());
         this.setServiceSpincipalName(ProxySPNegoAPIConfiguration.SERVICE_PROVIDER_NAME.getValue());
-
+        LOG.traceExit();
     }
 
     /**
@@ -62,18 +65,19 @@ public final class GSSClientAPI extends AbstractGSSClient {
      */    
     @Override
     protected Subject login() throws GSSException {
+        LOG.traceEntry();
         final LoginContext loginContext;
-        try {
+        try {            
             final KerberosConfiguration config = new KerberosConfiguration();
             config.initialize();
             loginContext = new LoginContext(ProxySPNegoAPIConfiguration.JAAS_CONTEXT.getValue());
         } catch (LoginException ex) {
-            throw new GSSException(GSSException.DEFECTIVE_CREDENTIAL,
+            throw LOG.throwing(new GSSException(GSSException.DEFECTIVE_CREDENTIAL,
                     GSSException.BAD_STATUS,
                     "Kerberos client '" + getName() + "' failed to login to KDC. Error: "
-                    + ex.getMessage());            
+                    + ex.getMessage()));            
         }
-        return loginContext.getSubject();
+        return LOG.traceExit(loginContext.getSubject());
     }
 
 }

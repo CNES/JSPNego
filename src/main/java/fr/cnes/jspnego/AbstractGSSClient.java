@@ -39,16 +39,17 @@ import org.ietf.jgss.Oid;
 
 /**
  * GSS (Generic Security Service) client interface
+ *
  * @author Jean-Christophe Malapert (jean-christophe.malapert@cnes.fr)
  * @author S. ETCHEVERRY
  */
 public abstract class AbstractGSSClient {
-    
+
     /**
      * JAVA environment variable for Kerberos {@value #JAVA_SECURITY_KRB5_ENV}.
      */
     public static final String JAVA_SECURITY_KRB5_ENV = "java.security.krb5.conf";
-    
+
     /**
      * Get actual class name to be printed on.
      */
@@ -58,22 +59,22 @@ public abstract class AbstractGSSClient {
      * Mechanism OID assigned to the pseudo-mechanism SPNEGO to negotiate the best common GSS-API
      * mechanism between two communication peers.
      */
-    private static final String SPNEGO_OID = "1.3.6.1.5.5.2";    
+    private static final String SPNEGO_OID = "1.3.6.1.5.5.2";
 
     /**
-     * A service principal name (SPN) is a unique identifier of a service instance. 
-     * SPNs are used by Kerberos authentication to associate a service instance with a service 
-     * logon account. This allows a client application to request that the service authenticate 
-     * an account even if the client does not have the account name.
+     * A service principal name (SPN) is a unique identifier of a service instance. SPNs are used by
+     * Kerberos authentication to associate a service instance with a service logon account. This
+     * allows a client application to request that the service authenticate an account even if the
+     * client does not have the account name.
      */
     private String servicePrincipalName;
 
     /**
-     * The initiator subject. 
-     * This object will hold the TGT and all service tickets in its private credentials cache.
+     * The initiator subject. This object will hold the TGT and all service tickets in its private
+     * credentials cache.
      */
     private Subject subject;
-    
+
     /**
      * Checks whether the principal is already logged.
      *
@@ -82,17 +83,19 @@ public abstract class AbstractGSSClient {
     private boolean isNotLogged() {
         LOG.traceEntry();
         return LOG.traceExit(this.subject == null);
-    }    
+    }
 
     /**
      * Login to KDC
+     *
      * @return the subject
-     * @throws GSSException When an error happens with KDC 
+     * @throws GSSException When an error happens with KDC
      */
     protected abstract Subject login() throws GSSException;
-    
+
     /**
      * Sets the SPN.
+     *
      * @param servicePrincipalName SPN
      */
     protected void setServiceSpincipalName(final String servicePrincipalName) {
@@ -100,9 +103,10 @@ public abstract class AbstractGSSClient {
         this.servicePrincipalName = servicePrincipalName;
         LOG.traceExit();
     }
-    
+
     /**
      * Returns the SPN.
+     *
      * @return the SPN
      */
     protected String getServicePrincipalName() {
@@ -112,8 +116,9 @@ public abstract class AbstractGSSClient {
 
     /**
      * Generates the Kerberos token.
+     *
      * @return the Kerberos token
-     * @throws GSSException 
+     * @throws GSSException
      */
     public byte[] generateGSSToken() throws GSSException {
         LOG.traceEntry();
@@ -138,26 +143,28 @@ public abstract class AbstractGSSClient {
         if (this.isNotLogged()) {
             LOG.debug("No, so login");
             this.subject = login(); // throw GSSException if fail to login
-            LOG.debug("subject: "+this.subject);
+            LOG.debug("subject: " + this.subject);
         }
         LOG.debug("I am loggued in");
 
         LOG.debug("If we do not have the service ticket it will be retrieved from the TGS");
-        final AbstractGSSClient.NegotiateContextAction negotiationAction = new AbstractGSSClient.NegotiateContextAction(gssContext,
+        final AbstractGSSClient.NegotiateContextAction negotiationAction = new AbstractGSSClient.NegotiateContextAction(
+                gssContext,
                 tokenInit);
 
         if (negotiationAction.getGSSException() != null) {
+            LOG.error(negotiationAction.getGSSException());
             throw LOG.throwing(negotiationAction.getGSSException());
         }
 
         // The service ticket will then be cached in the Subject's private credentials 
         // as the subject.
-        final byte[] token = (byte[]) Subject.doAs(subject, negotiationAction);
+        final byte[] token = (byte[]) Subject.doAs(this.subject, negotiationAction);
         LOG.debug("Token : {}", token);
-        
+
         return LOG.traceExit(token);
     }
-    
+
     /**
      * Returns the user ID.
      *
@@ -166,8 +173,7 @@ public abstract class AbstractGSSClient {
     public String getName() {
         LOG.traceEntry();
         return LOG.traceExit(this.subject.getPrincipals().iterator().next().getName());
-    }    
-    
+    }
 
     /**
      * Negotiate the token.
@@ -358,6 +364,6 @@ public abstract class AbstractGSSClient {
 
             LOG.traceExit();
         }
-    }    
+    }
 
 }

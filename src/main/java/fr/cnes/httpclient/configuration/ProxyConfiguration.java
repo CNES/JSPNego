@@ -25,18 +25,17 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Proxy configuration with basic authentication or without authentication.
+ *
  * @author Jean-Christophe Malapert (jean-christophe.malapert@cnes.fr)
  */
 public enum ProxyConfiguration {
     /**
-     * HTTP proxy variable (as hostname:port).
-     * By default loads the http_proxy variable.
-     */    
+     * HTTP proxy variable (as hostname:port). By default loads the http_proxy variable.
+     */
     HTTP_PROXY("http_proxy", System.getenv("http_proxy")),
     /**
-     * No proxy variable.
-     * A set of separated hostname/IP by comma.
-     */  
+     * No proxy variable. A set of separated hostname/IP by comma.
+     */
     NO_PROXY("no_proxy", System.getenv("no_proxy")),
     /**
      * Username if needed.
@@ -62,10 +61,10 @@ public enum ProxyConfiguration {
     public String getValue() {
         return this.value == null ? "" : this.value;
     }
-    
+
     public void setValue(final String value) {
         this.value = value;
-    }    
+    }
 
     public static Map<String, String> getConfig() {
         final Map<String, String> map = new ConcurrentHashMap<>();
@@ -74,15 +73,16 @@ public enum ProxyConfiguration {
             map.put(conf.getKey(), conf.getValue());
         }
         return map;
-    }    
+    }
 
     public static boolean isValid(StringBuilder error) {
         boolean isValid = true;
         final StringBuilder validation = new StringBuilder();
-        if(ProxyConfiguration.HTTP_PROXY.getValue().isEmpty()) {
-            validation.append(ProxyConfiguration.HTTP_PROXY.getKey()).append(" cannot be null or empty\n");
+        if (ProxyConfiguration.HTTP_PROXY.getValue().isEmpty()) {
+            validation.append(ProxyConfiguration.HTTP_PROXY.getKey()).append(
+                    " cannot be null or empty\n");
             isValid = false;
-        }    
+        }
         error.append(validation);
         return isValid;
     }

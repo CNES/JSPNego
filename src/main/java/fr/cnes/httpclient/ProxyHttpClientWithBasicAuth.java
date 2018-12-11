@@ -1,45 +1,63 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright (C) 2017-2018 Centre National d'Etudes Spatiales (CNES).
+ *
+ * This file is part of DOI-server.
+ *
+ * This JSPNego is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3.0 of the License, or (at your option) any later version.
+ *
+ * JSPNego is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02110-1301  USA
  */
 package fr.cnes.httpclient;
 
 import fr.cnes.httpclient.configuration.ProxyConfiguration;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
+ * The client makes HTTP requests via a proxy with a basic authentication and configured by the
+ * {@link fr.cnes.httpclient.configuration.ProxyConfiguration API}
  *
- * @author malapert
+ * @author Jean-Christophe Malapert
  */
 public class ProxyHttpClientWithBasicAuth extends ProxyHttpClientWithoutAuth {
-    
-    private static final Logger LOG = LogManager.getLogger(ProxyHttpClientWithBasicAuth.class.getName());
-    
+
+    private static final Logger LOG = LogManager.getLogger(ProxyHttpClientWithBasicAuth.class.
+            getName());
+
     public ProxyHttpClientWithBasicAuth(final boolean isDisabledSSL) {
         super(isDisabledSSL);
     }
-    
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected CredentialsProvider createCredsProvider(final HttpHost proxy) {
+        LOG.traceEntry("proxy: {}", proxy);
         final CredentialsProvider credsProvider = new BasicCredentialsProvider();
         credsProvider.setCredentials(
                 new AuthScope(proxy),
                 new UsernamePasswordCredentials(
-                        ProxyConfiguration.USERNAME.getValue(), 
+                        ProxyConfiguration.USERNAME.getValue(),
                         ProxyConfiguration.PASSWORD.getValue()
                 )
         );
         return LOG.traceExit(credsProvider);
-    }    
+    }
 }

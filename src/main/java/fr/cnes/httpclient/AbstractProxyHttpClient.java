@@ -1,7 +1,22 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright (C) 2017-2018 Centre National d'Etudes Spatiales (CNES).
+ *
+ * This file is part of DOI-server.
+ *
+ * This JSPNego is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3.0 of the License, or (at your option) any later version.
+ *
+ * JSPNego is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02110-1301  USA
  */
 package fr.cnes.httpclient;
 
@@ -23,10 +38,7 @@ import org.apache.http.config.Registry;
 import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.conn.routing.HttpRoute;
 import org.apache.http.conn.routing.HttpRoutePlanner;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.HttpContext;
@@ -34,60 +46,89 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
+ * Handls a Http client through a proxy.
  *
- * @author malapert
+ * @author Jean-Christophe Malapert
  */
 public abstract class AbstractProxyHttpClient extends HttpClient {
-    
+
     private static final Logger LOG = LogManager.getLogger(AbstractProxyHttpClient.class.getName());
-   
-    protected final HttpClientBuilder createBuilder(final HttpHost proxy, final List<String> excludedHosts, final boolean isDisabledSSL) {
-        LOG.traceEntry("proxy: {}\n"
-                + "excludedHosts: {}\n"
-                + "isDisabledSSL: {}", proxy, excludedHosts, isDisabledSSL);
+
+    /**
+     * config that contains the proxy configuration.
+     */
+    private RequestConfig config;
+
+    protected AbstractProxyHttpClient(final boolean isDisabledSSL) {
+        super(isDisabledSSL);
+    }
+
+    /**
+     * Creates builder extension {@link AbstractProxyHttpClient#createBuilderProxy(org.apache.http.impl.client.HttpClientBuilder)
+     * }
+     *
+     * @param builder builder
+     * @return builder with proxy.
+     */
+    @Override
+    protected HttpClientBuilder createBuilderExtension(HttpClientBuilder builder) {
+        return createBuilderProxy(builder);
+    }
+
+    /**
+     * Creates builder proxy.
+     *
+     * @param builder builder
+     * @return builder
+     */
+    protected abstract HttpClientBuilder createBuilderProxy(HttpClientBuilder builder);
+
+    /**
+     * Creates proxy builder.
+     *
+     * @param builder builder
+     * @param proxy proxy
+     * @param excludedHosts excluded hosts
+     * @return builder including proxy
+     */
+    protected final HttpClientBuilder createBuilder(HttpClientBuilder builder, final HttpHost proxy,
+            final List<String> excludedHosts) {
+        LOG.traceEntry("builder: {}\n"
+                + "proxy: {}\n"
+                + "excludedHosts: {}", builder, proxy, excludedHosts);
         final CredentialsProvider crp = createCredsProvider(proxy);
         final Registry<AuthSchemeProvider> regAuth = registerAuthSchemeProvider();
-        HttpClientBuilder builder = HttpClients.custom()   
-                .setRoutePlanner(configureRouterPlanner(proxy, excludedHosts));  
-        
-        if(crp != null) {
+        builder = builder.setRoutePlanner(configureRouterPlanner(proxy, excludedHosts));
+
+        if (crp != null) {
             LOG.debug("Adds credentials to builder");
             builder = builder.setDefaultCredentialsProvider(crp);
         }
-        
-        if(regAuth != null) {
+
+        if (regAuth != null) {
             LOG.debug("Adds auth scheme");
             builder = builder.setDefaultAuthSchemeRegistry(regAuth);
         }
-        
-        if (isDisabledSSL) {
-            LOG.warn("SSL Certificate checking is disabled. The connection is insecured.");
-            builder = builder.setSSLContext(disableSSLCertificateChecking())
-                    .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
-        }  
+
+        this.setProxyConfiguration(proxy);
+
         return LOG.traceExit(builder);
     }
-    
-    protected final HttpHost buildProxy(final String value) {
+
+    /**
+     * Build the proxy.
+     *
+     * @param value proxy value as hostname:port
+     * @return the proxy
+     */
+    protected final HttpHost stringToProxy(final String value) {
         LOG.traceEntry("value: {}", value);
         String[] proxyFragments = value.split(":");
-        return LOG.traceExit((proxyFragments.length == 2) 
+        return LOG.traceExit((proxyFragments.length == 2)
                 ? new HttpHost(proxyFragments[0], Integer.parseInt(proxyFragments[1]))
-                : new HttpHost(proxyFragments[0]));                        
-    }    
-    
-    /**
-     * http client.
-     */
-    private CloseableHttpClient httpClient;
-    private RequestConfig config;        
-    
-    protected final void setHttpClient(final CloseableHttpClient httpClient) {
-        LOG.traceEntry("httpClient: {}", httpClient);
-        this.httpClient = httpClient;
-        LOG.traceExit();
+                : new HttpHost(proxyFragments[0]));
     }
-    
+
     /**
      * Sets the proxy configuration.
      *
@@ -97,25 +138,27 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
         LOG.traceEntry("proxy : {}", proxy);
         this.config = RequestConfig.custom().setProxy(proxy).build();
         LOG.traceExit();
-    }    
-    
+    }
+
+    /**
+     * Returns the proxy configuration.
+     *
+     * @return the proxy configuration
+     */
     protected HttpHost getProxyConfiguration() {
         LOG.traceEntry();
         return LOG.traceExit(this.config.getProxy());
     }
-    
-    protected CloseableHttpClient getHttpClient() {
-        LOG.traceEntry();
-        return LOG.traceExit(this.httpClient);
-    }       
-    
+
     /**
      * Configures route.
+     *
      * @param proxy proxy
      * @param excludedHosts host for which hth proxy is not needed
-     * @return 
+     * @return
      */
-    protected final HttpRoutePlanner configureRouterPlanner(HttpHost proxy, List<String> excludedHosts) {
+    protected final HttpRoutePlanner configureRouterPlanner(HttpHost proxy,
+            List<String> excludedHosts) {
         LOG.traceEntry("proxy: {}\n"
                 + "excludedHosts: {}", proxy, excludedHosts);
         HttpRoutePlanner routePlanner = new DefaultProxyRoutePlanner(proxy) {
@@ -149,42 +192,44 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
         };
 
         return LOG.traceExit(routePlanner);
-    }  
-    
+    }
+
     /**
      * Creates the credentials.
+     *
      * @param proxy proxy
      * @return the credentials
      */
     protected abstract CredentialsProvider createCredsProvider(final HttpHost proxy);
-    
+
     /**
      * Registers the authentication scheme.
+     *
      * @return the authentication scheme or {@code null}
      */
     protected abstract Registry<AuthSchemeProvider> registerAuthSchemeProvider();
-    
+
     /**
      * {@inheritDoc }
-     */    
+     */
     @Override
     public HttpParams getParams() {
         LOG.traceEntry();
-        return LOG.traceExit(this.httpClient.getParams());
+        return LOG.traceExit(this.getHttpClient().getParams());
     }
 
     /**
      * {@inheritDoc }
-     */    
+     */
     @Override
     public ClientConnectionManager getConnectionManager() {
         LOG.traceEntry();
-        return LOG.traceExit(this.httpClient.getConnectionManager());
+        return LOG.traceExit(this.getHttpClient().getConnectionManager());
     }
 
     /**
      * {@inheritDoc }
-     */    
+     */
     @Override
     public HttpResponse execute(HttpUriRequest request) throws IOException, ClientProtocolException {
         return this.execute(request, new HttpClientContext());
@@ -192,7 +237,7 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
 
     /**
      * {@inheritDoc }
-     */    
+     */
     @Override
     public HttpResponse execute(HttpUriRequest request, HttpContext context) throws IOException,
             ClientProtocolException {
@@ -205,12 +250,12 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
         if (config != null) {
             context.setAttribute(HttpClientContext.REQUEST_CONFIG, config);
         }
-        return this.httpClient.execute(request, context);
+        return this.getHttpClient().execute(request, context);
     }
 
     /**
      * {@inheritDoc }
-     */    
+     */
     @Override
     public HttpResponse execute(HttpHost target, HttpRequest request) throws IOException,
             ClientProtocolException {
@@ -219,7 +264,7 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
 
     /**
      * {@inheritDoc }
-     */    
+     */
     @Override
     public HttpResponse execute(HttpHost target, HttpRequest request, HttpContext context) throws
             IOException, ClientProtocolException {
@@ -231,12 +276,12 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
         LOG.info("Executing request to {}  via {}:{}", target, this.getProxyConfiguration().
                 getHostName(),
                 this.getProxyConfiguration().getPort());
-        return LOG.traceExit(this.httpClient.execute(target, request, context));
+        return LOG.traceExit(this.getHttpClient().execute(target, request, context));
     }
 
     /**
      * {@inheritDoc }
-     */    
+     */
     @Override
     public <T> T execute(HttpUriRequest request,
             ResponseHandler<? extends T> responseHandler) throws IOException,
@@ -246,7 +291,7 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
 
     /**
      * {@inheritDoc }
-     */    
+     */
     @Override
     public <T> T execute(HttpUriRequest request,
             ResponseHandler<? extends T> responseHandler, HttpContext context) throws IOException,
@@ -259,12 +304,12 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
         LOG.info("Executing request to {}  via {}:{}", request.getRequestLine(), this.
                 getProxyConfiguration().getHostName(),
                 this.getProxyConfiguration().getPort());
-        return LOG.traceExit(this.httpClient.execute(request, responseHandler, context));
+        return LOG.traceExit(this.getHttpClient().execute(request, responseHandler, context));
     }
 
     /**
      * {@inheritDoc }
-     */    
+     */
     @Override
     public <T> T execute(HttpHost target, HttpRequest request,
             ResponseHandler<? extends T> responseHandler) throws IOException,
@@ -274,7 +319,7 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
 
     /**
      * {@inheritDoc }
-     */    
+     */
     @Override
     public <T> T execute(HttpHost target, HttpRequest request,
             ResponseHandler<? extends T> responseHandler, HttpContext context) throws IOException,
@@ -287,7 +332,8 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
         LOG.info("Executing request to {}  via {}:{}", target, this.getProxyConfiguration().
                 getHostName(),
                 this.getProxyConfiguration().getPort());
-        return LOG.traceExit(this.httpClient.execute(target, request, responseHandler, context));
+        return LOG.
+                traceExit(this.getHttpClient().execute(target, request, responseHandler, context));
     }
 
     /**
@@ -297,11 +343,11 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
     public void close() {
         LOG.traceEntry();
         try {
-            this.httpClient.close();
+            this.getHttpClient().close();
         } catch (IOException ex) {
             LOG.error(ex);
         }
         LOG.traceExit();
-    }    
-    
+    }
+
 }

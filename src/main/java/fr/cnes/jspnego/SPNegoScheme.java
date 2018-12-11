@@ -93,25 +93,26 @@ public class SPNegoScheme extends AuthSchemeBase {
      * base64 decoded challenge.
      */
     private byte[] token;
-    
+
     /**
      * Scheme for SPNego protocol.
+     *
      * @param type type of SPNego
      */
-    public SPNegoScheme(final Type type) {   
+    public SPNegoScheme(final Type type) {
         LOG.traceEntry("Type: {}", type);
-        switch(type) {
-            case PROXY_SPNEGO_API:               
+        switch (type) {
+            case PROXY_SPNEGO_API:
             case PROXY_SPNEGO_JAAS:
                 break;
             default:
-                throw LOG.throwing(new IllegalArgumentException("Cannot support "+type));
-        }        
+                throw LOG.throwing(new IllegalArgumentException("Cannot support " + type));
+        }
         this.state = State.UNINITIATED;
         LOG.debug("state: {}", this.state);
-        this.gssClient = GSSClientFactory.create(type);   
+        this.gssClient = GSSClientFactory.create(type);
         LOG.traceExit();
-    } 
+    }
 
     /**
      * {@inheritDoc}
@@ -222,7 +223,7 @@ public class SPNegoScheme extends AuthSchemeBase {
      * @param buffer buffer
      * @param beginIndex begin index
      * @param endIndex end index
-     * @throws org.apache.http.auth.MalformedChallengeException Signals that authentication 
+     * @throws org.apache.http.auth.MalformedChallengeException Signals that authentication
      * challenge is in some way invalid or illegal in the given context
      * @see org.apache.http.impl.auth.AuthSchemeBase#parseChallenge
      */

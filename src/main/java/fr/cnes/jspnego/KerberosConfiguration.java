@@ -51,7 +51,7 @@ public class KerberosConfiguration extends Configuration {
      */
     private static final String LOGIN_MODULE = com.sun.security.auth.module.Krb5LoginModule.class.
             getName();
-   
+
     /**
      * Debug.
      */
@@ -89,13 +89,15 @@ public class KerberosConfiguration extends Configuration {
                     || entry.getKey().equals(ProxySPNegoAPIConfiguration.NO_PROXY.getKey())) {
                 LOG.debug("Skip {} when recording in the Kerberos options", entry.getKey());
             } else if (entry.getValue().isEmpty()) {
-                LOG.debug("Skip {} when recording in the Kerberos options because the value is empty", entry.getKey());
+                LOG.debug(
+                        "Skip {} when recording in the Kerberos options because the value is empty",
+                        entry.getKey());
             } else {
                 this.options.put(entry.getKey(), entry.getValue());
                 LOG.debug("Set {} = {} int the Kerberos options", entry.getKey(), entry.getValue());
             }
         }
-        
+
         appConfigEntries = new AppConfigurationEntry[1];
         appConfigEntries[0] = new AppConfigurationEntry(LOGIN_MODULE,
                 AppConfigurationEntry.LoginModuleControlFlag.REQUIRED, this.options);

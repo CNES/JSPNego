@@ -28,7 +28,7 @@ import org.restlet.util.Series;
  * @author malapert
  */
 public class HttpClientHelper extends org.restlet.engine.connector.HttpClientHelper {
-    
+
     private volatile HttpClient httpClient;
 
     public HttpClientHelper(Client client) {
@@ -43,8 +43,6 @@ public class HttpClientHelper extends org.restlet.engine.connector.HttpClientHel
         super.setHelped(helpedRestlet); //To change body of generated methods, choose Tools | Templates.
         Context.setCurrent(helpedRestlet.getContext());
     }
-    
-    
 
     @Override
     public Series<Parameter> getHelpedParameters() {
@@ -56,12 +54,11 @@ public class HttpClientHelper extends org.restlet.engine.connector.HttpClientHel
         ProxySPNegoAPIConfiguration.PRINCIPAL.setValue(userID);
         ProxySPNegoAPIConfiguration.USE_KEYTAB.setValue("true");
         ProxySPNegoAPIConfiguration.KEY_TAB.setValue(keytabFilePath);
-        ProxySPNegoAPIConfiguration.HTTP_PROXY.setValue(proxyHost+":"+proxyPort);
-        ProxySPNegoAPIConfiguration.SERVICE_PROVIDER_NAME.setValue("HTTP@"+proxyHost);
+        ProxySPNegoAPIConfiguration.HTTP_PROXY.setValue(proxyHost + ":" + proxyPort);
+        ProxySPNegoAPIConfiguration.SERVICE_PROVIDER_NAME.setValue("HTTP@" + proxyHost);
         this.httpClient = new ProxySPNegoHttpClientWithJAAS(false);
         return params;
-    }       
-    
+    }
 
     @Override
     public ClientCall create(Request request) {
@@ -78,29 +75,29 @@ public class HttpClientHelper extends org.restlet.engine.connector.HttpClientHel
 
         return result;
     }
-    
+
     /**
      * Returns the wrapped Apache HTTP Client.
-     * 
+     *
      * @return The wrapped Apache HTTP Client.
      */
     public ProxySPNegoHttpClientWithJAAS getHttpClient() {
         return (ProxySPNegoHttpClientWithJAAS) this.httpClient;
-    }   
+    }
 
     @Override
     public synchronized void start() throws Exception {
         getHelpedParameters();
-        super.start();        
+        super.start();
     }
 
     @Override
     public synchronized void stop() throws Exception {
         super.stop();
-        if(this.httpClient != null) {
+        if (this.httpClient != null) {
             this.getHttpClient().close();
             this.httpClient = null;
         }
-    }              
-    
+    }
+
 }

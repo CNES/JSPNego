@@ -1,5 +1,3 @@
-package fr.cnes.httpclient;
-
 /*
  * Copyright (C) 2017-2018 Centre National d'Etudes Spatiales (CNES).
  *
@@ -20,8 +18,9 @@ package fr.cnes.httpclient;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301  USA
  */
+package fr.cnes.httpclient;
+
 import fr.cnes.httpclient.HttpClientFactory.Type;
-import fr.cnes.httpclient.configuration.ProxySPNegoAPIConfiguration;
 import fr.cnes.httpclient.configuration.ProxySPNegoJAASConfiguration;
 import fr.cnes.jspnego.SPNegoScheme;
 import java.util.ArrayList;
@@ -37,91 +36,61 @@ import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.config.AuthSchemes;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.http.protocol.HttpContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * The client makes HTTP requests via a proxy for which the client is authenticated through a SSO.
+ * The client makes HTTP requests via a proxy for which the client is authenticated through a SSO an
+ * configured by a JAAS configuration file and the
+ * {@link fr.cnes.httpclient.configuration.ProxySPNegoJAASConfiguration API}.
  *
  * The SSO uses <i>The Simple and Protected GSS-API Negotiation Mechanism (IETF RFC 2478)</i>
  * (<b>SPNEGO</b>) as protocol.
  * <br>
  * <img src="https://cdn.ttgtmedia.com/digitalguide/images/Misc/kerberos_1.gif" alt="Kerberos">
  *
+ * <p>
+ * The configuration file has this syntax :
+ * <pre>{@code
+ * <entry name> {
+ *  com.sun.security.auth.module.Krb5LoginModule required
+ *  <key>=<value>
+ * };
+ * }
+ * where
+ * - <i>entry name</i> is the {@link fr.cnes.httpclient.configuration.ProxySPNegoJAASConfiguration#JAAS_CONTEXT}
+ * - <i>key</i>=<i>value</i> are defined <a href="https://docs.oracle.com/javase/7/docs/jre/api/security/jaas/spec/com/sun/security/auth/module/Krb5LoginModule.html">here</a>
+ * </pre>
+ *
  * @author S. ETCHEVERRY
  * @author Jean-Christophe Malapert
  */
 public final class ProxySPNegoHttpClientWithJAAS extends ProxyHttpClientWithoutAuth {
-    
+
     /**
      * Get actual class name to be printed on.
      */
-    private static final Logger LOG = LogManager.getLogger(ProxySPNegoHttpClientWithJAAS.class.getName());    
+    private static final Logger LOG = LogManager.getLogger(ProxySPNegoHttpClientWithJAAS.class.
+            getName());
 
     /**
-     * Default Kerberos configuration file {@value #KRB_CONF_PATH}.
-     */
-    private static final String KRB_CONF_PATH = "/etc/krb5.conf";
-
-    /**
-     * Environment variable that defines the path of krb5 configuration file: {@value #ENV_KRB5}.
-     */
-    private static final String ENV_KRB5 = "KRB5CCNAME";
-
-    
-    public ProxySPNegoHttpClientWithJAAS(final boolean isDisabledSSL) {
-        super(ProxySPNegoJAASConfiguration.HTTP_PROXY.getValue(), ProxySPNegoJAASConfiguration.NO_PROXY.getValue(), isDisabledSSL);
-        //final File krbConf = getKrbConf(krbConfPath);
-//        final String noProxy = getNoProxy(type);
-//        final HttpHost proxy = getProxy(type);
-//        final List<String> excludedHosts = new ArrayList<>();        
-//        Collections.addAll(excludedHosts, noProxy.split("\\s*,\\s*")); 
-//        HttpClientBuilder builder = createBuilder(proxy, excludedHosts, isDisabledSSL);
-//        builder = builder.setDefaultAuthSchemeRegistry(registerSPNegoProvider(type));
-//        setHttpClient(builder.build());
-//        setProxyConfiguration(proxy);
-    }
-    
-    private String getNoProxy(final Type type) {
-        final String noProxy;
-        switch(type) {
-            case PROXY_SPNEGO_API:
-                noProxy = ProxySPNegoAPIConfiguration.NO_PROXY.getValue();
-                break;
-            case PROXY_SPNEGO_JAAS:
-                noProxy = ProxySPNegoJAASConfiguration.NO_PROXY.getValue();
-                break;
-            default:
-                throw new IllegalArgumentException(type.name()+" is not supported");
-        }
-        return noProxy;
-    }
-    
-    private HttpHost getProxy(final Type type) {
-        final HttpHost proxy;
-        switch(type) {
-            case PROXY_SPNEGO_API:
-                proxy = buildProxy(ProxySPNegoAPIConfiguration.HTTP_PROXY.getValue());
-                break;
-            case PROXY_SPNEGO_JAAS:
-                proxy = buildProxy(ProxySPNegoJAASConfiguration.HTTP_PROXY.getValue());
-                break;
-            default:
-                throw new IllegalArgumentException(type.name()+" is not supported");
-        }
-        return proxy;
-    }
-
-    /**
-     * Creates a dummy kerberos credential provider for the kerberized proxy.
+     * Creates a HTTP client that makes requests to a proxy authenticated with SSO and configured by
+     * a JAAAS configuration file. Uses
+     * {@link fr.cnes.httpclient.configuration.ProxySPNegoJAASConfiguration} class to configure this
+     * proxy.
      *
-     * @param proxy proxy configuration
-     * @return a dummy kerberos credential provider for the kerberized proxy
+     * @param isDisabledSSL True when the SSL certificate check is disabled otherwise False.
+     * @author Jean-Christophe Malapert
+     */
+    public ProxySPNegoHttpClientWithJAAS(final boolean isDisabledSSL) {
+        super(isDisabledSSL);
+    }
+
+    /**
+     * {@inheritDoc}
      */
     @Override
     protected CredentialsProvider createCredsProvider(final HttpHost proxy) {
@@ -132,6 +101,9 @@ public final class ProxySPNegoHttpClientWithJAAS extends ProxyHttpClientWithoutA
         return LOG.traceExit(credsProvider);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected Registry<AuthSchemeProvider> registerAuthSchemeProvider() {
         return LOG.traceExit(RegistryBuilder.
@@ -147,8 +119,25 @@ public final class ProxySPNegoHttpClientWithJAAS extends ProxyHttpClientWithoutA
                     public AuthScheme create(final HttpContext context) {
                         return new SPNegoScheme(Type.PROXY_SPNEGO_JAAS);
                     }
-                }).build());        
+                }).build());
     }
 
+    /**
+     * Creates a proxy builder based on
+     * {@link fr.cnes.httpclient.configuration.ProxySPNegoJAASConfiguration}. This method calls {@link AbstractProxyHttpClient#createBuilder(org.apache.http.impl.client.HttpClientBuilder, org.apache.http.HttpHost, java.util.List)
+     * }
+     *
+     * @param builder builder
+     * @return builder including proxy
+     */
+    @Override
+    protected HttpClientBuilder createBuilderProxy(HttpClientBuilder builder) {
+        LOG.traceEntry("builder: {}", builder);
+        final HttpHost proxy = stringToProxy(ProxySPNegoJAASConfiguration.HTTP_PROXY.getValue());
+        final List<String> excludedHosts = new ArrayList<>();
+        Collections.addAll(excludedHosts, ProxySPNegoJAASConfiguration.NO_PROXY.getValue().split(
+                "\\s*,\\s*"));
+        return LOG.traceExit(this.createBuilder(builder, proxy, excludedHosts));
+    }
 
 }

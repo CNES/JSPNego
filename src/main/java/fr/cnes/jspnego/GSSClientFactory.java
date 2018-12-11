@@ -26,29 +26,29 @@ import org.apache.logging.log4j.Logger;
 
 /**
  * Creates a factory on GSS (Generic Security Service) Client.
- * 
+ *
  * @author Jean-Christophe Malapert (jean-christophe.malapert@cnes.fr)
  * @author S. ETCHEVERRY
  */
 public class GSSClientFactory {
-    
+
     /**
      * Get actual class name to be printed on.
      */
     private static final Logger LOG = LogManager.getLogger(GSSClientFactory.class.getName());
-    
-    
+
     /**
      * Creates a GSS client according to a given type.
+     *
      * @param type type to select
      * @return the GSS client
-     * @throws IllegalArgumentException When type is not one of the following types PROXY_SPNEGO_API,
-     * PROXY_SPNEGO_JAAS
+     * @throws IllegalArgumentException When type is not one of the following types
+     * PROXY_SPNEGO_API, PROXY_SPNEGO_JAAS
      */
     public static AbstractGSSClient create(final Type type) {
         LOG.traceEntry("Type: {}", type);
         final AbstractGSSClient gssClient;
-        switch(type) {
+        switch (type) {
             case PROXY_SPNEGO_API:
                 LOG.debug("Uses PROXY_SPNEGO_API");
                 gssClient = new GSSClientAPI();
@@ -58,9 +58,9 @@ public class GSSClientFactory {
                 gssClient = new GSSClientJASS();
                 break;
             default:
-                throw LOG.throwing(new IllegalArgumentException("Cannot support "+type.name()));
+                throw LOG.throwing(new IllegalArgumentException("Cannot support " + type.name()));
         }
         return LOG.traceExit(gssClient);
     }
-    
+
 }

@@ -1,5 +1,3 @@
-package fr.cnes.httpclient;
-
 /*
  * Copyright (C) 2017-2018 Centre National d'Etudes Spatiales (CNES).
  *
@@ -20,9 +18,10 @@ package fr.cnes.httpclient;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301  USA
  */
+package fr.cnes.httpclient;
+
 import fr.cnes.httpclient.HttpClientFactory.Type;
 import fr.cnes.httpclient.configuration.ProxySPNegoAPIConfiguration;
-import fr.cnes.httpclient.configuration.ProxySPNegoJAASConfiguration;
 import fr.cnes.jspnego.SPNegoScheme;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,16 +36,15 @@ import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.config.AuthSchemes;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.http.protocol.HttpContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * The client makes HTTP requests via a proxy for which the client is authenticated through a SSO.
+ * The client makes HTTP requests via a proxy for which the client is authenticated through a SSO
+ * and configured by the {@link fr.cnes.httpclient.configuration.ProxySPNegoAPIConfiguration API}
  *
  * The SSO uses <i>The Simple and Protected GSS-API Negotiation Mechanism (IETF RFC 2478)</i>
  * (<b>SPNEGO</b>) as protocol.
@@ -57,25 +55,21 @@ import org.apache.logging.log4j.Logger;
  * @author Jean-Christophe Malapert
  */
 public final class ProxySPNegoHttpClientWithAPI extends ProxyHttpClientWithoutAuth {
-    
+
     /**
      * Get actual class name to be printed on.
      */
-    private static final Logger LOG = LogManager.getLogger(ProxySPNegoHttpClientWithAPI.class.getName());    
+    private static final Logger LOG = LogManager.getLogger(ProxySPNegoHttpClientWithAPI.class.
+            getName());
 
     /**
-     * Default Kerberos configuration file {@value #KRB_CONF_PATH}.
+     * Creates a Http client based on a proxy having a SSO authentication and configuration based on
+     * an API programmatic.
+     *
+     * @param isDisabledSSL True when the SSL certificate check is disabled otherwise False.
      */
-    private static final String KRB_CONF_PATH = "/etc/krb5.conf";
-
-    /**
-     * Environment variable that defines the path of krb5 configuration file: {@value #ENV_KRB5}.
-     */
-    private static final String ENV_KRB5 = "KRB5CCNAME";
-
-    
     public ProxySPNegoHttpClientWithAPI(final boolean isDisabledSSL) {
-        super(ProxySPNegoAPIConfiguration.HTTP_PROXY.getValue(), ProxySPNegoAPIConfiguration.NO_PROXY.getValue(), isDisabledSSL);
+        super(isDisabledSSL);
     }
 
     /**
@@ -93,6 +87,11 @@ public final class ProxySPNegoHttpClientWithAPI extends ProxyHttpClientWithoutAu
         return LOG.traceExit(credsProvider);
     }
 
+    /**
+     * Registers an authentication by SPNego.
+     *
+     * @return Authentication by SPNego
+     */
     @Override
     protected Registry<AuthSchemeProvider> registerAuthSchemeProvider() {
         return LOG.traceExit(RegistryBuilder.
@@ -108,7 +107,25 @@ public final class ProxySPNegoHttpClientWithAPI extends ProxyHttpClientWithoutAu
                     public AuthScheme create(final HttpContext context) {
                         return new SPNegoScheme(Type.PROXY_SPNEGO_API);
                     }
-                }).build());        
+                }).build());
+    }
+
+    /**
+     * Creates a proxy builder based on
+     * {@link fr.cnes.httpclient.configuration.ProxySPNegoAPIConfiguration}. This method calls {@link AbstractProxyHttpClient#createBuilder(org.apache.http.impl.client.HttpClientBuilder, org.apache.http.HttpHost, java.util.List)
+     * }
+     *
+     * @param builder builder
+     * @return builder including proxy
+     */
+    @Override
+    protected HttpClientBuilder createBuilderProxy(HttpClientBuilder builder) {
+        LOG.traceEntry("buulder: {}", builder);
+        final HttpHost proxy = stringToProxy(ProxySPNegoAPIConfiguration.HTTP_PROXY.getValue());
+        final List<String> excludedHosts = new ArrayList<>();
+        Collections.addAll(excludedHosts, ProxySPNegoAPIConfiguration.NO_PROXY.getValue().split(
+                "\\s*,\\s*"));
+        return LOG.traceExit(this.createBuilder(builder, proxy, excludedHosts));
     }
 
 }

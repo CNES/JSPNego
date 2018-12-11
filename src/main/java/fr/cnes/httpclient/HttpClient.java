@@ -1,7 +1,22 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright (C) 2017-2018 Centre National d'Etudes Spatiales (CNES).
+ *
+ * This file is part of DOI-server.
+ *
+ * This JSPNego is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3.0 of the License, or (at your option) any later version.
+ *
+ * JSPNego is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02110-1301  USA
  */
 package fr.cnes.httpclient;
 
@@ -11,6 +26,7 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.List;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
@@ -31,15 +47,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
+ * Http client
  *
- * @author malapert
+ * @author Jean-Christophe Malapert
  */
 public class HttpClient implements org.apache.http.client.HttpClient, Closeable {
-    
-    private static final Logger LOG = LogManager.getLogger(HttpClient.class.getName());
-    
-    private final CloseableHttpClient httpClient; 
-    
+
     /**
      * Disable SSL certificate checking.
      */
@@ -78,13 +91,67 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
         /**
          * Return null, everybody is trusted.
          *
-         * @return null
+         * @return {@code null}
          */
         @Override
         public X509Certificate[] getAcceptedIssuers() {
             return null;
         }
     };
+
+    /**
+     * Get actual class name to be printed on.
+     */
+    private static final Logger LOG = LogManager.getLogger(HttpClient.class.getName());
+
+    /**
+     * Http client.
+     */
+    private final CloseableHttpClient httpClient;
+
+    /**
+     * Creates a Http client.
+     */
+    public HttpClient() {
+        this(false);
+    }
+
+    /**
+     * Creates a http client that ignores the SSL certificates.
+     *
+     * @param isDisabledSSL True when SSL certificates are disabled otherwise False
+     */
+    public HttpClient(final boolean isDisabledSSL) {
+        this.httpClient = createBuilder(isDisabledSSL).build();
+    }
+
+    /**
+     * Creates the Http client builder.
+     *
+     * @param isDisabledSSL True when SSL certificates are disabled otherwise False
+     * @return the Http client builder
+     */
+    protected final HttpClientBuilder createBuilder(final boolean isDisabledSSL) {
+        HttpClientBuilder builder = HttpClients.custom();
+        if (isDisabledSSL) {
+            LOG.warn("SSL Certificate checking is disabled. The connection is insecured.");
+            builder = builder.setSSLContext(disableSSLCertificateChecking())
+                    .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
+        }
+
+        return createBuilderExtension(builder);
+    }
+
+    /**
+     * Adds builder extension. In this case, add no extension.
+     *
+     * @param builder builder
+     * @return the same builder
+     */
+    protected HttpClientBuilder createBuilderExtension(final HttpClientBuilder builder) {
+        LOG.traceEntry("builder: {}", builder);
+        return LOG.traceExit(builder);
+    }
 
     /**
      * Disables the SSL certificate checking.
@@ -100,86 +167,120 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
         } catch (NoSuchAlgorithmException | KeyManagementException ex) {
             throw LOG.throwing(new RuntimeException(ex));
         }
-    }      
-    
-    public HttpClient(){
-        this(false);       
     }
-    
-    public HttpClient(final boolean isDisabledSSL) {
-        HttpClientBuilder builder = HttpClients.custom();
-        if (isDisabledSSL) {
-            LOG.warn("SSL Certificate checking is disabled. The connection is insecured.");
-            builder = builder.setSSLContext(disableSSLCertificateChecking())
-                    .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
-        }   
-        this.httpClient = builder.build();
+
+    /**
+     * Returns the http client.
+     *
+     * @return the Http client
+     */
+    protected CloseableHttpClient getHttpClient() {
+        LOG.traceEntry();
+        return LOG.traceExit(this.httpClient);
     }
-    
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public HttpParams getParams() {
         return this.httpClient.getParams();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ClientConnectionManager getConnectionManager() {
         return this.httpClient.getConnectionManager();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public HttpResponse execute(HttpUriRequest request) throws IOException, ClientProtocolException {
+    public HttpResponse execute(final HttpUriRequest request) throws IOException,
+            ClientProtocolException {
         return this.httpClient.execute(request);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public HttpResponse execute(HttpUriRequest request, HttpContext context) throws IOException,
+    public HttpResponse execute(final HttpUriRequest request, final HttpContext context) throws
+            IOException,
             ClientProtocolException {
         return this.httpClient.execute(request, context);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public HttpResponse execute(HttpHost target, HttpRequest request) throws IOException,
+    public HttpResponse execute(final HttpHost target, final HttpRequest request) throws IOException,
             ClientProtocolException {
-        return this.httpClient.execute(target, request);    
+        return this.httpClient.execute(target, request);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public HttpResponse execute(HttpHost target, HttpRequest request, HttpContext context) throws
+    public HttpResponse execute(final HttpHost target, final HttpRequest request,
+            final HttpContext context) throws
             IOException, ClientProtocolException {
-        return this.httpClient.execute(target, request, context); 
+        return this.httpClient.execute(target, request, context);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public <T> T execute(HttpUriRequest request,
-            ResponseHandler<? extends T> responseHandler) throws IOException,
+    public <T> T execute(final HttpUriRequest request,
+            final ResponseHandler<? extends T> responseHandler) throws IOException,
             ClientProtocolException {
-        return this.httpClient.execute(request, responseHandler); 
+        return this.httpClient.execute(request, responseHandler);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public <T> T execute(HttpUriRequest request,
-            ResponseHandler<? extends T> responseHandler, HttpContext context) throws IOException,
+    public <T> T execute(final HttpUriRequest request,
+            final ResponseHandler<? extends T> responseHandler, final HttpContext context) throws
+            IOException,
             ClientProtocolException {
-        return this.httpClient.execute(request, responseHandler, context); 
+        return this.httpClient.execute(request, responseHandler, context);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public <T> T execute(HttpHost target, HttpRequest request,
-            ResponseHandler<? extends T> responseHandler) throws IOException,
+    public <T> T execute(final HttpHost target, final HttpRequest request,
+            final ResponseHandler<? extends T> responseHandler) throws IOException,
             ClientProtocolException {
-        return this.httpClient.execute(target, request, responseHandler); 
+        return this.httpClient.execute(target, request, responseHandler);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public <T> T execute(HttpHost target, HttpRequest request,
-            ResponseHandler<? extends T> responseHandler, HttpContext context) throws IOException,
+    public <T> T execute(final HttpHost target, final HttpRequest request,
+            final ResponseHandler<? extends T> responseHandler, final HttpContext context) throws
+            IOException,
             ClientProtocolException {
-        return this.httpClient.execute(target, request, responseHandler, context); 
+        return this.httpClient.execute(target, request, responseHandler, context);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void close() throws IOException {
         this.httpClient.close();
     }
-    
+
 }

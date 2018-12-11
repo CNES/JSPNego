@@ -29,9 +29,10 @@ import org.apache.logging.log4j.Logger;
 import org.ietf.jgss.GSSException;
 
 /**
- * GSS (Generic Security Service) client with the programmatic API as configuration.
- * The class {@link fr.cnes.httpclient.configuration.ProxySPNegoAPIConfiguration} is used to 
- * configure this client.
+ * GSS (Generic Security Service) client with the programmatic API as configuration. The class
+ * {@link fr.cnes.httpclient.configuration.ProxySPNegoAPIConfiguration} is used to configure this
+ * client.
+ *
  * @author Jean-Christophe Malapert (jean-christophe.malapert@cnes.fr)
  * @author S. ETCHEVERRY
  */
@@ -41,15 +42,15 @@ public final class GSSClientAPI extends AbstractGSSClient {
      * Get actual class name to be printed on.
      */
     private static final Logger LOG = LogManager.getLogger(GSSClientAPI.class.getName());
-    
+
     /**
-     * Creates the GSS client.
-     * This constructor sets the following variables using {@link fr.cnes.httpclient.configuration.ProxySPNegoJAASConfiguration}.
+     * Creates the GSS client. This constructor sets the following variables using
+     * {@link fr.cnes.httpclient.configuration.ProxySPNegoJAASConfiguration}.
      * <ul>
      * <li>the JAVA environment variable {@value #JAVA_SECURITY_KRB5_ENV}</li>
      * <li>the Service Principal Name {@link #setServiceSpincipalName(java.lang.String)}
-     * </ul>   
-     */    
+     * </ul>
+     */
     public GSSClientAPI() {
         LOG.traceEntry();
         LOG.debug("{} = {}", JAVA_SECURITY_KRB5_ENV, ProxySPNegoAPIConfiguration.KRB5.
@@ -62,21 +63,22 @@ public final class GSSClientAPI extends AbstractGSSClient {
 
     /**
      * {@inheritDoc}
-     */    
+     */
     @Override
     protected Subject login() throws GSSException {
         LOG.traceEntry();
         final LoginContext loginContext;
-        try {            
+        try {
             final KerberosConfiguration config = new KerberosConfiguration();
             config.initialize();
             loginContext = new LoginContext(ProxySPNegoAPIConfiguration.JAAS_CONTEXT.getValue());
             loginContext.login();
         } catch (LoginException ex) {
+            LOG.error(ex);
             throw LOG.throwing(new GSSException(GSSException.DEFECTIVE_CREDENTIAL,
                     GSSException.BAD_STATUS,
                     "Kerberos client '" + getName() + "' failed to login to KDC. Error: "
-                    + ex.getMessage()));            
+                    + ex.getMessage()));
         }
         return LOG.traceExit(loginContext.getSubject());
     }

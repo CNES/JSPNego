@@ -24,17 +24,17 @@
  * <img src="{@docRoot}/doc-files/proxyKerberos.png" alt="Proxy Kerberos"><br>
  * A client to make an HTTP request through a proxy using SSO follow the following steps:
  * <ul>
- *  <li>1 - Ask a TGT ticket to IPA</li>
- *  <li>2 - Return  a TGT</li>
- *  <li>3 - Request a HTTP request to the proxy</li>
- *  <li>4 - Return a 407 code (Authentication Required)</li>
- *  <li>5 - Ask a TGS (Ticket Granting Service) ticket to acccess to HTTP/<i>proxy_host</i> 
+ * <li>1 - Ask a TGT ticket to IPA</li>
+ * <li>2 - Return a TGT</li>
+ * <li>3 - Request a HTTP request to the proxy</li>
+ * <li>4 - Return a 407 code (Authentication Required)</li>
+ * <li>5 - Ask a TGS (Ticket Granting Service) ticket to acccess to HTTP/<i>proxy_host</i>
  * service</li>
- *  <li>6 - Return a TGS ticket</li>
- *  <li>7 - Request a HTTP request with the TGS included in the HTTP header</li>
- *  <li>8 - The proxy validates the authentication</li>
- *  <li>9-10 - Check the authorization according to IPA registry 
- * </ul> 
+ * <li>6 - Return a TGS ticket</li>
+ * <li>7 - Request a HTTP request with the TGS included in the HTTP header</li>
+ * <li>8 - The proxy validates the authentication</li>
+ * <li>9-10 - Check the authorization according to IPA registry
+ * </ul>
  * <h2>Keytab creation</h2>
  * A keytab (short for “key table”) stores long-term keys for one or more principals. Keytabs are
  * normally represented by files in a standard format, although in rare cases they can be
@@ -51,10 +51,9 @@
  * <pre>  {@code
  * ipa-getkeytab -p <login>@<server> -k <keytabPath> -P
  * }
- * </pre>
- * A keytab can be displayed using the <i>klist</i>. A Keytabs can be destroyed using
+ * </pre> A keytab can be displayed using the <i>klist</i>. A Keytabs can be destroyed using
  * <i>kdestroy</i>.
- * 
+ *
  * <h2>The code to request a page through a proxy using SSO</h2>
  * <pre>
  * {@code

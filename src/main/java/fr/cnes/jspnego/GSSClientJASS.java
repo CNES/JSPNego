@@ -29,42 +29,42 @@ import org.apache.logging.log4j.Logger;
 import org.ietf.jgss.GSSException;
 
 /**
- * GSS (Generic Security Service) client with the JAAS configuration file.
- * The class {@link fr.cnes.httpclient.configuration.ProxySPNegoJAASConfiguration} is used to 
- * configure this client.
+ * GSS (Generic Security Service) client with the JAAS configuration file. The class
+ * {@link fr.cnes.httpclient.configuration.ProxySPNegoJAASConfiguration} is used to configure this
+ * client.
+ *
  * @author Jean-Christophe Malapert (jean-christophe.malapert@cnes.fr)
  * @author S. ETCHEVERRY
  */
 public final class GSSClientJASS extends AbstractGSSClient {
-    
+
     /**
      * Java environment variable for authentication {@value #JAVA_SECURITY_AUTH_ENV}.
      */
     public static final String JAVA_SECURITY_AUTH_ENV = "java.security.auth.login.config";
-    
+
     /**
      * Get actual class name to be printed on.
      */
     private static final Logger LOG = LogManager.getLogger(KerberosConfiguration.class.getName());
-    
 
     /**
-     * Creates the GSS client.
-     * This constructor sets the following variables using {@link fr.cnes.httpclient.configuration.ProxySPNegoJAASConfiguration}.
+     * Creates the GSS client. This constructor sets the following variables using
+     * {@link fr.cnes.httpclient.configuration.ProxySPNegoJAASConfiguration}.
      * <ul>
      * <li>the JAVA environment variable {@value #JAVA_SECURITY_AUTH_ENV}</li>
      * <li>the JAVA environment variable {@value #JAVA_SECURITY_KRB5_ENV}</li>
      * <li>the Service Principal Name {@link #setServiceSpincipalName(java.lang.String)}
-     * </ul>   
+     * </ul>
      */
     public GSSClientJASS() {
         LOG.traceEntry();
-        LOG.debug("Sets {} = {}",JAVA_SECURITY_KRB5_ENV, ProxySPNegoJAASConfiguration.KRB5.
+        LOG.debug("Sets {} = {}", JAVA_SECURITY_KRB5_ENV, ProxySPNegoJAASConfiguration.KRB5.
                 getValue());
         System.setProperty(JAVA_SECURITY_KRB5_ENV, ProxySPNegoJAASConfiguration.KRB5.
                 getValue());
-        LOG.debug("Sets {} = {}",JAVA_SECURITY_AUTH_ENV, ProxySPNegoJAASConfiguration.JAAS.
-                getValue());        
+        LOG.debug("Sets {} = {}", JAVA_SECURITY_AUTH_ENV, ProxySPNegoJAASConfiguration.JAAS.
+                getValue());
         System.setProperty(JAVA_SECURITY_AUTH_ENV, ProxySPNegoJAASConfiguration.JAAS.
                 getValue());
         this.setServiceSpincipalName(ProxySPNegoJAASConfiguration.SERVICE_PROVIDER_NAME.getValue());
@@ -79,14 +79,15 @@ public final class GSSClientJASS extends AbstractGSSClient {
         LOG.traceEntry();
         final LoginContext loginContext;
         try {
-             loginContext = new LoginContext(ProxySPNegoJAASConfiguration.JAAS_CONTEXT.getValue());
-             loginContext.login();
+            loginContext = new LoginContext(ProxySPNegoJAASConfiguration.JAAS_CONTEXT.getValue());
+            loginContext.login();
         } catch (LoginException ex) {
+            LOG.error(ex);
             throw LOG.throwing(new GSSException(GSSException.DEFECTIVE_CREDENTIAL,
                     GSSException.BAD_STATUS,
                     "Kerberos client '" + getName() + "' failed to login to KDC. Error: "
-                    + ex.getMessage())); 
-        }        
+                    + ex.getMessage()));
+        }
         return LOG.traceExit(loginContext.getSubject());
     }
 

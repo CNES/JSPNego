@@ -42,32 +42,35 @@ import org.restlet.util.Series;
  *
  * @author malapert
  */
-public class HttpMethodCall extends ClientCall{
-    
-    /** The associated HTTP client. */
+public class HttpMethodCall extends ClientCall {
+
+    /**
+     * The associated HTTP client.
+     */
     private volatile HttpClientHelper clientHelper;
 
-    /** The wrapped HTTP request. */
+    /**
+     * The wrapped HTTP request.
+     */
     private volatile HttpUriRequest httpRequest;
 
-    /** The wrapped HTTP response. */
+    /**
+     * The wrapped HTTP response.
+     */
     private volatile HttpResponse httpResponse;
 
-    /** Indicates if the response headers were added. */
+    /**
+     * Indicates if the response headers were added.
+     */
     private volatile boolean responseHeadersAdded;
 
     /**
      * Constructor.
-     * 
-     * @param helper
-     *            The parent HTTP client helper.
-     * @param method
-     *            The method name.
-     * @param requestUri
-     *            The request URI.
-     * @param hasEntity
-     *            Indicates if the call will have an entity to send to the
-     *            server.
+     *
+     * @param helper The parent HTTP client helper.
+     * @param method The method name.
+     * @param requestUri The request URI.
+     * @param hasEntity Indicates if the call will have an entity to send to the server.
      * @throws IOException
      */
     public HttpMethodCall(HttpClientHelper helper, final String method,
@@ -123,11 +126,11 @@ public class HttpMethodCall extends ClientCall{
             throw new IllegalArgumentException(
                     "Only HTTP or HTTPS resource URIs are allowed here");
         }
-    }    
-    
+    }
+
     /**
      * Returns the HTTP request.
-     * 
+     *
      * @return The HTTP request.
      */
     public HttpUriRequest getHttpRequest() {
@@ -136,7 +139,7 @@ public class HttpMethodCall extends ClientCall{
 
     /**
      * Returns the HTTP response.
-     * 
+     *
      * @return The HTTP response.
      */
     public HttpResponse getHttpResponse() {
@@ -145,7 +148,7 @@ public class HttpMethodCall extends ClientCall{
 
     /**
      * Returns the response reason phrase.
-     * 
+     *
      * @return The response reason phrase.
      */
     @Override
@@ -186,7 +189,7 @@ public class HttpMethodCall extends ClientCall{
             // needed
             InputStream responseStream = (getHttpResponse() == null) ? null
                     : (getHttpResponse().getEntity() == null) ? null
-                            : getHttpResponse().getEntity().getContent();
+                    : getHttpResponse().getEntity().getContent();
             if (responseStream != null) {
                 result = new FilterInputStream(responseStream) {
                     @Override
@@ -204,7 +207,7 @@ public class HttpMethodCall extends ClientCall{
 
     /**
      * Returns the modifiable list of response headers.
-     * 
+     *
      * @return The modifiable list of response headers.
      */
     @Override
@@ -228,7 +231,7 @@ public class HttpMethodCall extends ClientCall{
     /**
      * Returns the response address.<br>
      * Corresponds to the IP address of the responding server.
-     * 
+     *
      * @return The response address.
      */
     @Override
@@ -238,7 +241,7 @@ public class HttpMethodCall extends ClientCall{
 
     /**
      * Returns the response status code.
-     * 
+     *
      * @return The response status code.
      */
     @Override
@@ -251,11 +254,10 @@ public class HttpMethodCall extends ClientCall{
     }
 
     /**
-     * Sends the request to the client. Commits the request line, headers and
-     * optional entity and send them over the network.
-     * 
-     * @param request
-     *            The high-level request.
+     * Sends the request to the client. Commits the request line, headers and optional entity and
+     * send them over the network.
+     *
+     * @param request The high-level request.
      * @return The result status.
      */
     @Override
@@ -292,7 +294,7 @@ public class HttpMethodCall extends ClientCall{
                         return new BasicHeader(
                                 HeaderConstants.HEADER_CONTENT_TYPE, (entity
                                         .getMediaType() != null) ? entity
-                                        .getMediaType().toString() : null);
+                                                .getMediaType().toString() : null);
                     }
 
                     public boolean isRepeatable() {
@@ -346,5 +348,5 @@ public class HttpMethodCall extends ClientCall{
             callback.handle(request, response);
         }
     }
-    
+
 }

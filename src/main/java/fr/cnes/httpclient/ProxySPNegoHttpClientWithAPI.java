@@ -117,10 +117,16 @@ public final class ProxySPNegoHttpClientWithAPI extends ProxyHttpClientWithoutAu
      *
      * @param builder builder
      * @return builder including proxy
+     * @throws IllegalArgumentException when a validation error happens in ProxySPNegoAPIConfiguration
      */
     @Override
     protected HttpClientBuilder createBuilderProxy(final HttpClientBuilder builder) {
         LOG.traceEntry("buulder: {}", builder);
+        final StringBuilder error = new StringBuilder();
+        final boolean isValid = ProxySPNegoAPIConfiguration.isValid(error);
+        if (!isValid) {
+            throw LOG.throwing(new IllegalArgumentException(error.toString()));
+        }
         final HttpHost proxy = stringToProxy(ProxySPNegoAPIConfiguration.HTTP_PROXY.getValue());
         final List<String> excludedHosts = new ArrayList<>();
         Collections.addAll(excludedHosts, ProxySPNegoAPIConfiguration.NO_PROXY.getValue().split(

@@ -136,6 +136,7 @@ public final class ProxySPNegoHttpClientWithJAAS extends ProxyHttpClientWithoutA
         final StringBuilder error = new StringBuilder();
         final boolean isValid = ProxySPNegoJAASConfiguration.isValid(error);
         if (!isValid) {
+            LOG.error("Error validation : {}", error);
             throw LOG.throwing(new IllegalArgumentException(error.toString()));
         }        
         final HttpHost proxy = stringToProxy(ProxySPNegoJAASConfiguration.HTTP_PROXY.getValue());

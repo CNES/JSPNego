@@ -63,6 +63,7 @@ public class ProxyHttpClientWithBasicAuth extends ProxyHttpClientWithoutAuth {
         final StringBuilder error = new StringBuilder();
         final boolean isValid = ProxyConfiguration.isValid(error);
         if(!isValid) {
+            LOG.error("Error validation : {}", error);
             throw LOG.throwing(new IllegalArgumentException(error.toString()));
         }
         final CredentialsProvider credsProvider = new BasicCredentialsProvider();

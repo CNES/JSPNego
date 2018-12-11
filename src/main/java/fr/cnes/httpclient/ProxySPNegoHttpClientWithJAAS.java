@@ -80,6 +80,16 @@ public final class ProxySPNegoHttpClientWithJAAS extends ProxyHttpClientWithoutA
      * Creates a HTTP client that makes requests to a proxy authenticated with SSO and configured by
      * a JAAAS configuration file. Uses
      * {@link fr.cnes.httpclient.configuration.ProxySPNegoJAASConfiguration} class to configure this
+     * proxy.     
+     */
+    public ProxySPNegoHttpClientWithJAAS() {
+        this(false);
+    }
+    
+    /**
+     * Creates a HTTP client that makes requests to a proxy authenticated with SSO and configured by
+     * a JAAAS configuration file. Uses
+     * {@link fr.cnes.httpclient.configuration.ProxySPNegoJAASConfiguration} class to configure this
      * proxy.
      *
      * @param isDisabledSSL True when the SSL certificate check is disabled otherwise False.

@@ -54,6 +54,7 @@ public class ProxySPNegoHttpClientTest {
     private static final String userID = System.getProperty("userID");
     private static final String keytabFilePath = System.getProperty("keytabFilePath");
     private static final String ticketCachePath = System.getProperty("ticketCachePath");
+    private static final String principal = System.getProperty("principal");
     
     static {
         Engine.getInstance().getRegisteredClients().add(0, new HttpClientHelper(null));

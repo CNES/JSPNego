@@ -281,15 +281,18 @@ public class HttpMethodCall extends ClientCall {
                     && (getHttpRequest() instanceof HttpEntityEnclosingRequestBase)) {
                 final HttpEntityEnclosingRequestBase eem = (HttpEntityEnclosingRequestBase) getHttpRequest();
                 eem.setEntity(new AbstractHttpEntity() {
+                    @Override
                     public InputStream getContent() throws IOException,
                             IllegalStateException {
                         return entity.getStream();
                     }
 
+                    @Override
                     public long getContentLength() {
                         return entity.getSize();
                     }
 
+                    @Override
                     public Header getContentType() {
                         return new BasicHeader(
                                 HeaderConstants.HEADER_CONTENT_TYPE, (entity
@@ -297,14 +300,17 @@ public class HttpMethodCall extends ClientCall {
                                                 .getMediaType().toString() : null);
                     }
 
+                    @Override
                     public boolean isRepeatable() {
                         return !entity.isTransient();
                     }
 
+                    @Override
                     public boolean isStreaming() {
                         return (entity.getSize() == Representation.UNKNOWN_SIZE);
                     }
 
+                    @Override
                     public void writeTo(OutputStream os) throws IOException {
                         entity.write(os);
                         os.flush();

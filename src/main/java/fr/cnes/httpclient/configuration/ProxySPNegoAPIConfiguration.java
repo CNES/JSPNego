@@ -220,7 +220,6 @@ public enum ProxySPNegoAPIConfiguration {
                     "Illegal combination : STORE_KEY=true && USE_TICKET_CACHE=true && DO_NOT_PROMPT=true");
             isValid = false;
         }
-
         error.append(validation);
         return isValid;
     }

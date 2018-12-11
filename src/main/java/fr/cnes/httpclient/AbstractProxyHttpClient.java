@@ -69,19 +69,6 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
     protected AbstractProxyHttpClient(final boolean isDisabledSSL) {
         super(isDisabledSSL);
     }
-
-    /**
-     * Creates builder extension {@link AbstractProxyHttpClient#createBuilderProxy(org.apache.http.impl.client.HttpClientBuilder)
-     * }
-     *
-     * @param builder builder
-     * @return builder with proxy.
-     */
-    @Override
-    protected HttpClientBuilder createBuilderExtension(final HttpClientBuilder builder) {
-        return createBuilderProxy(builder);
-    }
-
     /**
      * Creates builder proxy.
      *

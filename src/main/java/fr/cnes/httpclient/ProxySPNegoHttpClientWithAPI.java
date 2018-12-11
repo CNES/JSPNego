@@ -64,6 +64,14 @@ public final class ProxySPNegoHttpClientWithAPI extends ProxyHttpClientWithoutAu
 
     /**
      * Creates a Http client based on a proxy having a SSO authentication and configuration based on
+     * an API programmatic.     
+     */
+    public ProxySPNegoHttpClientWithAPI() {
+        this(false);
+    }
+    
+    /**
+     * Creates a Http client based on a proxy having a SSO authentication and configuration based on
      * an API programmatic.
      *
      * @param isDisabledSSL True when the SSL certificate check is disabled otherwise False.
@@ -125,6 +133,7 @@ public final class ProxySPNegoHttpClientWithAPI extends ProxyHttpClientWithoutAu
         final StringBuilder error = new StringBuilder();
         final boolean isValid = ProxySPNegoAPIConfiguration.isValid(error);
         if (!isValid) {
+            LOG.error("Error validation : {}", error);
             throw LOG.throwing(new IllegalArgumentException(error.toString()));
         }
         final HttpHost proxy = stringToProxy(ProxySPNegoAPIConfiguration.HTTP_PROXY.getValue());

@@ -33,6 +33,13 @@ public class ProxyHttpClientWithoutAuth extends AbstractProxyHttpClient {
 
     /**
      * Creates a HTTP client using a proxy with no authentication.
+     */    
+    public ProxyHttpClientWithoutAuth() {
+        this(false);
+    }
+    
+    /**
+     * Creates a HTTP client using a proxy with no authentication.
      * @param isDisabledSSL True when the SSL certificate check is disabled otherwise False.
      */    
     public ProxyHttpClientWithoutAuth(final boolean isDisabledSSL) {
@@ -74,6 +81,7 @@ public class ProxyHttpClientWithoutAuth extends AbstractProxyHttpClient {
         final StringBuilder error = new StringBuilder();
         final boolean isValid = ProxyConfiguration.isValid(error);
         if(!isValid) {
+            LOG.error("Error validation : {}", error);
             throw LOG.throwing(new IllegalArgumentException(error.toString()));
         }        
         final HttpHost proxy = stringToProxy(ProxyConfiguration.HTTP_PROXY.getValue());

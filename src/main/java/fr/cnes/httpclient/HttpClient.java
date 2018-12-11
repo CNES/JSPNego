@@ -26,6 +26,9 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
@@ -38,8 +41,11 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.client.LaxRedirectStrategy;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.HttpContext;
 import org.apache.logging.log4j.LogManager;
@@ -51,6 +57,23 @@ import org.apache.logging.log4j.Logger;
  * @author Jean-Christophe Malapert
  */
 public class HttpClient implements org.apache.http.client.HttpClient, Closeable {
+    
+    /**
+     * Maximum total of connections per route.
+     */    
+    public static final String CONNECTION_MAX_PER_ROUTE = "connectionMaxPerRoute"; 
+    /**
+     * Maximum total of connections.
+     */
+    public static final String CONNECTION_MAX_TOTAL = "connectionMaxTotal";
+    /**
+     * maximum time to live for persistent connections.
+     */
+    public static final String CONNECTION_TIME_TO_LIVE_MS = "connectionTimeToLiveMs";
+    /**
+     * number of retries before the request fails.
+     */
+    public static final String MAX_RETRY = "maxRetry";    
 
     /**
      * Disable SSL certificate checking.
@@ -107,6 +130,7 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
      * Http client.
      */
     private final CloseableHttpClient httpClient;
+    
 
     /**
      * Creates a Http client.
@@ -121,16 +145,27 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
      * @param isDisabledSSL True when SSL certificates are disabled otherwise False
      */
     public HttpClient(final boolean isDisabledSSL) {
-        this.httpClient = createBuilder(isDisabledSSL).build();
+        this(isDisabledSSL, new HashMap<>());
     }
+    
+    /**
+     * Creates a http client that ignores the SSL certificates.
+     *
+     * @param isDisabledSSL True when SSL certificates are disabled otherwise False
+     * @param config Options for HTTP client.
+     */
+    public HttpClient(final boolean isDisabledSSL, final Map<String, String> config) {
+        this.httpClient = createBuilder(isDisabledSSL, config).build();
+    }    
 
     /**
      * Creates the Http client builder.
      *
      * @param isDisabledSSL True when SSL certificates are disabled otherwise False
+     * @param config options for Http client
      * @return the Http client builder
      */
-    protected final HttpClientBuilder createBuilder(final boolean isDisabledSSL) {
+    protected final HttpClientBuilder createBuilder(final boolean isDisabledSSL, final Map<String, String> config) {
         HttpClientBuilder builder = HttpClients.custom();
         if (isDisabledSSL) {
             LOG.warn("SSL Certificate checking is disabled. The connection is insecured.");
@@ -138,19 +173,60 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
                     .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
         }
 
-        return createBuilderExtension(builder);
+        return createBuilderExtension(builder, config);
     }
-
+    
+    /**
+     * Creates builder extension.
+     *
+     * @param builder builder
+     * @param config options for Http client
+     * @return builder with extensions.
+     */
+    protected HttpClientBuilder createBuilderExtension(final HttpClientBuilder builder, final Map<String, String> config) {
+        HttpClientBuilder extBuilder = createBuilderProxy(builder);
+        extBuilder = createRedirect(extBuilder);
+        if(config.containsKey(CONNECTION_MAX_PER_ROUTE) && config.containsKey(CONNECTION_MAX_TOTAL)) {
+            extBuilder = createConnectionManager(extBuilder, Integer.parseInt(config.get(CONNECTION_MAX_PER_ROUTE)), Integer.parseInt(config.get(CONNECTION_MAX_TOTAL)));
+        }
+        if(config.containsKey(CONNECTION_TIME_TO_LIVE_MS)) {
+            extBuilder = createConnectionTimeout(extBuilder, Integer.parseInt(config.get(CONNECTION_TIME_TO_LIVE_MS)));
+        }
+        if(config.containsKey(MAX_RETRY)) {
+            extBuilder = createRetry(extBuilder, Integer.parseInt(config.get(MAX_RETRY)));
+        }
+        return extBuilder;
+    }
+    
     /**
      * Adds builder extension. In this case, add no extension.
      *
      * @param builder builder
      * @return the same builder
-     */
-    protected HttpClientBuilder createBuilderExtension(final HttpClientBuilder builder) {
+     */    
+    protected HttpClientBuilder createBuilderProxy(final HttpClientBuilder builder) {
         LOG.traceEntry("builder: {}", builder);
-        return LOG.traceExit(builder);
+        return LOG.traceExit(builder);        
+    }    
+    
+    private HttpClientBuilder createConnectionManager(final HttpClientBuilder builder, int connPerRoute, int total) {
+        PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager();
+        connManager.setDefaultMaxPerRoute(connPerRoute);
+        connManager.setMaxTotal(total);
+        return builder.setConnectionManager(connManager);
     }
+    
+    private HttpClientBuilder createConnectionTimeout(final HttpClientBuilder builder, int timeMs) {
+        return builder.setConnectionTimeToLive(timeMs, TimeUnit.MILLISECONDS);
+    }
+    
+    private HttpClientBuilder createRedirect(final HttpClientBuilder builder) {
+        return builder.setRedirectStrategy(new LaxRedirectStrategy());
+    }   
+    
+    protected HttpClientBuilder createRetry(final HttpClientBuilder builder, int retry) {
+        return builder.setRetryHandler(new DefaultHttpRequestRetryHandler(retry, true));
+    }       
 
     /**
      * Disables the SSL certificate checking.

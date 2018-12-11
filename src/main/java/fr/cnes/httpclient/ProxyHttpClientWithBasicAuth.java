@@ -44,6 +44,14 @@ public class ProxyHttpClientWithBasicAuth extends ProxyHttpClientWithoutAuth {
             getName());
 
     /**
+     * Creates a HTTP client using a proxy with a basic authentication.     
+     */
+    public ProxyHttpClientWithBasicAuth() {
+        this(false);
+    }
+
+    
+    /**
      * Creates a HTTP client using a proxy with a basic authentication.
      * @param isDisabledSSL True when the SSL certificate check is disabled otherwise False.
      */

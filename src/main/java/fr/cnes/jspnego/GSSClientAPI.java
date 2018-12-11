@@ -71,6 +71,7 @@ public final class GSSClientAPI extends AbstractGSSClient {
             final KerberosConfiguration config = new KerberosConfiguration();
             config.initialize();
             loginContext = new LoginContext(ProxySPNegoAPIConfiguration.JAAS_CONTEXT.getValue());
+            loginContext.login();
         } catch (LoginException ex) {
             throw LOG.throwing(new GSSException(GSSException.DEFECTIVE_CREDENTIAL,
                     GSSException.BAD_STATUS,

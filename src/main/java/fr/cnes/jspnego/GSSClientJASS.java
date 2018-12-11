@@ -80,12 +80,13 @@ public final class GSSClientJASS extends AbstractGSSClient {
         final LoginContext loginContext;
         try {
              loginContext = new LoginContext(ProxySPNegoJAASConfiguration.JAAS_CONTEXT.getValue());
+             loginContext.login();
         } catch (LoginException ex) {
             throw LOG.throwing(new GSSException(GSSException.DEFECTIVE_CREDENTIAL,
                     GSSException.BAD_STATUS,
                     "Kerberos client '" + getName() + "' failed to login to KDC. Error: "
                     + ex.getMessage())); 
-        }
+        }        
         return LOG.traceExit(loginContext.getSubject());
     }
 

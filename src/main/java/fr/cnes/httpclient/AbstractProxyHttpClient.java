@@ -42,16 +42,21 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
     private static final Logger LOG = LogManager.getLogger(AbstractProxyHttpClient.class.getName());
    
     protected final HttpClientBuilder createBuilder(final HttpHost proxy, final List<String> excludedHosts, final boolean isDisabledSSL) {
+        LOG.traceEntry("proxy: {}\n"
+                + "excludedHosts: {}\n"
+                + "isDisabledSSL: {}", proxy, excludedHosts, isDisabledSSL);
         final CredentialsProvider crp = createCredsProvider(proxy);
         final Registry<AuthSchemeProvider> regAuth = registerAuthSchemeProvider();
         HttpClientBuilder builder = HttpClients.custom()   
                 .setRoutePlanner(configureRouterPlanner(proxy, excludedHosts));  
         
         if(crp != null) {
+            LOG.debug("Adds credentials to builder");
             builder = builder.setDefaultCredentialsProvider(crp);
         }
         
         if(regAuth != null) {
+            LOG.debug("Adds auth scheme");
             builder = builder.setDefaultAuthSchemeRegistry(regAuth);
         }
         
@@ -60,15 +65,15 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
             builder = builder.setSSLContext(disableSSLCertificateChecking())
                     .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
         }  
-        return builder;
+        return LOG.traceExit(builder);
     }
     
     protected final HttpHost buildProxy(final String value) {
+        LOG.traceEntry("value: {}", value);
         String[] proxyFragments = value.split(":");
-        return (proxyFragments.length == 2) 
+        return LOG.traceExit((proxyFragments.length == 2) 
                 ? new HttpHost(proxyFragments[0], Integer.parseInt(proxyFragments[1]))
-                : new HttpHost(proxyFragments[0]);
-                        
+                : new HttpHost(proxyFragments[0]));                        
     }    
     
     /**
@@ -78,7 +83,9 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
     private RequestConfig config;        
     
     protected final void setHttpClient(final CloseableHttpClient httpClient) {
+        LOG.traceEntry("httpClient: {}", httpClient);
         this.httpClient = httpClient;
+        LOG.traceExit();
     }
     
     /**
@@ -93,20 +100,30 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
     }    
     
     protected HttpHost getProxyConfiguration() {
-        return this.config.getProxy();
+        LOG.traceEntry();
+        return LOG.traceExit(this.config.getProxy());
     }
     
     protected CloseableHttpClient getHttpClient() {
-        return this.httpClient;
+        LOG.traceEntry();
+        return LOG.traceExit(this.httpClient);
     }       
     
+    /**
+     * Configures route.
+     * @param proxy proxy
+     * @param excludedHosts host for which hth proxy is not needed
+     * @return 
+     */
     protected final HttpRoutePlanner configureRouterPlanner(HttpHost proxy, List<String> excludedHosts) {
-
+        LOG.traceEntry("proxy: {}\n"
+                + "excludedHosts: {}", proxy, excludedHosts);
         HttpRoutePlanner routePlanner = new DefaultProxyRoutePlanner(proxy) {
 
             @Override
             public HttpRoute determineRoute(HttpHost host, HttpRequest request,
                     HttpContext context) throws HttpException {
+                LOG.traceEntry("host: {}\nrequest: {}\ncontext: {}", host, request, context);
                 final HttpClientContext clientContext = HttpClientContext.adapt(context);
                 final RequestConfig config = clientContext.getRequestConfig();
                 final InetAddress local = config.getLocalAddress();
@@ -124,35 +141,58 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
                 }
                 final boolean secure = target.getSchemeName().equalsIgnoreCase("https");
                 if (excludedHosts.contains(host.getHostName())) {
-                    return new HttpRoute(target, local, secure);
+                    return LOG.traceExit(new HttpRoute(target, local, secure));
                 } else {
-                    return new HttpRoute(target, local, proxy, secure);
+                    return LOG.traceExit(new HttpRoute(target, local, proxy, secure));
                 }
             }
         };
 
-        return routePlanner;
+        return LOG.traceExit(routePlanner);
     }  
     
+    /**
+     * Creates the credentials.
+     * @param proxy proxy
+     * @return the credentials
+     */
     protected abstract CredentialsProvider createCredsProvider(final HttpHost proxy);
     
+    /**
+     * Registers the authentication scheme.
+     * @return the authentication scheme or {@code null}
+     */
     protected abstract Registry<AuthSchemeProvider> registerAuthSchemeProvider();
     
+    /**
+     * {@inheritDoc }
+     */    
     @Override
     public HttpParams getParams() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        LOG.traceEntry();
+        return LOG.traceExit(this.httpClient.getParams());
     }
 
+    /**
+     * {@inheritDoc }
+     */    
     @Override
     public ClientConnectionManager getConnectionManager() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        LOG.traceEntry();
+        return LOG.traceExit(this.httpClient.getConnectionManager());
     }
 
+    /**
+     * {@inheritDoc }
+     */    
     @Override
     public HttpResponse execute(HttpUriRequest request) throws IOException, ClientProtocolException {
         return this.execute(request, new HttpClientContext());
     }
 
+    /**
+     * {@inheritDoc }
+     */    
     @Override
     public HttpResponse execute(HttpUriRequest request, HttpContext context) throws IOException,
             ClientProtocolException {
@@ -168,12 +208,18 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
         return this.httpClient.execute(request, context);
     }
 
+    /**
+     * {@inheritDoc }
+     */    
     @Override
     public HttpResponse execute(HttpHost target, HttpRequest request) throws IOException,
             ClientProtocolException {
         return this.execute(target, request, new HttpClientContext());
     }
 
+    /**
+     * {@inheritDoc }
+     */    
     @Override
     public HttpResponse execute(HttpHost target, HttpRequest request, HttpContext context) throws
             IOException, ClientProtocolException {
@@ -188,6 +234,9 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
         return LOG.traceExit(this.httpClient.execute(target, request, context));
     }
 
+    /**
+     * {@inheritDoc }
+     */    
     @Override
     public <T> T execute(HttpUriRequest request,
             ResponseHandler<? extends T> responseHandler) throws IOException,
@@ -195,6 +244,9 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
         return this.execute(request, responseHandler, new HttpClientContext());
     }
 
+    /**
+     * {@inheritDoc }
+     */    
     @Override
     public <T> T execute(HttpUriRequest request,
             ResponseHandler<? extends T> responseHandler, HttpContext context) throws IOException,
@@ -210,6 +262,9 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
         return LOG.traceExit(this.httpClient.execute(request, responseHandler, context));
     }
 
+    /**
+     * {@inheritDoc }
+     */    
     @Override
     public <T> T execute(HttpHost target, HttpRequest request,
             ResponseHandler<? extends T> responseHandler) throws IOException,
@@ -217,6 +272,9 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
         return this.execute(target, request, responseHandler, new HttpClientContext());
     }
 
+    /**
+     * {@inheritDoc }
+     */    
     @Override
     public <T> T execute(HttpHost target, HttpRequest request,
             ResponseHandler<? extends T> responseHandler, HttpContext context) throws IOException,
@@ -233,8 +291,7 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
     }
 
     /**
-     * Close the http connection.
-     *
+     * {@inheritDoc }
      */
     @Override
     public void close() {

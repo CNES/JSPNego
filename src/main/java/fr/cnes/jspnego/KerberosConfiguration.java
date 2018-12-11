@@ -68,13 +68,6 @@ public class KerberosConfiguration extends Configuration {
     private AppConfigurationEntry[] appConfigEntries;
 
     /**
-     * Creates a Kerberos configuration object.
-     */
-    public KerberosConfiguration() {
-        super();
-    }
-
-    /**
      * Initialize the kerberos configuration.
      */
     public void initialize() {
@@ -84,7 +77,7 @@ public class KerberosConfiguration extends Configuration {
         }
         final Map<String, String> config = ProxySPNegoAPIConfiguration.getConfig();
         final Set<Entry<String, String>> entries = config.entrySet();
-        for (Entry<String, String> entry : entries) {
+        for (final Entry<String, String> entry : entries) {
             if (entry.getKey().equals(ProxySPNegoAPIConfiguration.HTTP_PROXY.getKey())
                     || entry.getKey().equals(ProxySPNegoAPIConfiguration.NO_PROXY.getKey())) {
                 LOG.debug("Skip {} when recording in the Kerberos options", entry.getKey());

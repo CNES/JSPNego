@@ -119,7 +119,7 @@ public final class ProxySPNegoHttpClientWithAPI extends ProxyHttpClientWithoutAu
      * @return builder including proxy
      */
     @Override
-    protected HttpClientBuilder createBuilderProxy(HttpClientBuilder builder) {
+    protected HttpClientBuilder createBuilderProxy(final HttpClientBuilder builder) {
         LOG.traceEntry("buulder: {}", builder);
         final HttpHost proxy = stringToProxy(ProxySPNegoAPIConfiguration.HTTP_PROXY.getValue());
         final List<String> excludedHosts = new ArrayList<>();

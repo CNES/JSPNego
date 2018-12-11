@@ -65,6 +65,11 @@ public enum ProxySPNegoJAASConfiguration {
      */
     private String value;
 
+    /**
+     * Creates enum.
+     * @param key key
+     * @param value  vlaue
+     */
     ProxySPNegoJAASConfiguration(final String key, final String value) {
         this.key = key;
         this.value = value;
@@ -99,8 +104,8 @@ public enum ProxySPNegoJAASConfiguration {
      */
     public static Map<String, String> getConfig() {
         final Map<String, String> map = new ConcurrentHashMap<>();
-        final ProxySPNegoAPIConfiguration[] confs = ProxySPNegoAPIConfiguration.values();
-        for (ProxySPNegoAPIConfiguration conf : confs) {
+        final ProxySPNegoJAASConfiguration[] confs = ProxySPNegoJAASConfiguration.values();
+        for (ProxySPNegoJAASConfiguration conf : confs) {
             map.put(conf.getKey(), conf.getValue());
         }
         return map;

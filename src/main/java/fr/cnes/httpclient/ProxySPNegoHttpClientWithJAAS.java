@@ -83,7 +83,6 @@ public final class ProxySPNegoHttpClientWithJAAS extends ProxyHttpClientWithoutA
      * proxy.
      *
      * @param isDisabledSSL True when the SSL certificate check is disabled otherwise False.
-     * @author Jean-Christophe Malapert
      */
     public ProxySPNegoHttpClientWithJAAS(final boolean isDisabledSSL) {
         super(isDisabledSSL);
@@ -129,10 +128,16 @@ public final class ProxySPNegoHttpClientWithJAAS extends ProxyHttpClientWithoutA
      *
      * @param builder builder
      * @return builder including proxy
+     * @throws IllegalArgumentException when a validation error happens in ProxySPNegoJAASConfiguration
      */
     @Override
-    protected HttpClientBuilder createBuilderProxy(HttpClientBuilder builder) {
+    protected HttpClientBuilder createBuilderProxy(final HttpClientBuilder builder) {
         LOG.traceEntry("builder: {}", builder);
+        final StringBuilder error = new StringBuilder();
+        final boolean isValid = ProxySPNegoJAASConfiguration.isValid(error);
+        if (!isValid) {
+            throw LOG.throwing(new IllegalArgumentException(error.toString()));
+        }        
         final HttpHost proxy = stringToProxy(ProxySPNegoJAASConfiguration.HTTP_PROXY.getValue());
         final List<String> excludedHosts = new ArrayList<>();
         Collections.addAll(excludedHosts, ProxySPNegoJAASConfiguration.NO_PROXY.getValue().split(

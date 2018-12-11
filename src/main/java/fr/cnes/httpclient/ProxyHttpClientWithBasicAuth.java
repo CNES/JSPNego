@@ -37,19 +37,34 @@ import org.apache.logging.log4j.Logger;
  */
 public class ProxyHttpClientWithBasicAuth extends ProxyHttpClientWithoutAuth {
 
+    /**
+     * Get actual class name to be printed on.
+     */    
     private static final Logger LOG = LogManager.getLogger(ProxyHttpClientWithBasicAuth.class.
             getName());
 
+    /**
+     * Creates a HTTP client using a proxy with a basic authentication.
+     * @param isDisabledSSL True when the SSL certificate check is disabled otherwise False.
+     */
     public ProxyHttpClientWithBasicAuth(final boolean isDisabledSSL) {
         super(isDisabledSSL);
     }
 
     /**
-     * {@inheritDoc}
+     * Provides credentials by setting username/password.
+     * @param proxy Http proxy
+     * @return credentials
+     * @throws IllegalArgumentException when a validation error happens in ProxyConfiguration
      */
     @Override
     protected CredentialsProvider createCredsProvider(final HttpHost proxy) {
         LOG.traceEntry("proxy: {}", proxy);
+        final StringBuilder error = new StringBuilder();
+        final boolean isValid = ProxyConfiguration.isValid(error);
+        if(!isValid) {
+            throw LOG.throwing(new IllegalArgumentException(error.toString()));
+        }
         final CredentialsProvider credsProvider = new BasicCredentialsProvider();
         credsProvider.setCredentials(
                 new AuthScope(proxy),

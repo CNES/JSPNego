@@ -52,12 +52,13 @@ public final class GSSClientJASS extends AbstractGSSClient {
      * Creates the GSS client. This constructor sets the following variables using
      * {@link fr.cnes.httpclient.configuration.ProxySPNegoJAASConfiguration}.
      * <ul>
-     * <li>the JAVA environment variable {@value #JAVA_SECURITY_AUTH_ENV}</li>
-     * <li>the JAVA environment variable {@value #JAVA_SECURITY_KRB5_ENV}</li>
+     * <li>the JAVA environment variable {@value fr.cnes.jspnego.GSSClientJASS#JAVA_SECURITY_AUTH_ENV}</li>
+     * <li>the JAVA environment variable {@value fr.cnes.jspnego.AbstractGSSClient#JAVA_SECURITY_KRB5_ENV}</li>
      * <li>the Service Principal Name {@link #setServiceSpincipalName(java.lang.String)}
      * </ul>
      */
     public GSSClientJASS() {
+        super();
         LOG.traceEntry();
         LOG.debug("Sets {} = {}", JAVA_SECURITY_KRB5_ENV, ProxySPNegoJAASConfiguration.KRB5.
                 getValue());

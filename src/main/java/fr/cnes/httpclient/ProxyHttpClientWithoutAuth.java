@@ -31,6 +31,10 @@ public class ProxyHttpClientWithoutAuth extends AbstractProxyHttpClient {
     private static final Logger LOG = LogManager.getLogger(ProxyHttpClientWithoutAuth.class.
             getName());
 
+    /**
+     * Creates a HTTP client using a proxy with no authentication.
+     * @param isDisabledSSL True when the SSL certificate check is disabled otherwise False.
+     */    
     public ProxyHttpClientWithoutAuth(final boolean isDisabledSSL) {
         super(isDisabledSSL);
     }
@@ -58,9 +62,20 @@ public class ProxyHttpClientWithoutAuth extends AbstractProxyHttpClient {
         return null;
     }
 
+    /**
+     * Creates proxy builder without authentication.
+     * @param builder builder
+     * @return builder
+     * @throws IllegalArgumentException when a validation error happens in ProxyConfiguration
+     */
     @Override
     protected HttpClientBuilder createBuilderProxy(HttpClientBuilder builder) {
         LOG.traceEntry("builder : {}", builder);
+        final StringBuilder error = new StringBuilder();
+        final boolean isValid = ProxyConfiguration.isValid(error);
+        if(!isValid) {
+            throw LOG.throwing(new IllegalArgumentException(error.toString()));
+        }        
         final HttpHost proxy = stringToProxy(ProxyConfiguration.HTTP_PROXY.getValue());
         final List<String> excludedHosts = new ArrayList<>();
         Collections.addAll(excludedHosts, ProxyConfiguration.NO_PROXY.getValue().split("\\s*,\\s*"));

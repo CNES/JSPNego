@@ -157,11 +157,10 @@ public enum ProxySPNegoAPIConfiguration {
     public static Map<String, String> getConfig() {
         final Map<String, String> map = new ConcurrentHashMap<>();
         final ProxySPNegoAPIConfiguration[] confs = ProxySPNegoAPIConfiguration.values();
-        for (ProxySPNegoAPIConfiguration conf : confs) {
+        for (final ProxySPNegoAPIConfiguration conf : confs) {
             map.put(conf.getKey(), conf.getValue());
         }
         return map;
-
     }
 
     /**
@@ -169,10 +168,9 @@ public enum ProxySPNegoAPIConfiguration {
      *
      * @param error errors
      * @return true when the configuration is valid otherwise false
-     * @see
-     * {@link https://docs.oracle.com/javase/8/docs/jre/api/security/jaas/spec/com/sun/security/auth/module/Krb5LoginModule.html}
+     * @see <a href="https://docs.oracle.com/javase/8/docs/jre/api/security/jaas/spec/com/sun/security/auth/module/Krb5LoginModule.html">Krb5LoginModule</a>
      */
-    public static boolean isValid(StringBuilder error) {
+    public static boolean isValid(final StringBuilder error) {
         boolean isValid = true;
         final StringBuilder validation = new StringBuilder();
         if (ProxySPNegoAPIConfiguration.HTTP_PROXY.getValue().isEmpty()) {

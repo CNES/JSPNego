@@ -46,36 +46,69 @@ public enum ProxyConfiguration {
      */
     PASSWORD("password", "");
 
+    /**
+     * key.
+     */
     private final String key;
+    /**
+     * value.
+     */
     private String value;
 
+    /**
+     * Creates enum.
+     * @param key key
+     * @param value value
+     */
     ProxyConfiguration(final String key, final String value) {
         this.key = key;
         this.value = value;
     }
 
+    /**
+     * Returns the key.
+     * @return the key
+     */
     public String getKey() {
         return this.key;
     }
 
+    /**
+     * Returns the value.
+     * @return the value.
+     */
     public String getValue() {
         return this.value == null ? "" : this.value;
     }
 
+    /**
+     * Sets the value.
+     * @param value the value
+     */
     public void setValue(final String value) {
         this.value = value;
     }
-
+    
+    /**
+     * Returns the configuration as a map.
+     *
+     * @return the configuration
+     */
     public static Map<String, String> getConfig() {
         final Map<String, String> map = new ConcurrentHashMap<>();
-        final ProxySPNegoAPIConfiguration[] confs = ProxySPNegoAPIConfiguration.values();
-        for (ProxySPNegoAPIConfiguration conf : confs) {
+        final ProxyConfiguration[] confs = ProxyConfiguration.values();
+        for (final ProxyConfiguration conf : confs) {
             map.put(conf.getKey(), conf.getValue());
         }
         return map;
-    }
+    }    
 
-    public static boolean isValid(StringBuilder error) {
+    /**
+     * Validates the configuration.
+     * @param error error
+     * @return True when the configuration is valid otherwise False
+     */
+    public static boolean isValid(final StringBuilder error) {
         boolean isValid = true;
         final StringBuilder validation = new StringBuilder();
         if (ProxyConfiguration.HTTP_PROXY.getValue().isEmpty()) {

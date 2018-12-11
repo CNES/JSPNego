@@ -100,6 +100,7 @@ public class SPNegoScheme extends AuthSchemeBase {
      * @param type type of SPNego
      */
     public SPNegoScheme(final Type type) {
+        super();
         LOG.traceEntry("Type: {}", type);
         switch (type) {
             case PROXY_SPNEGO_API:

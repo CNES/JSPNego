@@ -16,11 +16,20 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <proxyHost></proxyHost>
         <proxyPort></proxyPort>
+        <principal></principal>
         <userID></userID>
         <keytabFilePath></keytabFilePath>
         <ticketCachePath></ticketCachePath>
         <skipTests>true</skipTests>
+        <restlet-version>3.0-M1</restlet-version>
     </properties>
+    <repositories>
+        <repository>
+            <id>maven-restlet</id>
+            <name>Restlet repository</name>
+            <url>https://maven.restlet.com</url>
+        </repository>
+    </repositories>    
     <url>http://github.com/Cnes/JSPNego</url>    
     <description>The Technical Web Proxy allows CNES users to connect on the Internet. Before that, an authentication on the proxy is required.
         The aim of the library is to provide an easy way to authenticate the user using Kerberos making him allowed to go through the Technical Web Proxy.</description>
@@ -184,6 +193,11 @@
         </plugins>
     </build>
     <dependencies>
+        <dependency>
+            <groupId>org.restlet.jse</groupId>
+            <artifactId>org.restlet</artifactId>
+            <version>${restlet-version}</version>
+        </dependency>         
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>

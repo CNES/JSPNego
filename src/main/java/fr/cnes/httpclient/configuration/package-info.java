@@ -19,9 +19,19 @@
  * MA 02110-1301  USA
  */
 /**
- * This package implements the protocol SPNego (Simple and Protected GSSAPI Negotiation Mechanism)
+ * This package provides the classes to configure the proxies.
+ *
+ * Several classes are available:
+ * <ul>
+ * <li>ProxyConfiguration to configure a proxy with no authentication or with a basic
+ * authentication.</li>
+ * <li>ProxySPNegoAPIConfiguration to configure a proxy with an authentication by SSO and configured
+ * by a programmatic API.</li>
+ * <li>ProxySPNegoJAASConfiguration to configure a proxy with an authentication by SSI and
+ * configured by a JAAS configuration file</li>
+ * </ul>
  * <p>
- * <img src="{@docRoot}/doc-files/gss.png" alt="GSS client">
+ * <img src="{@docRoot}/doc-files/configuration.png" alt="configuration for HTTP client">
  * </p> 
  */
-package fr.cnes.jspnego;
+package fr.cnes.httpclient.configuration;

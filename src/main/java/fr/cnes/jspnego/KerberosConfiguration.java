@@ -20,14 +20,17 @@ package fr.cnes.jspnego;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301  USA
  */
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import fr.cnes.httpclient.configuration.ProxySPNegoAPIConfiguration;
 import java.security.Security;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * This class removes the need for a jaas.conf file to configure the
@@ -39,9 +42,9 @@ import javax.security.auth.login.Configuration;
 public class KerberosConfiguration extends Configuration {
 
     /**
-     * True as string.
+     * Get actual class name to be printed on.
      */
-    private static final String STR_TRUE = "true";
+    private static final Logger LOG = LogManager.getLogger(KerberosConfiguration.class.getName());
 
     /**
      * Login module.
@@ -50,76 +53,9 @@ public class KerberosConfiguration extends Configuration {
             getName();
 
     /**
-     * Option to get the principal's key from the the keytab: {@value #USE_KEY_TAB}.
-     */
-    private static final String USE_KEY_TAB = "useKeyTab";
-
-    /**
-     * File name of the keytab to get principal's secret key: {@value #KEY_TAB}.
-     */
-    private static final String KEY_TAB = "keyTab";
-
-    /**
-     * Option do not prompted for the password if credentials can not be obtained from the cache,
-     * the keytab, or through shared state: {@value #DO_NOT_PROMPT}.
-     */
-    private static final String DO_NOT_PROMPT = "doNotPrompt";
-
-    /**
-     * Option to get the TGT to be obtained from the ticket cache: {@value #USE_TICKET_CACHE}.
-     */
-    private static final String USE_TICKET_CACHE = "useTicketCache";
-
-    /**
-     * Name of the ticket cache that contains user's TGT: {@value #TICKET_CACHE}.
-     */
-    private static final String TICKET_CACHE = "ticketCache";
-
-    /**
      * Debug.
      */
     private static final String DEBUG = "debug";
-
-    /**
-     * The name of the principal that should be used: {@value #PRINCIPAL}.
-     */
-    private static final String PRINCIPAL = "principal";
-
-    /**
-     * Option for the configuration to be refreshed before the login method is called:
-     * {@value #REFRESH_KRB5_CONFIG}.
-     */
-    private static final String REFRESH_KRB5_CONFIG = "refreshKrb5Config";
-
-    /**
-     * Default value for {@value #USE_KEY_TAB}: {@value #DEFAULT_USE_KEY_TAB}.
-     */
-    private static final String DEFAULT_USE_KEY_TAB = STR_TRUE;
-
-    /**
-     * Default value for {@value #DO_NOT_PROMPT}: {@value #DEFAULT_DO_NOT_PROMPT}.
-     */
-    private static final String DEFAULT_DO_NOT_PROMPT = STR_TRUE;
-
-    /**
-     * Default value for {@value #USE_TICKET_CACHE}: {@value #DEFAULT_USE_TICKET_CACHE}.
-     */
-    private static final String DEFAULT_USE_TICKET_CACHE = STR_TRUE;
-
-    /**
-     * Default value for {@value #DEBUG}: {@value #DEFAULT_DEBUG}.
-     */
-    private static final String DEFAULT_DEBUG = STR_TRUE;
-
-    /**
-     * Default value for {@value #REFRESH_KRB5_CONFIG}: {@value #DEFAULT_REFRESH_KRB5}.
-     */
-    private static final String DEFAULT_REFRESH_KRB5 = STR_TRUE;
-
-    /**
-     * The user ID.
-     */
-    private final String principalName;
 
     /**
      * Options.
@@ -132,67 +68,32 @@ public class KerberosConfiguration extends Configuration {
     private AppConfigurationEntry[] appConfigEntries;
 
     /**
-     * Creates a Kerberos configuration object.
-     *
-     * @param principalName The principal can be a simple username such as "testuser" or a service
-     * name such as "host/testhost.eng.sun.com".
-     */
-    public KerberosConfiguration(final String principalName) {
-        super();
-        this.principalName = principalName;
-    }
-
-    /**
-     * Sets up kerberos configuration to use a keytab to initiate a ticket-granting ticket (TGT).
-     * When keytabFilename is null, {@value KerberosConfiguration#USE_KEY_TAB} is set to false
-     * otherwise {@value KerberosConfiguration#DEFAULT_USE_KEY_TAB}
-     *
-     * @param keytabFilename The path of the keytab file
-     */
-    public void setKeytab(final String keytabFilename) {
-        final String useKeyTabVal = (keytabFilename == null) ? "false" : DEFAULT_USE_KEY_TAB;
-        options.put(USE_KEY_TAB, useKeyTabVal);
-        if (Boolean.parseBoolean(useKeyTabVal)) {
-            // null value is not allowed in ConcurrentHashMap
-            options.put(KEY_TAB, keytabFilename);
-        }
-        options.put(DO_NOT_PROMPT, DEFAULT_DO_NOT_PROMPT);
-    }
-
-    /**
-     * Sets up kerberos configuration to use the ticket cache file to retrieve TGT from cache. When
-     * ticketCacheFileName is null or ticketCacheFileName not readable,
-     * {@value KerberosConfiguration#USE_TICKET_CACHE} is set to false otherwise
-     * {@value KerberosConfiguration#DEFAULT_USE_TICKET_CACHE}
-     *
-     * @param ticketCacheFileName The path of the ticket cache file
-     */
-    public void setTicketCache(final String ticketCacheFileName) {
-        // first use kerberos cache as specified
-        final String useTicketCacheVal = (ticketCacheFileName == null
-                || !Files.isReadable(Paths.get(ticketCacheFileName)))
-                ? "false" : DEFAULT_USE_TICKET_CACHE;
-        options.put(USE_TICKET_CACHE, useTicketCacheVal);
-        if (Boolean.parseBoolean(useTicketCacheVal)) {
-            // null value is not allowed in ConcurrentHashMap
-            options.put(TICKET_CACHE, ticketCacheFileName);
-        }
-    }
-
-    /**
-     * Initialize the kerberos configuration. These parameters
-     * {@value KerberosConfiguration#DEBUG}, {@value KerberosConfiguration#PRINCIPAL}, 
-     * {@value KerberosConfiguration#REFRESH_KRB5_CONFIG} are initialized to true.
+     * Initialize the kerberos configuration.
      */
     public void initialize() {
-
-        options.put(DEBUG, DEFAULT_DEBUG);
-        options.put(PRINCIPAL, principalName); // Ensure the correct TGT is used.
-        options.put(REFRESH_KRB5_CONFIG, DEFAULT_REFRESH_KRB5);
+        LOG.traceEntry();
+        if (LOG.isDebugEnabled()) {
+            options.put(DEBUG, "true");
+        }
+        final Map<String, String> config = ProxySPNegoAPIConfiguration.getConfig();
+        final Set<Entry<String, String>> entries = config.entrySet();
+        for (final Entry<String, String> entry : entries) {
+            if (entry.getKey().equals(ProxySPNegoAPIConfiguration.HTTP_PROXY.getKey())
+                    || entry.getKey().equals(ProxySPNegoAPIConfiguration.NO_PROXY.getKey())) {
+                LOG.debug("Skip {} when recording in the Kerberos options", entry.getKey());
+            } else if (entry.getValue().isEmpty()) {
+                LOG.debug(
+                        "Skip {} when recording in the Kerberos options because the value is empty",
+                        entry.getKey());
+            } else {
+                this.options.put(entry.getKey(), entry.getValue());
+                LOG.debug("Set {} = {} int the Kerberos options", entry.getKey(), entry.getValue());
+            }
+        }
 
         appConfigEntries = new AppConfigurationEntry[1];
         appConfigEntries[0] = new AppConfigurationEntry(LOGIN_MODULE,
-                AppConfigurationEntry.LoginModuleControlFlag.REQUIRED, options);
+                AppConfigurationEntry.LoginModuleControlFlag.REQUIRED, this.options);
 
         Security.setProperty("login.configuration.provider", getClass().getName());
 
@@ -200,18 +101,16 @@ public class KerberosConfiguration extends Configuration {
         // need a separate instance of this class, it gets set here, so next call
         // on the LoginContext will use this instance.
         setConfiguration(this);
+        LOG.traceExit();
     }
 
     /**
-     * (non-Javadoc)
-     *
-     * @param arg0 the name used as the index into the Configuration
-     * @return The appConfigEntries
-     * @see javax.security.auth.login.Configuration#getAppConfigurationEntry
+     * {@inheritDoc}
      */
     @Override
     public AppConfigurationEntry[] getAppConfigurationEntry(final String arg0) {
-        return appConfigEntries == null ? null : appConfigEntries.clone();
+        LOG.traceEntry();
+        return LOG.traceExit(appConfigEntries == null ? null : appConfigEntries.clone());
     }
 
 }

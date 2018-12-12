@@ -20,6 +20,7 @@ package fr.cnes.jspnego;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301  USA
  */
+import fr.cnes.httpclient.HttpClientFactory.Type;
 import java.nio.charset.Charset;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
@@ -37,11 +38,7 @@ import org.apache.http.util.Args;
 import org.apache.http.util.CharArrayBuffer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.ietf.jgss.GSSContext;
 import org.ietf.jgss.GSSException;
-import org.ietf.jgss.GSSManager;
-import org.ietf.jgss.GSSName;
-import org.ietf.jgss.Oid;
 
 /**
  * SPNEGO (Simple and Protected GSSAPI Negotiation Mechanism) authentication scheme adapted for
@@ -79,30 +76,14 @@ public class SPNegoScheme extends AuthSchemeBase {
     private static final Logger LOG = LogManager.getLogger(SPNegoScheme.class.getName());
 
     /**
-     * Mechanism OID assigned to the pseudo-mechanism SPNEGO to negotiate the best common GSS-API
-     * mechanism between two communication peers.
-     */
-    private static final String SPNEGO_OID = "1.3.6.1.5.5.2";
-
-    /**
      * Kerberos client.
      */
-    private final GSSClient gssClient;
-
-    /**
-     * the SPN (HTTP@proxy host).
-     */
-    private final String servicePrincipalName;
-
-    /**
-     * the oid representing the type of service name form.
-     */
-    private final Oid servicePrincipalOid;
+    private final AbstractGSSClient gssClient;
 
     /**
      * Provides Base64 encoding and decoding as defined by RFC 2045.
      */
-    private final Base64 base64codec;
+    private final Base64 base64codec = new Base64();
 
     /**
      * Authentication process state.
@@ -114,60 +95,28 @@ public class SPNegoScheme extends AuthSchemeBase {
     private byte[] token;
 
     /**
-     * Init a Proxy SPNego Scheme
+     * Scheme for SPNego protocol.
      *
-     * @param gssClient the gss client with all the client configuration
-     * @param servicePrincipalName the SPN (proxy host)
-     * @param servicePrincipalOid the oid representing the type of service name form
+     * @param type type of SPNego
      */
-    public SPNegoScheme(final GSSClient gssClient, final String servicePrincipalName,
-            final Oid servicePrincipalOid) {
+    public SPNegoScheme(final Type type) {
         super();
-        LOG.traceEntry("gssClient : {}\n"
-                + "servicePrincipalName: {}\n"
-                + "servicePrincipalOid: {}",
-                gssClient.getName(), servicePrincipalName, servicePrincipalOid);
-        this.base64codec = new Base64();
-        // sets the state to no initiated at the beginning.
+        LOG.traceEntry("Type: {}", type);
+        switch (type) {
+            case PROXY_SPNEGO_API:
+            case PROXY_SPNEGO_JAAS:
+                break;
+            default:
+                throw LOG.throwing(new IllegalArgumentException("Cannot support " + type));
+        }
         this.state = State.UNINITIATED;
-        this.gssClient = gssClient;
-        this.servicePrincipalName = servicePrincipalName;
-        this.servicePrincipalOid = servicePrincipalOid;
+        LOG.debug("state: {}", this.state);
+        this.gssClient = GSSClientFactory.create(type);
+        LOG.traceExit();
     }
 
     /**
-     * Generate a Generic Security Service (GSS) Token.
-     *
-     * @param oid The universal object identifier
-     * @return a Kerberos token as a byte array
-     * @throws GSSException This exception is thrown whenever a GSS-API error occurs
-     */
-    protected byte[] generateGSSToken(final Oid oid) throws GSSException {
-        LOG.traceEntry("oid: {}", oid);
-
-        LOG.debug("Init token for {}", servicePrincipalName);
-
-        final byte[] tokenInit = new byte[0];
-
-        // Get the GSS-API
-        final GSSManager manager = GSSManager.getInstance();
-
-        // convert a servicePrincipalName from the specified namespace to a GSSName object
-        final GSSName serverName = manager.createName(servicePrincipalName, servicePrincipalOid);
-
-        // Instantiate and initialize a security context that will be established with the server
-        final GSSContext gssContext = manager.createContext(serverName.canonicalize(oid), oid, null,
-                GSSContext.DEFAULT_LIFETIME);
-
-        // returns a service ticket, called token as well
-        return LOG.traceExit(gssClient.negotiate(gssContext, tokenInit));
-    }
-
-    /**
-     * (non-Javadoc)
-     *
-     * @return true if authentication process state is failed or token generated
-     * @see org.apache.http.auth.AuthScheme#isComplete()
+     * {@inheritDoc}
      */
     @Override
     public boolean isComplete() {
@@ -218,6 +167,7 @@ public class SPNegoScheme extends AuthSchemeBase {
         if (request == null) {
             throw LOG.throwing(new IllegalArgumentException("HTTP request may not be null"));
         }
+        LOG.debug("state: {}", state);
         switch (state) {
             case UNINITIATED:
                 throw LOG.throwing(new AuthenticationException(
@@ -227,7 +177,7 @@ public class SPNegoScheme extends AuthSchemeBase {
                         getSchemeName() + " authentication has failed"));
             case CHALLENGE_RECEIVED:
                 try {
-                    token = generateToken();
+                    token = gssClient.generateGSSToken();
                     state = State.TOKEN_GENERATED;
                 } catch (GSSException gsse) {
                     state = State.FAILED;
@@ -274,7 +224,7 @@ public class SPNegoScheme extends AuthSchemeBase {
      * @param buffer buffer
      * @param beginIndex begin index
      * @param endIndex end index
-     * @throws org.apache.http.auth.MalformedChallengeException Signals that authentication 
+     * @throws org.apache.http.auth.MalformedChallengeException Signals that authentication
      * challenge is in some way invalid or illegal in the given context
      * @see org.apache.http.impl.auth.AuthSchemeBase#parseChallenge
      */
@@ -294,17 +244,6 @@ public class SPNegoScheme extends AuthSchemeBase {
             LOG.debug("Authentication already attempted");
             state = State.FAILED;
         }
-    }
-
-    /**
-     * Token generation
-     *
-     * @return the token as a byte array
-     * @throws GSSException This exception is thrown whenever a GSS-API error occurs
-     */
-    protected byte[] generateToken() throws GSSException {
-        LOG.traceEntry();
-        return LOG.traceExit(generateGSSToken(new Oid(SPNEGO_OID)));
     }
 
     /**

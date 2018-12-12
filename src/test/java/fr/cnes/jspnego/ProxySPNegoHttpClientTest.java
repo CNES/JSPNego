@@ -26,15 +26,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.restlet.Client;
-import org.restlet.Context;
-import org.restlet.data.Protocol;
-import org.restlet.data.Status;
-import org.restlet.engine.Engine;
-import org.restlet.engine.connector.ConnectorHelper;
-import org.restlet.ext.httpclient4.HttpClientHelper;
-import org.restlet.representation.Representation;
-import org.restlet.resource.ClientResource;
 
 /**
  * @author malapert
@@ -55,10 +46,6 @@ public class ProxySPNegoHttpClientTest {
     private static final String keytabFilePath = System.getProperty("keytabFilePath");
     private static final String ticketCachePath = System.getProperty("ticketCachePath");
     private static final String principal = System.getProperty("principal");
-
-    static {
-        Engine.getInstance().getRegisteredClients().add(0, new HttpClientHelper(null));
-    }
 
     public ProxySPNegoHttpClientTest() {
 
@@ -123,61 +110,5 @@ public class ProxySPNegoHttpClientTest {
         assertTrue("Testing https request:", response != null && response.getStatusLine().
                 getStatusCode() == 200);
     }
-
-    @Test
-    public void clientResourceHttp() throws Exception {
-        checkInputParameters();
-        ConnectorHelper<Client> connClient = Engine.getInstance().getRegisteredClients().get(0);
-        Context ctx = new Context();
-        ctx.getParameters().add(HttpClient.HTTP_CLIENT_TYPE,
-                HttpClientFactory.Type.PROXY_SPNEGO_JAAS.name());
-        Client client = new Client(ctx, Arrays.asList(Protocol.HTTP, Protocol.HTTPS));
-        connClient.setHelped(client);
-        ClientResource cl = new ClientResource("http://www.larousse.fr");
-        Representation rep = cl.get();
-        String txt = rep.getText();
-        System.out.println(txt);
-        cl.release();
-        assertTrue("Testing http restlet: ", txt.length() != 0);
-    }
-
-    @Test
-    public void clientResourceHttps() throws Exception {
-        checkInputParameters();
-        ConnectorHelper<Client> connClient = Engine.getInstance().getRegisteredClients().get(0);
-        Context ctx = new Context();
-        ctx.getParameters().add(HttpClient.HTTP_CLIENT_TYPE,
-                HttpClientFactory.Type.PROXY_SPNEGO_JAAS.name());
-        Client client = new Client(ctx, Arrays.asList(Protocol.HTTP, Protocol.HTTPS));
-        connClient.setHelped(client);        
-        ClientResource cl = new ClientResource("https://www.google.com");
-        Representation rep = cl.get();
-        String txt = rep.getText();
-        System.out.println(txt);
-        cl.release();
-        assertTrue("Testing https restlet: ", txt.length() != 0);
-    }
-    
-    @Test
-    public void clientMultiResourceHttps() throws Exception {
-        checkInputParameters();
-        ConnectorHelper<Client> connClient = Engine.getInstance().getRegisteredClients().get(0);
-        Context ctx = new Context();
-        ctx.getParameters().add(HttpClient.HTTP_CLIENT_TYPE,
-                HttpClientFactory.Type.PROXY_SPNEGO_JAAS.name());
-        Client client = new Client(ctx, Arrays.asList(Protocol.HTTP, Protocol.HTTPS));
-        connClient.setHelped(client);  
-        int nbOK = 0;
-        for (int i=0;i<50;i++) {
-            ClientResource cl = new ClientResource("https://www.google.com");
-            Representation rep = cl.get();
-            String txt = rep.getText();
-            Status status = cl.getStatus();
-            if(status.isSuccess()) {
-                nbOK++;
-            }
-            cl.release();
-        }
-        assertTrue("Testing multi https restlet: ", nbOK == 50);
-    }    
+   
 }

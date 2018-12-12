@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>fr.cnes.lib.proxy</groupId>
     <artifactId>LibraryForProxyWeb</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0</version>
     <name>Java Library for the CNES Technical Web Proxy</name>
     <inceptionYear>2018</inceptionYear>
     <licenses>
@@ -21,15 +21,7 @@
         <keytabFilePath></keytabFilePath>
         <ticketCachePath></ticketCachePath>
         <skipTests>true</skipTests>
-        <restlet-version>3.0-M1</restlet-version>
-    </properties>
-    <repositories>
-        <repository>
-            <id>maven-restlet</id>
-            <name>Restlet repository</name>
-            <url>https://maven.restlet.com</url>
-        </repository>
-    </repositories>    
+    </properties>  
     <url>http://github.com/Cnes/JSPNego</url>    
     <description>The Technical Web Proxy allows CNES users to connect on the Internet. Before that, an authentication on the proxy is required.
         The aim of the library is to provide an easy way to authenticate the user using Kerberos making him allowed to go through the Technical Web Proxy.</description>
@@ -192,12 +184,7 @@
             </plugin>             
         </plugins>
     </build>
-    <dependencies>
-        <dependency>
-            <groupId>org.restlet.jse</groupId>
-            <artifactId>org.restlet</artifactId>
-            <version>${restlet-version}</version>
-        </dependency>         
+    <dependencies>        
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>

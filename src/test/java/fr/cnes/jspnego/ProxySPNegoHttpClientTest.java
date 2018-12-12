@@ -59,7 +59,7 @@ public class ProxySPNegoHttpClientTest {
     static {
         Engine.getInstance().getRegisteredClients().add(0, new HttpClientHelper(null));
     }
-
+    
     public ProxySPNegoHttpClientTest() {
 
     }
@@ -92,14 +92,7 @@ public class ProxySPNegoHttpClientTest {
             LOG.warn("Please add -DproxyPort=<proxyPort> to your command line");
             error++;
         }
-//        if (userID == null || userID.isEmpty()) {
-//            LOG.warn("Please add -DuserID=<userID> to your command line");
-//            error++;
-//        }
-//        if (keytabFilePath == null || keytabFilePath.isEmpty()) {
-//            LOG.warn("Please add -DkeytabFilePath=<keytabFilePath> to your command line");
-//            error++;
-//        }
+
         if (error > 0) {
             throw new Exception("Missing input parameters");
         }
@@ -145,7 +138,7 @@ public class ProxySPNegoHttpClientTest {
         final ExecutorService clientExec = Executors.newFixedThreadPool(200);
         final int nbIters = 50;
         Request req = new Request();
-        try {            
+        try {
             for (int i = 0; i < nbIters; i++) {
                 clientExec.execute(req);
             }
@@ -158,50 +151,39 @@ public class ProxySPNegoHttpClientTest {
     }
 
     public class Request implements Runnable {
-        
+
         private volatile int nbOK = 0;
 
         public Request() {
-            ProxySPNegoJAASConfiguration.HTTP_PROXY.setValue(proxyHost + ":" + proxyPort);
-            ProxySPNegoJAASConfiguration.JAAS_CONTEXT.setValue("KRB5");
-            ProxySPNegoJAASConfiguration.JAAS.setValue("/tmp/jaas.conf");
-            ProxySPNegoJAASConfiguration.SERVICE_PROVIDER_NAME.setValue("HTTP@" + proxyHost);
 
-            ConnectorHelper<Client> connClient = Engine.getInstance().getRegisteredClients().get(0);
-            Context ctx = new Context();
-            ctx.getParameters().add(HttpClient.HTTP_CLIENT_TYPE,
-                    HttpClientFactory.Type.PROXY_SPNEGO_JAAS.name());
-            Client client = new Client(ctx, Arrays.asList(Protocol.HTTP, Protocol.HTTPS));
-            connClient.setHelped(client);
         }
 
         @Override
-        public void run() {   
+        public void run() {
             ClientResource cl = null;
             try {
                 cl = new ClientResource("https://www.google.com");
                 Representation rep = cl.get();
                 String txt = rep.getText();
                 Status status = cl.getStatus();
-                if(status.isSuccess()) {
+                if (status.isSuccess()) {
                     nbOK++;
                 }
             } catch (IOException ex) {
                 java.util.logging.Logger.getLogger(ProxySPNegoHttpClientTest.class.getName()).
                         log(Level.SEVERE, null, ex);
             } finally {
-                if (cl != null)
+                if (cl != null) {
                     cl.release();
+                }
             }
         }
-        
+
         public int getNbOK() {
             return this.nbOK;
         }
 
-
     }
-
 
     @Test
     public void clientResourceHttp() throws Exception {

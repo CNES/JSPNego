@@ -20,6 +20,7 @@
         <userID></userID>
         <keytabFilePath></keytabFilePath>
         <ticketCachePath></ticketCachePath>
+        <github.global.server></github.global.server>
         <skipTests>true</skipTests>
     </properties>  
     <url>http://github.com/Cnes/JSPNego</url>    

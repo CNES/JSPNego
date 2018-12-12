@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>fr.cnes.lib.proxy</groupId>
     <artifactId>LibraryForProxyWeb</artifactId>
-    <version>1.0</version>
+    <version>1.0.0</version>
     <name>Java Library for the CNES Technical Web Proxy</name>
     <inceptionYear>2018</inceptionYear>
     <licenses>

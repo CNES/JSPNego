@@ -59,7 +59,7 @@ public class ProxySPNegoHttpClientTest {
     static {
         Engine.getInstance().getRegisteredClients().add(0, new HttpClientHelper(null));
     }
-    
+
     public ProxySPNegoHttpClientTest() {
 
     }
@@ -101,13 +101,6 @@ public class ProxySPNegoHttpClientTest {
         ProxySPNegoJAASConfiguration.JAAS_CONTEXT.setValue("KRB5");
         ProxySPNegoJAASConfiguration.JAAS.setValue("/tmp/jaas.conf");
         ProxySPNegoJAASConfiguration.SERVICE_PROVIDER_NAME.setValue("HTTP@" + proxyHost);
-
-        ConnectorHelper<Client> connClient = Engine.getInstance().getRegisteredClients().get(0);
-        Context ctx = new Context();
-        ctx.getParameters().add(HttpClient.HTTP_CLIENT_TYPE,
-                HttpClientFactory.Type.PROXY_SPNEGO_JAAS.name());
-        Client client = new Client(ctx, Arrays.asList(Protocol.HTTP, Protocol.HTTPS));
-        connClient.setHelped(client);
     }
 
     @Test
@@ -135,6 +128,12 @@ public class ProxySPNegoHttpClientTest {
     public void testRequestHttpMultiThreads() throws Exception {
         LOG_TITLE.info(" --- Running multi http requests ---");
         checkInputParameters();
+        ConnectorHelper<Client> connClient = Engine.getInstance().getRegisteredClients().get(0);
+        Context ctx = new Context();
+        ctx.getParameters().add(HttpClient.HTTP_CLIENT_TYPE,
+                HttpClientFactory.Type.PROXY_SPNEGO_JAAS.name());
+        Client client = new Client(ctx, Arrays.asList(Protocol.HTTP, Protocol.HTTPS));
+        connClient.setHelped(client);
         final ExecutorService clientExec = Executors.newFixedThreadPool(200);
         final int nbIters = 50;
         Request req = new Request();
@@ -188,6 +187,12 @@ public class ProxySPNegoHttpClientTest {
     @Test
     public void clientResourceHttp() throws Exception {
         checkInputParameters();
+        ConnectorHelper<Client> connClient = Engine.getInstance().getRegisteredClients().get(0);
+        Context ctx = new Context();
+        ctx.getParameters().add(HttpClient.HTTP_CLIENT_TYPE,
+                HttpClientFactory.Type.PROXY_SPNEGO_JAAS.name());
+        Client client = new Client(ctx, Arrays.asList(Protocol.HTTP, Protocol.HTTPS));
+        connClient.setHelped(client);
         ClientResource cl = new ClientResource("http://www.larousse.fr");
         Representation rep = cl.get();
         String txt = rep.getText();
@@ -199,6 +204,12 @@ public class ProxySPNegoHttpClientTest {
     @Test
     public void clientResourceHttps() throws Exception {
         checkInputParameters();
+        ConnectorHelper<Client> connClient = Engine.getInstance().getRegisteredClients().get(0);
+        Context ctx = new Context();
+        ctx.getParameters().add(HttpClient.HTTP_CLIENT_TYPE,
+                HttpClientFactory.Type.PROXY_SPNEGO_JAAS.name());
+        Client client = new Client(ctx, Arrays.asList(Protocol.HTTP, Protocol.HTTPS));
+        connClient.setHelped(client);        
         ClientResource cl = new ClientResource("https://www.google.com");
         Representation rep = cl.get();
         String txt = rep.getText();

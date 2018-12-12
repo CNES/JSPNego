@@ -76,12 +76,6 @@ public class ProxySPNegoHttpClientTest {
 
     @Before
     public void setUp() {
-        //try {
-        //    checkInputParameters();
-        //} catch (Exception ex) {
-        //    java.util.logging.Logger.getLogger(ProxySPNegoHttpClientTest.class.getName()).
-        //            log(Level.SEVERE, null, ex);
-        //}
     }
 
     @After
@@ -159,14 +153,12 @@ public class ProxySPNegoHttpClientTest {
 
         } finally {
             int nbOK = req.getNbOK();
-            req.close();
             assertTrue(nbOK == nbIters);
         }
     }
 
     public class Request implements Runnable {
         
-        private ClientResource cl;
         private volatile int nbOK = 0;
 
         public Request() {
@@ -181,12 +173,13 @@ public class ProxySPNegoHttpClientTest {
                     HttpClientFactory.Type.PROXY_SPNEGO_JAAS.name());
             Client client = new Client(ctx, Arrays.asList(Protocol.HTTP, Protocol.HTTPS));
             connClient.setHelped(client);
-            ClientResource cl = new ClientResource("https://www.google.com");
         }
 
         @Override
-        public void run() {            
+        public void run() {   
+            ClientResource cl = null;
             try {
+                cl = new ClientResource("https://www.google.com");
                 Representation rep = cl.get();
                 String txt = rep.getText();
                 Status status = cl.getStatus();
@@ -196,6 +189,9 @@ public class ProxySPNegoHttpClientTest {
             } catch (IOException ex) {
                 java.util.logging.Logger.getLogger(ProxySPNegoHttpClientTest.class.getName()).
                         log(Level.SEVERE, null, ex);
+            } finally {
+                if (cl != null)
+                    cl.release();
             }
         }
         
@@ -203,9 +199,6 @@ public class ProxySPNegoHttpClientTest {
             return this.nbOK;
         }
 
-        public void close() {
-            this.cl.release();
-        }
 
     }
 

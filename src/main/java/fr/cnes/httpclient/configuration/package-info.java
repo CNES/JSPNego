@@ -30,5 +30,8 @@
  * <li>ProxySPNegoJAASConfiguration to configure a proxy with an authentication by SSI and
  * configured by a JAAS configuration file</li>
  * </ul>
+ * <p>
+ * <img src="{@docRoot}/doc-files/configuration.png" alt="configuration for HTTP client">
+ * </p> 
  */
 package fr.cnes.httpclient.configuration;

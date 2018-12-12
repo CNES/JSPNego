@@ -36,5 +36,9 @@
  * In addition to that, a factory is available to create one of the clients. However, before
  * creating a proxy, the proxy must be configured using the configuration
  * {@link fr.cnes.httpclient.configuration package}.
+ * 
+ * <p>
+ * <img src="{@docRoot}/doc-files/httpclient.png" alt="HTTP client">
+ * </p>
  */
 package fr.cnes.httpclient;

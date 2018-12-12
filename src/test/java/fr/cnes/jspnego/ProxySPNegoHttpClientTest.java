@@ -125,66 +125,6 @@ public class ProxySPNegoHttpClientTest {
     }
 
     @Test
-    public void testRequestHttpMultiThreads() throws Exception {
-        LOG_TITLE.info(" --- Running multi http requests ---");
-        checkInputParameters();
-        ConnectorHelper<Client> connClient = Engine.getInstance().getRegisteredClients().get(0);
-        Context ctx = new Context();
-        ctx.getParameters().add(HttpClient.HTTP_CLIENT_TYPE,
-                HttpClientFactory.Type.PROXY_SPNEGO_JAAS.name());
-        Client client = new Client(ctx, Arrays.asList(Protocol.HTTP, Protocol.HTTPS));
-        connClient.setHelped(client);
-        final ExecutorService clientExec = Executors.newFixedThreadPool(200);
-        final int nbIters = 50;
-        Request req = new Request();
-        try {
-            for (int i = 0; i < nbIters; i++) {
-                clientExec.execute(req);
-            }
-        } catch (RuntimeException ex) {
-
-        } finally {
-            int nbOK = req.getNbOK();
-            assertTrue(nbOK == nbIters);
-        }
-    }
-
-    public class Request implements Runnable {
-
-        private volatile int nbOK = 0;
-
-        public Request() {
-
-        }
-
-        @Override
-        public void run() {
-            ClientResource cl = null;
-            try {
-                cl = new ClientResource("https://www.google.com");
-                Representation rep = cl.get();
-                String txt = rep.getText();
-                Status status = cl.getStatus();
-                if (status.isSuccess()) {
-                    nbOK++;
-                }
-            } catch (IOException ex) {
-                java.util.logging.Logger.getLogger(ProxySPNegoHttpClientTest.class.getName()).
-                        log(Level.SEVERE, null, ex);
-            } finally {
-                if (cl != null) {
-                    cl.release();
-                }
-            }
-        }
-
-        public int getNbOK() {
-            return this.nbOK;
-        }
-
-    }
-
-    @Test
     public void clientResourceHttp() throws Exception {
         checkInputParameters();
         ConnectorHelper<Client> connClient = Engine.getInstance().getRegisteredClients().get(0);
@@ -217,5 +157,27 @@ public class ProxySPNegoHttpClientTest {
         cl.release();
         assertTrue("Testing https restlet: ", txt.length() != 0);
     }
-
+    
+    @Test
+    public void clientMultiResourceHttps() throws Exception {
+        checkInputParameters();
+        ConnectorHelper<Client> connClient = Engine.getInstance().getRegisteredClients().get(0);
+        Context ctx = new Context();
+        ctx.getParameters().add(HttpClient.HTTP_CLIENT_TYPE,
+                HttpClientFactory.Type.PROXY_SPNEGO_JAAS.name());
+        Client client = new Client(ctx, Arrays.asList(Protocol.HTTP, Protocol.HTTPS));
+        connClient.setHelped(client);  
+        int nbOK = 0;
+        for (int i=0;i<50;i++) {
+            ClientResource cl = new ClientResource("https://www.google.com");
+            Representation rep = cl.get();
+            String txt = rep.getText();
+            Status status = cl.getStatus();
+            if(status.isSuccess()) {
+                nbOK++;
+            }
+            cl.release();
+        }
+        assertTrue("Testing multi https restlet: ", nbOK == 50);
+    }    
 }

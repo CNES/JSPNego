@@ -259,15 +259,7 @@
                     <rulesets>
                         <ruleset>${project.basedir}/ConfTools/pmd_5.8.1._CNES_C_2017.09.04.xml</ruleset>
                     </rulesets>
-                    <skip>${skip.pmd.check}</skip>
-                    <excludes>
-                        <exclude>fr/cnes/doi/utils/HttpClientHelperPatch.java</exclude>
-                        <exclude>fr/cnes/doi/server/Starter.java</exclude>
-                        <exclude>org/datacite/**/*.java</exclude>
-                        <exclude>fr/cnes/doi/plugin/impl/*.java</exclude>
-                        <exclude>fr/cnes/doi/utils/spec/*.java</exclude>
-                        <exclude>fr/cnes/doi/utils/DoiGUI.java</exclude>
-                    </excludes>                    
+                    <skip>${skip.pmd.check}</skip>                   
                 </configuration>
             </plugin>              
             <plugin>
@@ -276,7 +268,6 @@
                 <version>2.17</version>
                 <configuration>
                     <configLocation>${project.basedir}/ConfTools/Checkstyle_7.2.0_CNES_C_2016.12.05.xml</configLocation>
-                    <excludes>fr/cnes/lib/proxy/ProxySPNegoExample.java</excludes>
                 </configuration>
             </plugin>
             <plugin>

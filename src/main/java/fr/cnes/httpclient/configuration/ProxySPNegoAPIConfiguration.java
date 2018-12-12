@@ -117,6 +117,11 @@ public enum ProxySPNegoAPIConfiguration {
      */
     private String value;
 
+    /**
+     * Creates enum.
+     * @param key key
+     * @param value value
+     */
     ProxySPNegoAPIConfiguration(final String key, final String value) {
         this.key = key;
         this.value = value;
@@ -132,7 +137,7 @@ public enum ProxySPNegoAPIConfiguration {
     }
 
     /**
-     * Returns the value.
+     * Returns the value or an empty string if null.
      *
      * @return the value
      */
@@ -168,7 +173,8 @@ public enum ProxySPNegoAPIConfiguration {
      *
      * @param error errors
      * @return true when the configuration is valid otherwise false
-     * @see <a href="https://docs.oracle.com/javase/8/docs/jre/api/security/jaas/spec/com/sun/security/auth/module/Krb5LoginModule.html">Krb5LoginModule</a>
+     * @see
+     * <a href="https://docs.oracle.com/javase/8/docs/jre/api/security/jaas/spec/com/sun/security/auth/module/Krb5LoginModule.html">Krb5LoginModule</a>
      */
     public static boolean isValid(final StringBuilder error) {
         boolean isValid = true;

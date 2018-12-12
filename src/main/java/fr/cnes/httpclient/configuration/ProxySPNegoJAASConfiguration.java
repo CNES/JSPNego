@@ -67,8 +67,9 @@ public enum ProxySPNegoJAASConfiguration {
 
     /**
      * Creates enum.
+     *
      * @param key key
-     * @param value  vlaue
+     * @param value vlaue
      */
     ProxySPNegoJAASConfiguration(final String key, final String value) {
         this.key = key;
@@ -85,7 +86,7 @@ public enum ProxySPNegoJAASConfiguration {
     }
 
     /**
-     * Returns the value.
+     * Returns the value or an empty string if null.
      *
      * @return the value
      */
@@ -93,6 +94,10 @@ public enum ProxySPNegoJAASConfiguration {
         return this.value == null ? "" : this.value;
     }
 
+    /**
+     * Sets the value.
+     * @param value value
+     */
     public void setValue(final String value) {
         this.value = value;
     }
@@ -153,7 +158,7 @@ public enum ProxySPNegoJAASConfiguration {
         }
 
         error.append(validation);
-        
+
         return isValid;
     }
 

@@ -57,11 +57,11 @@ import org.apache.logging.log4j.Logger;
  * @author Jean-Christophe Malapert
  */
 public class HttpClient implements org.apache.http.client.HttpClient, Closeable {
-    
+
     /**
      * Maximum total of connections per route.
-     */    
-    public static final String CONNECTION_MAX_PER_ROUTE = "connectionMaxPerRoute"; 
+     */
+    public static final String CONNECTION_MAX_PER_ROUTE = "connectionMaxPerRoute";
     /**
      * Maximum total of connections.
      */
@@ -73,7 +73,7 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
     /**
      * number of retries before the request fails.
      */
-    public static final String MAX_RETRY = "maxRetry";    
+    public static final String MAX_RETRY = "maxRetry";
 
     /**
      * Disable SSL certificate checking.
@@ -130,7 +130,6 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
      * Http client.
      */
     private final CloseableHttpClient httpClient;
-    
 
     /**
      * Creates a Http client.
@@ -147,7 +146,7 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
     public HttpClient(final boolean isDisabledSSL) {
         this(isDisabledSSL, new HashMap<>());
     }
-    
+
     /**
      * Creates a http client that ignores the SSL certificates.
      *
@@ -156,7 +155,7 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
      */
     public HttpClient(final boolean isDisabledSSL, final Map<String, String> config) {
         this.httpClient = createBuilder(isDisabledSSL, config).build();
-    }    
+    }
 
     /**
      * Creates the Http client builder.
@@ -165,7 +164,9 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
      * @param config options for Http client
      * @return the Http client builder
      */
-    protected final HttpClientBuilder createBuilder(final boolean isDisabledSSL, final Map<String, String> config) {
+    protected final HttpClientBuilder createBuilder(final boolean isDisabledSSL,
+            final Map<String, String> config) {
+        LOG.traceEntry("isDisabledSSL: {}\nconfig: {}", isDisabledSSL, config);
         HttpClientBuilder builder = HttpClients.custom();
         if (isDisabledSSL) {
             LOG.warn("SSL Certificate checking is disabled. The connection is insecured.");
@@ -173,9 +174,9 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
                     .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
         }
 
-        return createBuilderExtension(builder, config);
+        return LOG.traceExit(createBuilderExtension(builder, config));
     }
-    
+
     /**
      * Creates builder extension.
      *
@@ -183,50 +184,94 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
      * @param config options for Http client
      * @return builder with extensions.
      */
-    protected HttpClientBuilder createBuilderExtension(final HttpClientBuilder builder, final Map<String, String> config) {
+    protected HttpClientBuilder createBuilderExtension(final HttpClientBuilder builder,
+            final Map<String, String> config) {
+        LOG.traceEntry("builder: {}\nconfig: {}", builder, config);
         HttpClientBuilder extBuilder = createBuilderProxy(builder);
         extBuilder = createRedirect(extBuilder);
-        if(config.containsKey(CONNECTION_MAX_PER_ROUTE) && config.containsKey(CONNECTION_MAX_TOTAL)) {
-            extBuilder = createConnectionManager(extBuilder, Integer.parseInt(config.get(CONNECTION_MAX_PER_ROUTE)), Integer.parseInt(config.get(CONNECTION_MAX_TOTAL)));
+        if (config.containsKey(CONNECTION_MAX_PER_ROUTE) && config.containsKey(CONNECTION_MAX_TOTAL)) {
+            LOG.debug("configure connectionManager");
+            extBuilder = createConnectionManager(extBuilder, Integer.parseInt(config.get(
+                    CONNECTION_MAX_PER_ROUTE)), Integer.parseInt(config.get(CONNECTION_MAX_TOTAL)));
         }
-        if(config.containsKey(CONNECTION_TIME_TO_LIVE_MS)) {
-            extBuilder = createConnectionTimeout(extBuilder, Integer.parseInt(config.get(CONNECTION_TIME_TO_LIVE_MS)));
+        if (config.containsKey(CONNECTION_TIME_TO_LIVE_MS)) {
+            LOG.debug("configure timeout");
+            extBuilder = createConnectionTimeout(extBuilder, Integer.parseInt(config.get(
+                    CONNECTION_TIME_TO_LIVE_MS)));
         }
-        if(config.containsKey(MAX_RETRY)) {
+        if (config.containsKey(MAX_RETRY)) {
+            LOG.debug("configure retry");
             extBuilder = createRetry(extBuilder, Integer.parseInt(config.get(MAX_RETRY)));
         }
-        return extBuilder;
+        return LOG.traceExit(extBuilder);
     }
-    
+
     /**
-     * Adds builder extension. In this case, add no extension.
+     * Adds builder proxy extension. In this case, add no extension.
      *
      * @param builder builder
      * @return the same builder
-     */    
+     */
     protected HttpClientBuilder createBuilderProxy(final HttpClientBuilder builder) {
         LOG.traceEntry("builder: {}", builder);
-        return LOG.traceExit(builder);        
-    }    
-    
-    private HttpClientBuilder createConnectionManager(final HttpClientBuilder builder, int connPerRoute, int total) {
-        PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager();
+        return LOG.traceExit(builder);
+    }
+
+    /**
+     * Creates connectionManager builder.
+     *
+     * @param builder builder
+     * @param connPerRoute connection per route
+     * @param total total connection
+     * @return builder
+     */
+    private HttpClientBuilder createConnectionManager(final HttpClientBuilder builder,
+            final int connPerRoute, final int total) {
+        LOG.traceEntry("builder: {}\nconnPerRoute: {}\ntotal: {}", builder, connPerRoute, total);
+        final PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager();
+        LOG.debug("set default max per route: {}", connPerRoute);
         connManager.setDefaultMaxPerRoute(connPerRoute);
+        LOG.debug("set max total: {}", total);
         connManager.setMaxTotal(total);
-        return builder.setConnectionManager(connManager);
+        return LOG.traceExit(builder.setConnectionManager(connManager));
     }
-    
-    private HttpClientBuilder createConnectionTimeout(final HttpClientBuilder builder, int timeMs) {
-        return builder.setConnectionTimeToLive(timeMs, TimeUnit.MILLISECONDS);
+
+    /**
+     * Creates timeout connection.
+     *
+     * @param builder builder
+     * @param timeMs time in ms
+     * @return builder
+     */
+    private HttpClientBuilder createConnectionTimeout(final HttpClientBuilder builder,
+            final int timeMs) {
+        LOG.traceEntry("builder: {}\ntimeMs: {}", builder, timeMs);
+        return LOG.traceExit(builder.setConnectionTimeToLive(timeMs, TimeUnit.MILLISECONDS));
     }
-    
+
+    /**
+     * Creates redirect.
+     *
+     * @param builder builder
+     * @return builder
+     */
     private HttpClientBuilder createRedirect(final HttpClientBuilder builder) {
-        return builder.setRedirectStrategy(new LaxRedirectStrategy());
-    }   
-    
-    protected HttpClientBuilder createRetry(final HttpClientBuilder builder, int retry) {
-        return builder.setRetryHandler(new DefaultHttpRequestRetryHandler(retry, true));
-    }       
+        LOG.traceEntry("builder: {}", builder);
+        return LOG.traceExit(builder.setRedirectStrategy(new LaxRedirectStrategy()));
+    }
+
+    /**
+     * Creates retry.
+     *
+     * @param builder builder
+     * @param retry number of retries
+     * @return builder
+     */
+    protected HttpClientBuilder createRetry(final HttpClientBuilder builder, final int retry) {
+        LOG.traceEntry("builder: {}\nretry: {}", builder, retry);
+        return LOG.traceExit(builder.
+                setRetryHandler(new DefaultHttpRequestRetryHandler(retry, true)));
+    }
 
     /**
      * Disables the SSL certificate checking.

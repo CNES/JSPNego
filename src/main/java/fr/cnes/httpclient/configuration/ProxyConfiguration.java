@@ -57,6 +57,7 @@ public enum ProxyConfiguration {
 
     /**
      * Creates enum.
+     *
      * @param key key
      * @param value value
      */
@@ -67,6 +68,7 @@ public enum ProxyConfiguration {
 
     /**
      * Returns the key.
+     *
      * @return the key
      */
     public String getKey() {
@@ -74,7 +76,8 @@ public enum ProxyConfiguration {
     }
 
     /**
-     * Returns the value.
+     * Returns the value or an empty string if null.
+     *
      * @return the value.
      */
     public String getValue() {
@@ -83,12 +86,13 @@ public enum ProxyConfiguration {
 
     /**
      * Sets the value.
+     *
      * @param value the value
      */
     public void setValue(final String value) {
         this.value = value;
     }
-    
+
     /**
      * Returns the configuration as a map.
      *
@@ -101,10 +105,11 @@ public enum ProxyConfiguration {
             map.put(conf.getKey(), conf.getValue());
         }
         return map;
-    }    
+    }
 
     /**
      * Validates the configuration.
+     *
      * @param error error
      * @return True when the configuration is valid otherwise False
      */

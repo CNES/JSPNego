@@ -39,20 +39,20 @@ public class ProxyHttpClientWithBasicAuth extends ProxyHttpClientWithoutAuth {
 
     /**
      * Get actual class name to be printed on.
-     */    
+     */
     private static final Logger LOG = LogManager.getLogger(ProxyHttpClientWithBasicAuth.class.
             getName());
 
     /**
-     * Creates a HTTP client using a proxy with a basic authentication.     
+     * Creates a HTTP client using a proxy with a basic authentication.
      */
     public ProxyHttpClientWithBasicAuth() {
         this(false);
     }
 
-    
     /**
      * Creates a HTTP client using a proxy with a basic authentication.
+     *
      * @param isDisabledSSL True when the SSL certificate check is disabled otherwise False.
      */
     public ProxyHttpClientWithBasicAuth(final boolean isDisabledSSL) {
@@ -61,6 +61,7 @@ public class ProxyHttpClientWithBasicAuth extends ProxyHttpClientWithoutAuth {
 
     /**
      * Provides credentials by setting username/password.
+     *
      * @param proxy Http proxy
      * @return credentials
      * @throws IllegalArgumentException when a validation error happens in ProxyConfiguration
@@ -70,7 +71,7 @@ public class ProxyHttpClientWithBasicAuth extends ProxyHttpClientWithoutAuth {
         LOG.traceEntry("proxy: {}", proxy);
         final StringBuilder error = new StringBuilder();
         final boolean isValid = ProxyConfiguration.isValid(error);
-        if(!isValid) {
+        if (!isValid) {
             LOG.error("Error validation : {}", error);
             throw LOG.throwing(new IllegalArgumentException(error.toString()));
         }

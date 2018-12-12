@@ -21,24 +21,7 @@
 package fr.cnes.httpclient;
 
 import fr.cnes.httpclient.HttpClientFactory.Type;
-import fr.cnes.httpclient.configuration.ProxySPNegoAPIConfiguration;
-import fr.cnes.jspnego.SPNegoScheme;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import org.apache.http.HttpHost;
-import org.apache.http.auth.AuthScheme;
-
-import org.apache.http.auth.AuthSchemeProvider;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.KerberosCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.config.AuthSchemes;
-import org.apache.http.config.Registry;
-import org.apache.http.config.RegistryBuilder;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.protocol.HttpContext;
+import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -54,7 +37,7 @@ import org.apache.logging.log4j.Logger;
  * @author S. ETCHEVERRY
  * @author Jean-Christophe Malapert
  */
-public final class ProxySPNegoHttpClientWithAPI extends ProxyHttpClientWithoutAuth {
+public final class ProxySPNegoHttpClientWithAPI extends AbstractProxySPNegoHttpClient {
 
     /**
      * Get actual class name to be printed on.
@@ -64,12 +47,12 @@ public final class ProxySPNegoHttpClientWithAPI extends ProxyHttpClientWithoutAu
 
     /**
      * Creates a Http client based on a proxy having a SSO authentication and configuration based on
-     * an API programmatic.     
+     * an API programmatic.
      */
     public ProxySPNegoHttpClientWithAPI() {
         this(false);
     }
-    
+
     /**
      * Creates a Http client based on a proxy having a SSO authentication and configuration based on
      * an API programmatic.
@@ -77,70 +60,19 @@ public final class ProxySPNegoHttpClientWithAPI extends ProxyHttpClientWithoutAu
      * @param isDisabledSSL True when the SSL certificate check is disabled otherwise False.
      */
     public ProxySPNegoHttpClientWithAPI(final boolean isDisabledSSL) {
-        super(isDisabledSSL);
+        super(isDisabledSSL, Type.PROXY_SPNEGO_API);
     }
 
     /**
-     * Creates a dummy kerberos credential provider for the kerberized proxy.
+     * Creates a Http client based on a proxy having a SSO authentication and configuration based on
+     * an API programmatic.
      *
-     * @param proxy proxy configuration
-     * @return a dummy kerberos credential provider for the kerberized proxy
+     * @param isDisabledSSL True when the SSL certificate check is disabled otherwise False.
+     * @param config options for Http client
      */
-    @Override
-    protected CredentialsProvider createCredsProvider(final HttpHost proxy) {
-        LOG.traceEntry("proxy: {}", proxy);
-        final CredentialsProvider credsProvider = new BasicCredentialsProvider();
-        credsProvider.setCredentials(new AuthScope(proxy.getHostName(), proxy.getPort()),
-                new KerberosCredentials(null));
-        return LOG.traceExit(credsProvider);
-    }
-
-    /**
-     * Registers an authentication by SPNego.
-     *
-     * @return Authentication by SPNego
-     */
-    @Override
-    protected Registry<AuthSchemeProvider> registerAuthSchemeProvider() {
-        return LOG.traceExit(RegistryBuilder.
-                <AuthSchemeProvider>create()
-                .register(AuthSchemes.SPNEGO, new AuthSchemeProvider() {
-                    /**
-                     * Creates an authentication scheme.
-                     *
-                     * @param context context
-                     * @return the authentication scheme
-                     */
-                    @Override
-                    public AuthScheme create(final HttpContext context) {
-                        return new SPNegoScheme(Type.PROXY_SPNEGO_API);
-                    }
-                }).build());
-    }
-
-    /**
-     * Creates a proxy builder based on
-     * {@link fr.cnes.httpclient.configuration.ProxySPNegoAPIConfiguration}. This method calls {@link AbstractProxyHttpClient#createBuilder(org.apache.http.impl.client.HttpClientBuilder, org.apache.http.HttpHost, java.util.List)
-     * }
-     *
-     * @param builder builder
-     * @return builder including proxy
-     * @throws IllegalArgumentException when a validation error happens in ProxySPNegoAPIConfiguration
-     */
-    @Override
-    protected HttpClientBuilder createBuilderProxy(final HttpClientBuilder builder) {
-        LOG.traceEntry("buulder: {}", builder);
-        final StringBuilder error = new StringBuilder();
-        final boolean isValid = ProxySPNegoAPIConfiguration.isValid(error);
-        if (!isValid) {
-            LOG.error("Error validation : {}", error);
-            throw LOG.throwing(new IllegalArgumentException(error.toString()));
-        }
-        final HttpHost proxy = stringToProxy(ProxySPNegoAPIConfiguration.HTTP_PROXY.getValue());
-        final List<String> excludedHosts = new ArrayList<>();
-        Collections.addAll(excludedHosts, ProxySPNegoAPIConfiguration.NO_PROXY.getValue().split(
-                "\\s*,\\s*"));
-        return LOG.traceExit(this.createBuilder(builder, proxy, excludedHosts));
+    public ProxySPNegoHttpClientWithAPI(final boolean isDisabledSSL,
+            final Map<String, String> config) {
+        super(isDisabledSSL, Type.PROXY_SPNEGO_API, config);
     }
 
 }

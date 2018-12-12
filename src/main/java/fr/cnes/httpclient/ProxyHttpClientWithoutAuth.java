@@ -9,6 +9,7 @@ import fr.cnes.httpclient.configuration.ProxyConfiguration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthSchemeProvider;
 import org.apache.http.client.CredentialsProvider;
@@ -33,17 +34,28 @@ public class ProxyHttpClientWithoutAuth extends AbstractProxyHttpClient {
 
     /**
      * Creates a HTTP client using a proxy with no authentication.
-     */    
+     */
     public ProxyHttpClientWithoutAuth() {
         this(false);
     }
-    
+
     /**
      * Creates a HTTP client using a proxy with no authentication.
+     *
      * @param isDisabledSSL True when the SSL certificate check is disabled otherwise False.
-     */    
+     */
     public ProxyHttpClientWithoutAuth(final boolean isDisabledSSL) {
         super(isDisabledSSL);
+    }
+
+    /**
+     * Creates a HTTP client using a proxy with no authentication and options for Http client.
+     *
+     * @param isDisabledSSL True when the SSL certificate check is disabled otherwise False.
+     * @param config options for Http client
+     */
+    public ProxyHttpClientWithoutAuth(final boolean isDisabledSSL, final Map<String, String> config) {
+        super(isDisabledSSL, config);
     }
 
     /**
@@ -71,19 +83,20 @@ public class ProxyHttpClientWithoutAuth extends AbstractProxyHttpClient {
 
     /**
      * Creates proxy builder without authentication.
+     *
      * @param builder builder
      * @return builder
      * @throws IllegalArgumentException when a validation error happens in ProxyConfiguration
      */
     @Override
-    protected HttpClientBuilder createBuilderProxy(HttpClientBuilder builder) {
+    protected HttpClientBuilder createBuilderProxy(final HttpClientBuilder builder) {
         LOG.traceEntry("builder : {}", builder);
         final StringBuilder error = new StringBuilder();
         final boolean isValid = ProxyConfiguration.isValid(error);
-        if(!isValid) {
+        if (!isValid) {
             LOG.error("Error validation : {}", error);
             throw LOG.throwing(new IllegalArgumentException(error.toString()));
-        }        
+        }
         final HttpHost proxy = stringToProxy(ProxyConfiguration.HTTP_PROXY.getValue());
         final List<String> excludedHosts = new ArrayList<>();
         Collections.addAll(excludedHosts, ProxyConfiguration.NO_PROXY.getValue().split("\\s*,\\s*"));

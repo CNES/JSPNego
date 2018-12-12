@@ -21,24 +21,7 @@
 package fr.cnes.httpclient;
 
 import fr.cnes.httpclient.HttpClientFactory.Type;
-import fr.cnes.httpclient.configuration.ProxySPNegoJAASConfiguration;
-import fr.cnes.jspnego.SPNegoScheme;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import org.apache.http.HttpHost;
-import org.apache.http.auth.AuthScheme;
-
-import org.apache.http.auth.AuthSchemeProvider;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.KerberosCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.config.AuthSchemes;
-import org.apache.http.config.Registry;
-import org.apache.http.config.RegistryBuilder;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.protocol.HttpContext;
+import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -68,7 +51,7 @@ import org.apache.logging.log4j.Logger;
  * @author S. ETCHEVERRY
  * @author Jean-Christophe Malapert
  */
-public final class ProxySPNegoHttpClientWithJAAS extends ProxyHttpClientWithoutAuth {
+public final class ProxySPNegoHttpClientWithJAAS extends AbstractProxySPNegoHttpClient {
 
     /**
      * Get actual class name to be printed on.
@@ -80,12 +63,12 @@ public final class ProxySPNegoHttpClientWithJAAS extends ProxyHttpClientWithoutA
      * Creates a HTTP client that makes requests to a proxy authenticated with SSO and configured by
      * a JAAAS configuration file. Uses
      * {@link fr.cnes.httpclient.configuration.ProxySPNegoJAASConfiguration} class to configure this
-     * proxy.     
+     * proxy.
      */
     public ProxySPNegoHttpClientWithJAAS() {
         this(false);
     }
-    
+
     /**
      * Creates a HTTP client that makes requests to a proxy authenticated with SSO and configured by
      * a JAAAS configuration file. Uses
@@ -95,65 +78,21 @@ public final class ProxySPNegoHttpClientWithJAAS extends ProxyHttpClientWithoutA
      * @param isDisabledSSL True when the SSL certificate check is disabled otherwise False.
      */
     public ProxySPNegoHttpClientWithJAAS(final boolean isDisabledSSL) {
-        super(isDisabledSSL);
+        super(isDisabledSSL, Type.PROXY_SPNEGO_JAAS);
     }
 
     /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected CredentialsProvider createCredsProvider(final HttpHost proxy) {
-        LOG.traceEntry("proxy: {}", proxy);
-        final CredentialsProvider credsProvider = new BasicCredentialsProvider();
-        credsProvider.setCredentials(new AuthScope(proxy.getHostName(), proxy.getPort()),
-                new KerberosCredentials(null));
-        return LOG.traceExit(credsProvider);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected Registry<AuthSchemeProvider> registerAuthSchemeProvider() {
-        return LOG.traceExit(RegistryBuilder.
-                <AuthSchemeProvider>create()
-                .register(AuthSchemes.SPNEGO, new AuthSchemeProvider() {
-                    /**
-                     * Creates an authentication scheme.
-                     *
-                     * @param context context
-                     * @return the authentication scheme
-                     */
-                    @Override
-                    public AuthScheme create(final HttpContext context) {
-                        return new SPNegoScheme(Type.PROXY_SPNEGO_JAAS);
-                    }
-                }).build());
-    }
-
-    /**
-     * Creates a proxy builder based on
-     * {@link fr.cnes.httpclient.configuration.ProxySPNegoJAASConfiguration}. This method calls {@link AbstractProxyHttpClient#createBuilder(org.apache.http.impl.client.HttpClientBuilder, org.apache.http.HttpHost, java.util.List)
-     * }
+     * Creates a HTTP client that makes requests to a proxy authenticated with SSO and configured by
+     * a JAAAS configuration file. Uses
+     * {@link fr.cnes.httpclient.configuration.ProxySPNegoJAASConfiguration} class to configure this
+     * proxy.
      *
-     * @param builder builder
-     * @return builder including proxy
-     * @throws IllegalArgumentException when a validation error happens in ProxySPNegoJAASConfiguration
+     * @param isDisabledSSL True when the SSL certificate check is disabled otherwise False.
+     * @param config options for Http client
      */
-    @Override
-    protected HttpClientBuilder createBuilderProxy(final HttpClientBuilder builder) {
-        LOG.traceEntry("builder: {}", builder);
-        final StringBuilder error = new StringBuilder();
-        final boolean isValid = ProxySPNegoJAASConfiguration.isValid(error);
-        if (!isValid) {
-            LOG.error("Error validation : {}", error);
-            throw LOG.throwing(new IllegalArgumentException(error.toString()));
-        }        
-        final HttpHost proxy = stringToProxy(ProxySPNegoJAASConfiguration.HTTP_PROXY.getValue());
-        final List<String> excludedHosts = new ArrayList<>();
-        Collections.addAll(excludedHosts, ProxySPNegoJAASConfiguration.NO_PROXY.getValue().split(
-                "\\s*,\\s*"));
-        return LOG.traceExit(this.createBuilder(builder, proxy, excludedHosts));
+    public ProxySPNegoHttpClientWithJAAS(final boolean isDisabledSSL,
+            final Map<String, String> config) {
+        super(isDisabledSSL, Type.PROXY_SPNEGO_JAAS, config);
     }
 
 }

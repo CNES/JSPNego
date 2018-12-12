@@ -5,9 +5,11 @@
  */
 package fr.cnes.httpclient;
 
+import fr.cnes.httpclient.HttpClientFactory.Type;
 import fr.cnes.httpclient.configuration.ProxyConfiguration;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.http.HttpHost;
@@ -45,9 +47,9 @@ public class ProxyHttpClientWithoutAuth extends AbstractProxyHttpClient {
      * @param isDisabledSSL True when the SSL certificate check is disabled otherwise False.
      */
     public ProxyHttpClientWithoutAuth(final boolean isDisabledSSL) {
-        super(isDisabledSSL);
+        this(isDisabledSSL, new HashMap(), Type.PROXY_BASIC);
     }
-
+    
     /**
      * Creates a HTTP client using a proxy with no authentication and options for Http client.
      *
@@ -55,7 +57,18 @@ public class ProxyHttpClientWithoutAuth extends AbstractProxyHttpClient {
      * @param config options for Http client
      */
     public ProxyHttpClientWithoutAuth(final boolean isDisabledSSL, final Map<String, String> config) {
-        super(isDisabledSSL, config);
+        this(isDisabledSSL, config, Type.PROXY_BASIC);
+    }    
+
+    /**
+     * Creates a HTTP client using a proxy with no authentication and options for Http client.
+     *
+     * @param isDisabledSSL True when the SSL certificate check is disabled otherwise False.
+     * @param config options for Http client
+     * @param type type of http client
+     */
+    protected ProxyHttpClientWithoutAuth(final boolean isDisabledSSL, final Map<String, String> config, final Type type) {
+        super(isDisabledSSL, config, type);
     }
 
     /**

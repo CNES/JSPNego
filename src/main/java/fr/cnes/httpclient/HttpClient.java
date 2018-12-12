@@ -20,6 +20,7 @@
  */
 package fr.cnes.httpclient;
 
+import fr.cnes.httpclient.HttpClientFactory.Type;
 import java.io.Closeable;
 import java.io.IOException;
 import java.security.KeyManagementException;
@@ -130,6 +131,11 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
      * Http client.
      */
     private final CloseableHttpClient httpClient;
+    
+    /**
+     * Httpclient type.
+     */
+    private final HttpClientFactory.Type type;    
 
     /**
      * Creates a Http client.
@@ -154,6 +160,18 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
      * @param config Options for HTTP client.
      */
     public HttpClient(final boolean isDisabledSSL, final Map<String, String> config) {
+        this(isDisabledSSL, config, Type.NO_PROXY);
+    }
+    
+    /**
+     * Creates a type of http client that ignores the SSL certificates.
+     *
+     * @param isDisabledSSL True when SSL certificates are disabled otherwise False
+     * @param config Options for HTTP client.
+     * @param type type of http client
+     */    
+    protected HttpClient(final boolean isDisabledSSL, final Map<String, String> config, final Type type) {
+        this.type = type;
         this.httpClient = createBuilder(isDisabledSSL, config).build();
     }
 
@@ -297,6 +315,14 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
     protected CloseableHttpClient getHttpClient() {
         LOG.traceEntry();
         return LOG.traceExit(this.httpClient);
+    }
+    
+    /**
+     * Returns the type of httpClient.
+     * @return the type of httpClient
+     */
+    public Type getType() {
+        return this.type;
     }
 
     /**

@@ -26,6 +26,7 @@ import fr.cnes.httpclient.configuration.ProxySPNegoJAASConfiguration;
 import fr.cnes.jspnego.SPNegoScheme;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.http.HttpHost;
@@ -57,19 +58,13 @@ public abstract class AbstractProxySPNegoHttpClient extends ProxyHttpClientWitho
             getName());
 
     /**
-     * SPNego type.
-     */
-    private final Type type;
-
-    /**
      * Creates an AbstractProxySPNegoHttpClient
      *
      * @param isDisabledSSL True when SSL certificates are disabled otherwise False
      * @param type Type of SPNego
      */
     protected AbstractProxySPNegoHttpClient(final boolean isDisabledSSL, final Type type) {
-        super(isDisabledSSL);
-        this.type = type;
+        this(isDisabledSSL, type, new HashMap());
     }
 
     /**
@@ -81,8 +76,7 @@ public abstract class AbstractProxySPNegoHttpClient extends ProxyHttpClientWitho
      */
     protected AbstractProxySPNegoHttpClient(final boolean isDisabledSSL, final Type type,
             final Map<String, String> config) {
-        super(isDisabledSSL, config);
-        this.type = type;
+        super(isDisabledSSL, config, type);
     }
 
     /**
@@ -116,7 +110,7 @@ public abstract class AbstractProxySPNegoHttpClient extends ProxyHttpClientWitho
                      */
                     @Override
                     public AuthScheme create(final HttpContext context) {
-                        return new SPNegoScheme(type);
+                        return new SPNegoScheme(getType());
                     }
                 }).build());
     }
@@ -136,7 +130,7 @@ public abstract class AbstractProxySPNegoHttpClient extends ProxyHttpClientWitho
         final boolean isValid;
         final String proxyStr;
         final String noProxyStr;
-        switch (this.type) {
+        switch (this.getType()) {
             case PROXY_SPNEGO_API:
                 isValid = ProxySPNegoAPIConfiguration.isValid(error);
                 proxyStr = ProxySPNegoAPIConfiguration.HTTP_PROXY.getValue();
@@ -148,7 +142,7 @@ public abstract class AbstractProxySPNegoHttpClient extends ProxyHttpClientWitho
                 noProxyStr = ProxySPNegoJAASConfiguration.NO_PROXY.getValue();
                 break;
             default:
-                throw new IllegalArgumentException(type.name() + " is not supported");
+                throw new IllegalArgumentException(this.getType().name() + " is not supported");
         }
         if (!isValid) {
             LOG.error("Error validation : {}", error);

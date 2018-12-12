@@ -20,6 +20,7 @@
  */
 package fr.cnes.httpclient;
 
+import fr.cnes.httpclient.HttpClientFactory.Type;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.List;
@@ -64,22 +65,14 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
     private RequestConfig requestConfig;
 
     /**
-     * Creates an AbstractProxyHttpClient
-     *
-     * @param isDisabledSSL True when SSL certificates are disabled otherwise False
-     */
-    protected AbstractProxyHttpClient(final boolean isDisabledSSL) {
-        super(isDisabledSSL);
-    }
-
-    /**
      * Creates an AbstractProxyHttpClient based on http client options.
      *
      * @param isDisabledSSL True when SSL certificates are disabled otherwise False
      * @param config options for Http client
+     * @param type type of Http client
      */
-    protected AbstractProxyHttpClient(final boolean isDisabledSSL, final Map<String, String> config) {
-        super(isDisabledSSL, config);
+    protected AbstractProxyHttpClient(final boolean isDisabledSSL, final Map<String, String> config, final Type type) {
+        super(isDisabledSSL, config, type);
     }
 
     /**

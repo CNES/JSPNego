@@ -74,7 +74,15 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
     /**
      * number of retries before the request fails.
      */
-    public static final String MAX_RETRY = "maxRetry";
+    public static final String MAX_RETRY = "maxRetry";    
+    /**
+     * Type of Http client.
+     */
+    public static final String HTTP_CLIENT_TYPE = "type";
+    /**
+     * IsdisabledSSL.
+     */
+    public static final String IS_DISABLED_SSL = "isDisabledSSL"; 
 
     /**
      * Disable SSL certificate checking.
@@ -214,7 +222,7 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
         }
         if (config.containsKey(CONNECTION_TIME_TO_LIVE_MS)) {
             LOG.debug("configure timeout");
-            extBuilder = createConnectionTimeout(extBuilder, Integer.parseInt(config.get(
+            extBuilder = createConnectionTimeout(extBuilder, Long.parseLong(config.get(
                     CONNECTION_TIME_TO_LIVE_MS)));
         }
         if (config.containsKey(MAX_RETRY)) {
@@ -262,7 +270,7 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
      * @return builder
      */
     private HttpClientBuilder createConnectionTimeout(final HttpClientBuilder builder,
-            final int timeMs) {
+            final long timeMs) {
         LOG.traceEntry("builder: {}\ntimeMs: {}", builder, timeMs);
         return LOG.traceExit(builder.setConnectionTimeToLive(timeMs, TimeUnit.MILLISECONDS));
     }
@@ -329,6 +337,7 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
      * {@inheritDoc}
      */
     @Override
+    @Deprecated
     public HttpParams getParams() {
         return this.httpClient.getParams();
     }
@@ -337,6 +346,7 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
      * {@inheritDoc}
      */
     @Override
+    @Deprecated
     public ClientConnectionManager getConnectionManager() {
         return this.httpClient.getConnectionManager();
     }

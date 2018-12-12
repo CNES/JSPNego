@@ -21,6 +21,8 @@
 package fr.cnes.httpclient;
 
 import fr.cnes.httpclient.configuration.ProxyConfiguration;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -47,16 +49,17 @@ public class ProxyHttpClientWithBasicAuth extends ProxyHttpClientWithoutAuth {
      * Creates a HTTP client using a proxy with a basic authentication.
      */
     public ProxyHttpClientWithBasicAuth() {
-        this(false);
+        this(false, new HashMap());
     }
 
     /**
      * Creates a HTTP client using a proxy with a basic authentication.
      *
      * @param isDisabledSSL True when the SSL certificate check is disabled otherwise False.
+     * @param config Options for HttpClient
      */
-    public ProxyHttpClientWithBasicAuth(final boolean isDisabledSSL) {
-        super(isDisabledSSL);
+    public ProxyHttpClientWithBasicAuth(final boolean isDisabledSSL, final Map<String, String> config) {
+        super(isDisabledSSL, config);
     }
 
     /**

@@ -20,6 +20,8 @@
  */
 package fr.cnes.httpclient;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -66,7 +68,7 @@ public class HttpClientFactory {
      */
     public static HttpClient create(final Type type) {
         LOG.traceEntry("Type: {}", type);
-        return LOG.traceExit(HttpClientFactory.create(type, false));
+        return LOG.traceExit(HttpClientFactory.create(type, false, new HashMap<>()));
     }
 
     /**
@@ -75,28 +77,29 @@ public class HttpClientFactory {
      *
      * @param type type of http client
      * @param isDisabledSSL True when the SSL certificate checking is disabled otherwise False
+     * @param config options for HttpClient
      * @return the HttpClient
      * @throws IllegalArgumentException Unknown httpclient type
      */
-    public static HttpClient create(final Type type, final boolean isDisabledSSL) {
+    public static HttpClient create(final Type type, final boolean isDisabledSSL, final Map<String, String> config) {
         LOG.traceEntry("Type: {}\nisDisabledSSL: {}", type, isDisabledSSL);
         final HttpClient httpclient;
         switch (type) {
             case PROXY_SPNEGO_JAAS:
                 LOG.debug("Uses PROXY_SPNEGO_JAAS");
-                httpclient = new ProxySPNegoHttpClientWithJAAS(isDisabledSSL);
+                httpclient = new ProxySPNegoHttpClientWithJAAS(isDisabledSSL, config);
                 break;
             case PROXY_SPNEGO_API:
                 LOG.debug("Uses PROXY_SPNEGO_API");
-                httpclient = new ProxySPNegoHttpClientWithAPI(isDisabledSSL);
+                httpclient = new ProxySPNegoHttpClientWithAPI(isDisabledSSL, config);
                 break;
             case PROXY_BASIC:
                 LOG.debug("Uses PROXY_BASIC");
-                httpclient = new ProxyHttpClientWithBasicAuth(isDisabledSSL);
+                httpclient = new ProxyHttpClientWithBasicAuth(isDisabledSSL, config);
                 break;
             case NO_PROXY:
                 LOG.debug("Uses NO_PROXY");
-                httpclient = new HttpClient(isDisabledSSL);
+                httpclient = new HttpClient(isDisabledSSL, config);
                 break;
             default:
                 throw LOG.throwing(new IllegalArgumentException("Unknown httpclient type"));

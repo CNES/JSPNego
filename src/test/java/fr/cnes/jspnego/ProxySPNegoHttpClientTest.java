@@ -5,18 +5,13 @@
  */
 package fr.cnes.jspnego;
 
+import fr.cnes.httpclient.HttpClient;
 import fr.cnes.httpclient.HttpClientFactory;
-import fr.cnes.httpclient.HttpClientFactory.Type;
 import fr.cnes.httpclient.ProxySPNegoHttpClientWithJAAS;
-import fr.cnes.httpclient.configuration.ProxySPNegoAPIConfiguration;
 import fr.cnes.httpclient.configuration.ProxySPNegoJAASConfiguration;
-import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.logging.Level;
-import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.logging.log4j.LogManager;
@@ -110,12 +105,14 @@ public class ProxySPNegoHttpClientTest {
             throw new Exception("Missing input parameters");
         }  
         
+        ProxySPNegoJAASConfiguration.HTTP_PROXY.setValue(proxyHost+":"+proxyPort);
+        ProxySPNegoJAASConfiguration.JAAS_CONTEXT.setValue("KRB5");
+        ProxySPNegoJAASConfiguration.JAAS.setValue("/tmp/jaas.conf");
+        ProxySPNegoJAASConfiguration.SERVICE_PROVIDER_NAME.setValue("HTTP@"+proxyHost);
+        
         ConnectorHelper<Client> connClient = Engine.getInstance().getRegisteredClients().get(0);
-        Context ctx = new Context();
-        ctx.getParameters().add("proxyHost", proxyHost);
-        ctx.getParameters().add("proxyPort", proxyPort);
-        ctx.getParameters().add("userID", userID);
-        ctx.getParameters().add("keytabFilePath", keytabFilePath);
+        Context ctx = new Context();        
+        ctx.getParameters().add(HttpClient.HTTP_CLIENT_TYPE, HttpClientFactory.Type.PROXY_SPNEGO_JAAS.name());
         Client client = new Client(ctx, Arrays.asList(Protocol.HTTP, Protocol.HTTPS));
         connClient.setHelped(client);
     }
@@ -201,8 +198,9 @@ public class ProxySPNegoHttpClientTest {
 //
 //    }
     
-    //@Test
+    @Test
     public void clientResourceHttp() throws Exception {  
+        checkInputParameters();
         ClientResource cl = new ClientResource("http://www.larousse.fr");
         Representation rep = cl.get();
         String txt = rep.getText();
@@ -211,9 +209,9 @@ public class ProxySPNegoHttpClientTest {
         assertTrue("Testing http restlet: ", txt.length()!=0);
     }
     
-    //@Test
+    @Test
     public void clientResourceHttps() throws Exception {    
-        //Engine.getInstance().getRegisteredClients().get(0).getContext()
+        checkInputParameters();
         ClientResource cl = new ClientResource("https://www.google.com");
         Representation rep = cl.get();
         String txt = rep.getText();

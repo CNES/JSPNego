@@ -105,7 +105,7 @@
                         <include>**/*</include>
                     </includes>
                     <repositoryName>JSPNego</repositoryName>      <!-- github repo name -->
-                    <repositoryOwner>J-Christophe</repositoryOwner>    <!-- github username  -->
+                    <repositoryOwner>Cnes</repositoryOwner>    <!-- github username  -->
                 </configuration>
                 <executions>
                     <!-- run site-maven-plugin's 'site' target as part of the build's normal 'deploy' phase -->

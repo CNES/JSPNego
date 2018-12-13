@@ -20,7 +20,7 @@
         <userID></userID>
         <keytabFilePath></keytabFilePath>
         <ticketCachePath></ticketCachePath>
-        <github.global.server></github.global.server>
+        <github.global.server>jspnego</github.global.server>
         <skipTests>true</skipTests>
     </properties>  
     <url>http://github.com/Cnes/JSPNego</url>    
@@ -313,7 +313,7 @@
     </reporting>
     <distributionManagement>
         <repository>
-            <id>JSPNego</id>
+            <id>internal.repo</id>
             <name>Temporary Staging Repository</name>
             <url>file://${project.build.directory}/mvn-repo</url>
         </repository>

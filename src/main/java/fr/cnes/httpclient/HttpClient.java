@@ -54,7 +54,6 @@ import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.client.LaxRedirectStrategy;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.HttpContext;
 import org.apache.logging.log4j.LogManager;
@@ -259,7 +258,7 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
         extBuilder = createRedirect(extBuilder);
         if (config.containsKey(CONNECTION_MAX_PER_ROUTE) && config.containsKey(CONNECTION_MAX_TOTAL)) {
             LOG.debug("configure connectionManager");
-            extBuilder = createConnectionManager(extBuilder, Integer.parseInt(config.get(
+            extBuilder = createConnectionNumber(extBuilder, Integer.parseInt(config.get(
                     CONNECTION_MAX_PER_ROUTE)), Integer.parseInt(config.get(CONNECTION_MAX_TOTAL)));
         }
         if (config.containsKey(CONNECTION_TIME_TO_LIVE_MS)) {
@@ -286,22 +285,21 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
     }
 
     /**
-     * Creates connectionManager builder.
+     * Creates connection number builder.
      *
      * @param builder builder
      * @param connPerRoute connection per route
      * @param total total connection
      * @return builder
      */
-    private HttpClientBuilder createConnectionManager(final HttpClientBuilder builder,
+    private HttpClientBuilder createConnectionNumber(final HttpClientBuilder builder,
             final int connPerRoute, final int total) {
         LOG.traceEntry("builder: {}\nconnPerRoute: {}\ntotal: {}", builder, connPerRoute, total);
-        final PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager();
         LOG.debug("set default max per route: {}", connPerRoute);
-        connManager.setDefaultMaxPerRoute(connPerRoute);
-        LOG.debug("set max total: {}", total);
-        connManager.setMaxTotal(total);
-        return LOG.traceExit(builder.setConnectionManager(connManager));
+        builder.setMaxConnPerRoute(connPerRoute);
+        LOG.debug("set max total: {}", total);        
+        builder.setMaxConnTotal(total);
+        return LOG.traceExit(builder);
     }
 
     /**

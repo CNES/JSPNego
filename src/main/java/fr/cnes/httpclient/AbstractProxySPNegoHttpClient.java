@@ -135,11 +135,15 @@ public abstract class AbstractProxySPNegoHttpClient extends ProxyHttpClientWitho
                 isValid = ProxySPNegoAPIConfiguration.isValid(error);
                 proxyStr = ProxySPNegoAPIConfiguration.HTTP_PROXY.getValue();
                 noProxyStr = ProxySPNegoAPIConfiguration.NO_PROXY.getValue();
+                LOG.debug("set proxy from SPNEGO_API : "+proxyStr);
+                LOG.debug("set noproxy from SPNEGO_API : "+noProxyStr);
                 break;
             case PROXY_SPNEGO_JAAS:
                 isValid = ProxySPNegoJAASConfiguration.isValid(error);
                 proxyStr = ProxySPNegoJAASConfiguration.HTTP_PROXY.getValue();
                 noProxyStr = ProxySPNegoJAASConfiguration.NO_PROXY.getValue();
+                LOG.debug("set proxy from SPNEGO_JAAS : "+proxyStr);
+                LOG.debug("set noproxy from SPNEGO_JAAS : "+noProxyStr);                
                 break;
             default:
                 throw new IllegalArgumentException(this.getType().name() + " is not supported");

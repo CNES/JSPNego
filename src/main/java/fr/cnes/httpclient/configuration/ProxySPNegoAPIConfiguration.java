@@ -24,6 +24,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Configuration for SPNego using the programmatic API.
@@ -107,6 +109,12 @@ public enum ProxySPNegoAPIConfiguration {
      * the JAAS context sets to "other".
      */
     JAAS_CONTEXT("jassContext", "other");
+    
+    /**
+     * Get actual class name to be printed on.
+     */
+    private static final Logger LOG = LogManager.getLogger(ProxySPNegoAPIConfiguration.class.getName());
+    
 
     /**
      * key.
@@ -163,6 +171,7 @@ public enum ProxySPNegoAPIConfiguration {
         final Map<String, String> map = new ConcurrentHashMap<>();
         final ProxySPNegoAPIConfiguration[] confs = ProxySPNegoAPIConfiguration.values();
         for (final ProxySPNegoAPIConfiguration conf : confs) {
+            LOG.debug("config - "+conf.getKey()+"="+conf.getValue());
             map.put(conf.getKey(), conf.getValue());
         }
         return map;
@@ -182,19 +191,23 @@ public enum ProxySPNegoAPIConfiguration {
         if (ProxySPNegoAPIConfiguration.HTTP_PROXY.getValue().isEmpty()) {
             validation.append(ProxySPNegoAPIConfiguration.HTTP_PROXY.getKey()).append(
                     " cannot be null or empty\n");
+            LOG.error(ProxySPNegoAPIConfiguration.HTTP_PROXY.getKey()+": "+ProxySPNegoAPIConfiguration.HTTP_PROXY.getValue()+" cannot be null or empty\n");            
             isValid = false;
         }
         if (!Files.isReadable(Paths.get(ProxySPNegoAPIConfiguration.KRB5.getValue()))) {
             validation.append("Kerberos configuration file must be readable");
+            LOG.error(ProxySPNegoAPIConfiguration.KRB5.getKey()+": "+ProxySPNegoAPIConfiguration.KRB5.getValue()+" - Kerberos configuration file must be readable");            
             isValid = false;
         }
         if (ProxySPNegoAPIConfiguration.PRINCIPAL.getValue().isEmpty()) {
             validation.append(ProxySPNegoAPIConfiguration.PRINCIPAL.getKey()).append(" must be set");
+            LOG.error(ProxySPNegoAPIConfiguration.PRINCIPAL.getKey()+" must be set");                        
             isValid = false;
         }
         if (ProxySPNegoAPIConfiguration.SERVICE_PROVIDER_NAME.getValue().isEmpty()) {
             validation.append(ProxySPNegoAPIConfiguration.SERVICE_PROVIDER_NAME.getKey()).append(
                     " must be set");
+            LOG.error(ProxySPNegoAPIConfiguration.SERVICE_PROVIDER_NAME.getKey()+": value is not set");            
             isValid = false;
         }
         if (Boolean.parseBoolean(ProxySPNegoAPIConfiguration.DO_NOT_PROMPT.getValue())

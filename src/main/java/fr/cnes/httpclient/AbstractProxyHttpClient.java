@@ -189,8 +189,10 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
                 }
                 final boolean secure = target.getSchemeName().equalsIgnoreCase("https");
                 if (excludedHosts.contains(host.getHostName())) {
+                    LOG.debug(host.getHostName()+" is excluded from proxy");
                     return LOG.traceExit(new HttpRoute(target, local, secure));
                 } else {
+                    LOG.debug(host.getHostName()+" uses the proxy");
                     return LOG.traceExit(new HttpRoute(target, local, proxy, secure));
                 }
             }

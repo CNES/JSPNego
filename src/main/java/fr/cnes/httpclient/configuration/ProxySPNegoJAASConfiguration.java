@@ -24,6 +24,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Configuration for SPNego using JAAS configuration file.
@@ -55,6 +57,11 @@ public enum ProxySPNegoJAASConfiguration {
      * Location of the kerberos configuration file. By default, look at /et/krb5.conf
      */
     KRB5("krb5File", "/etc/krb5.conf");
+    
+    /**
+     * Get actual class name to be printed on.
+     */
+    private static final Logger LOG = LogManager.getLogger(ProxySPNegoJAASConfiguration.class.getName());
 
     /**
      * key.
@@ -108,12 +115,14 @@ public enum ProxySPNegoJAASConfiguration {
      * @return the configuration
      */
     public static Map<String, String> getConfig() {
+        LOG.traceEntry();
         final Map<String, String> map = new ConcurrentHashMap<>();
         final ProxySPNegoJAASConfiguration[] confs = ProxySPNegoJAASConfiguration.values();
         for (ProxySPNegoJAASConfiguration conf : confs) {
+            LOG.debug("config - "+conf.getKey()+"="+conf.getValue());
             map.put(conf.getKey(), conf.getValue());
         }
-        return map;
+        return LOG.traceExit(map);
     }
 
     /**
@@ -123,43 +132,49 @@ public enum ProxySPNegoJAASConfiguration {
      * @return true when the configuration is valid otherwise false
      */
     public static boolean isValid(final StringBuilder error) {
+        LOG.traceEntry();
         boolean isValid = true;
         final StringBuilder validation = new StringBuilder();
         if (ProxySPNegoJAASConfiguration.HTTP_PROXY.getValue().isEmpty()) {
             validation.append(ProxySPNegoJAASConfiguration.HTTP_PROXY.getKey()).append(
                     " cannot be null or empty\n");
+            LOG.error(ProxySPNegoJAASConfiguration.HTTP_PROXY.getKey()+": "+ProxySPNegoJAASConfiguration.HTTP_PROXY.getValue()+" cannot be null or empty\n");
             isValid = false;
         }
         if (!Files.isReadable(Paths.get(ProxySPNegoJAASConfiguration.KRB5.getValue()))) {
             validation.append("Kerberos configuration file must be readable");
+            LOG.error(ProxySPNegoJAASConfiguration.KRB5.getKey()+": "+ProxySPNegoJAASConfiguration.KRB5.getValue()+" - Kerberos configuration file must be readable");
             isValid = false;
         }
         if (ProxySPNegoJAASConfiguration.SERVICE_PROVIDER_NAME.getValue().isEmpty()) {
             validation.append(ProxySPNegoJAASConfiguration.SERVICE_PROVIDER_NAME.getKey()).append(
                     " must be set");
+            LOG.error(ProxySPNegoJAASConfiguration.SERVICE_PROVIDER_NAME.getKey()+": value is not set");
             isValid = false;
         }
         if (ProxySPNegoJAASConfiguration.JAAS.getValue().isEmpty() || !Files.isReadable(Paths.get(
                 ProxySPNegoJAASConfiguration.JAAS.getValue()))) {
             validation.append(ProxySPNegoJAASConfiguration.JAAS.getKey()).append(
                     " must be a readable file\n");
+            LOG.error(ProxySPNegoJAASConfiguration.JAAS.getKey()+": "+ProxySPNegoJAASConfiguration.JAAS.getValue()+" must be a readable file");
             isValid = false;
         }
         if (ProxySPNegoJAASConfiguration.JAAS_CONTEXT.getValue().isEmpty()) {
             validation.append(ProxySPNegoJAASConfiguration.JAAS_CONTEXT.getKey()).append(
                     " cannot be null or empty\n");
-            isValid = false;
+            LOG.error(ProxySPNegoJAASConfiguration.JAAS_CONTEXT.getKey()+": "+ProxySPNegoJAASConfiguration.JAAS_CONTEXT.getValue()+" cannot be null or empty");
+            isValid = false;            
         }
         if (ProxySPNegoJAASConfiguration.KRB5.getValue().isEmpty() || !Files.isReadable(Paths.get(
                 ProxySPNegoJAASConfiguration.KRB5.getValue()))) {
             validation.append(ProxySPNegoJAASConfiguration.KRB5.getKey()).append(
                     " must be a readable file\n");
+            LOG.error(ProxySPNegoJAASConfiguration.KRB5.getKey()+": "+ProxySPNegoJAASConfiguration.KRB5.getValue()+" must be a readable file");
             isValid = false;
         }
-
         error.append(validation);
 
-        return isValid;
+        return LOG.traceExit(isValid);
     }
 
 }

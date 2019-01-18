@@ -22,16 +22,24 @@ package fr.cnes.httpclient;
 
 import fr.cnes.httpclient.HttpClientFactory.Type;
 import java.io.Closeable;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
@@ -82,7 +90,35 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
     /**
      * IsdisabledSSL.
      */
-    public static final String IS_DISABLED_SSL = "isDisabledSSL"; 
+    public static final String IS_DISABLED_SSL = "isDisabledSSL";
+    /**
+     * Key store type.
+     */    
+    public static final String KEYSTORE_TYPE = "keystoreType";
+    /**
+     * Key store path.
+     */
+    public static final String KEYSTORE_PATH = "keystorePath";
+    /**
+     * Key store password.
+     */    
+    public static final String KEYSTORE_PWD = "keystorePassword";
+    /**
+     * Trust store type.
+     */    
+    public static final String TRUSTSTORE_TYPE = "truststoreType";
+    /**
+     * Trust store path.
+     */
+    public static final String TRUSTSTORE_PATH = "truststorePath";
+    /**
+     * Trust store password.
+     */    
+    public static final String TRUSTSTORE_PWD = "truststorePassword";    
+    /**
+     * Key manager algorithm.
+     */
+    private static final String KEY_MANAGER_ALGO = "SunX509";
 
     /**
      * Disable SSL certificate checking.
@@ -198,6 +234,12 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
             LOG.warn("SSL Certificate checking is disabled. The connection is insecured.");
             builder = builder.setSSLContext(disableSSLCertificateChecking())
                     .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
+        } else {            
+            SSLContext sslCtx = createJKSContext(config);
+            if (sslCtx != null) {
+                LOG.info("Creating a SSL configuration with JKS");
+                builder.setSSLContext(sslCtx);
+            }
         }
 
         return LOG.traceExit(createBuilderExtension(builder, config));
@@ -305,14 +347,113 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
      * @return the SSL context
      * @throws RuntimeException When a NoSuchAlgorithmException or KeyManagementException happens
      */
-    protected final SSLContext disableSSLCertificateChecking() {
+    private SSLContext disableSSLCertificateChecking() {
+        LOG.traceEntry();
         try {
             final SSLContext sslCtx = SSLContext.getInstance("TLS");
             sslCtx.init(null, new TrustManager[]{TRUST_MANAGER}, null);
-            return sslCtx;
+            return LOG.traceExit(sslCtx);
         } catch (NoSuchAlgorithmException | KeyManagementException ex) {
             throw LOG.throwing(new RuntimeException(ex));
+        }        
+    }
+    
+    /**
+     * Configures key store.
+     * @param config keystore parameters
+     * @return Key manager or null
+     */
+    private KeyManagerFactory configureKeyStore(final Map<String, String> config) {
+        LOG.traceEntry("config: {}", config);
+        final String keyStoreType = config.getOrDefault(KEYSTORE_TYPE, System.getProperty("javax.net.ssl.keyStoreType"));
+        final String keyStorePath = config.getOrDefault(KEYSTORE_PATH, System.getProperty("javax.net.ssl.keyStore"));
+        final String keyStorePwd = config.getOrDefault(KEYSTORE_PWD, System.getProperty("javax.net.ssl.keyStorePassword"));
+        KeyManagerFactory kmf;
+        if(keyStoreType != null && keyStorePath != null && keyStorePwd != null) {
+            LOG.debug("keyStoreType: {}",keyStoreType);
+            LOG.debug("keyStorePath: {}",keyStorePath);
+            LOG.debug("keyStorePwd: ******");            
+            try {                
+                final KeyStore ks = KeyStore.getInstance(keyStoreType);
+                final char[] keyPassphrase = keyStorePwd.toCharArray();                
+                ks.load(new FileInputStream(keyStorePath), keyPassphrase);
+                kmf = KeyManagerFactory.getInstance(KEY_MANAGER_ALGO);
+                kmf.init(ks, keyPassphrase);
+            } catch (KeyStoreException | NoSuchAlgorithmException | UnrecoverableKeyException | IOException | CertificateException ex) {
+                LOG.catching(ex);
+                kmf = null;
+            }            
+        } else {
+            kmf = null;
         }
+        return LOG.traceExit(kmf);
+    }
+    
+    /**
+     * Configures trust store.
+     * @param config truststore parameters
+     * @return Trust manager or null
+     */    
+    private TrustManagerFactory configureTrustStore(final Map<String, String> config) {
+        LOG.traceEntry("config: {}", config);
+        final String trustStoreType = config.getOrDefault(TRUSTSTORE_TYPE, System.getProperty("javax.net.ssl.trustStoreType"));
+        final String trustStorePath = config.getOrDefault(TRUSTSTORE_PATH, System.getProperty("javax.net.ssl.trustStore"));
+        final String trustStorePwd = config.getOrDefault(TRUSTSTORE_PWD, System.getProperty("javax.net.ssl.trustStorePassword"));      
+        TrustManagerFactory tmf;
+        if(trustStoreType != null && trustStorePath != null && trustStorePwd != null) {
+            LOG.debug("trustStoreType: {}",trustStoreType);
+            LOG.debug("trustStorePath: {}",trustStorePath);
+            LOG.debug("trustStorePwd: ******");
+            try {
+                final KeyStore tks = KeyStore.getInstance(trustStoreType);
+                final char[] trustPassphrase = trustStorePwd.toCharArray();                
+                tks.load(new FileInputStream(trustStorePath), trustPassphrase);
+                tmf = TrustManagerFactory.getInstance(KEY_MANAGER_ALGO);
+                tmf.init(tks);
+            } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException ex) {
+                LOG.catching(ex);
+                tmf = null;
+            }         
+        } else {
+            tmf = null;
+        }
+        return LOG.traceExit(tmf);
+    }    
+    
+    /**
+     * Creates SSL context.
+     * @param config SSL parameters
+     * @return SSL context or null
+     */
+    private SSLContext createJKSContext(final Map<String, String> config) {
+        LOG.traceEntry("config: {}", config);
+        SSLContext sslCtx;
+        try {
+            sslCtx = SSLContext.getInstance("TLS");
+           
+            final KeyManagerFactory kmf = configureKeyStore(config);
+            final TrustManagerFactory tmf = configureTrustStore(config);
+            final KeyManager[] keys;
+            if(kmf == null) {
+                keys = null;
+            } else {
+                keys = kmf.getKeyManagers();
+            }
+            
+            final TrustManager[] trusts;
+            if(tmf == null) {
+                trusts = null;
+            } else {
+                trusts = tmf.getTrustManagers();
+            }            
+            sslCtx.init(keys, trusts, new SecureRandom());            
+            
+        } catch (NoSuchAlgorithmException | KeyManagementException ex) {
+            LOG.catching(ex);
+            sslCtx = null;
+        }
+      
+        return LOG.traceExit(sslCtx);
     }
 
     /**

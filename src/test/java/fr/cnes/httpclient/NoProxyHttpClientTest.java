@@ -5,7 +5,6 @@
  */
 package fr.cnes.httpclient;
 
-import fr.cnes.httpclient.configuration.ProxyConfiguration;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import org.apache.http.HttpResponse;
@@ -16,16 +15,12 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
-import org.junit.Ignore;
 import org.junit.experimental.categories.Category;
 import org.mockserver.client.server.MockServerClient;
 import org.mockserver.integration.ClientAndServer;
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
-import static org.mockserver.matchers.Times.exactly;
-import org.mockserver.model.Header;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
-import static org.mockserver.model.StringBody.exact;
 import org.mockserver.verify.VerificationTimes;
 
 /**

@@ -48,7 +48,6 @@ public class ProxySPNegoAPIConfigurationTest {
      */
     @Test
     public void testValues() {
-        System.out.println("values");
         ProxySPNegoAPIConfiguration[] expResult = new ProxySPNegoAPIConfiguration[]{
             ProxySPNegoAPIConfiguration.HTTP_PROXY, ProxySPNegoAPIConfiguration.NO_PROXY,
             ProxySPNegoAPIConfiguration.REFRESH_KRB5_CONFIG, ProxySPNegoAPIConfiguration.USE_TICKET_CACHE,
@@ -68,7 +67,6 @@ public class ProxySPNegoAPIConfigurationTest {
      */
     @Test
     public void testValueOf() {
-        System.out.println("valueOf");
         String name = "KRB5";
         ProxySPNegoAPIConfiguration expResult = ProxySPNegoAPIConfiguration.KRB5;
         ProxySPNegoAPIConfiguration result = ProxySPNegoAPIConfiguration.valueOf(name);
@@ -80,7 +78,6 @@ public class ProxySPNegoAPIConfigurationTest {
      */
     @Test
     public void testGetKey() {
-        System.out.println("getKey");
         ProxySPNegoAPIConfiguration instance = ProxySPNegoAPIConfiguration.NO_PROXY;
         String expResult = "no_proxy";
         String result = instance.getKey();
@@ -92,7 +89,6 @@ public class ProxySPNegoAPIConfigurationTest {
      */
     @Test
     public void testGetValue() {
-        System.out.println("getValue");
         ProxySPNegoAPIConfiguration instance = ProxySPNegoAPIConfiguration.IS_INITIATOR;
         String expResult = "true";
         String result = instance.getValue();
@@ -104,7 +100,6 @@ public class ProxySPNegoAPIConfigurationTest {
      */
     @Test
     public void testSetValue() {
-        System.out.println("setValue");
         String value = "test";
         ProxySPNegoAPIConfiguration instance = ProxySPNegoAPIConfiguration.KRB5;
         instance.setValue(value);;
@@ -115,7 +110,6 @@ public class ProxySPNegoAPIConfigurationTest {
      */
     @Test
     public void testGetConfig() {
-        System.out.println("getConfig");
         Map<String, String> expResult = new HashMap(){{
             put("http_proxy","");
             put("no_proxy", "");
@@ -142,7 +136,6 @@ public class ProxySPNegoAPIConfigurationTest {
      */
     @Test
     public void testIsValid() {
-        System.out.println("isValid");
         StringBuilder error = new StringBuilder();
         boolean expResult = false;
         boolean result = ProxySPNegoAPIConfiguration.isValid(error);

@@ -48,7 +48,6 @@ public class ProxySPNegoJAASConfigurationTest {
      */
     @Test
     public void testValues() {
-        System.out.println("values");
         ProxySPNegoJAASConfiguration[] expResult = new ProxySPNegoJAASConfiguration[]{
             ProxySPNegoJAASConfiguration.HTTP_PROXY,
             ProxySPNegoJAASConfiguration.NO_PROXY,            
@@ -66,7 +65,6 @@ public class ProxySPNegoJAASConfigurationTest {
      */    
     @Ignore
     public void testValueOf() {
-        System.out.println("valueOf");
         ProxySPNegoJAASConfiguration expResult = ProxySPNegoJAASConfiguration.JAAS;
         ProxySPNegoJAASConfiguration result = ProxySPNegoJAASConfiguration.valueOf("JAAS");
         assertEquals(expResult, result);
@@ -77,7 +75,6 @@ public class ProxySPNegoJAASConfigurationTest {
      */
     @Test
     public void testGetKey() {
-        System.out.println("getKey");
         ProxySPNegoJAASConfiguration instance = ProxySPNegoJAASConfiguration.NO_PROXY;
         String expResult = "no_proxy";
         String result = instance.getKey();
@@ -89,7 +86,6 @@ public class ProxySPNegoJAASConfigurationTest {
      */
     @Test
     public void testGetValue() {
-        System.out.println("getValue");
         ProxySPNegoJAASConfiguration instance = ProxySPNegoJAASConfiguration.JAAS_CONTEXT;
         String expResult = "client";
         String result = instance.getValue();
@@ -101,7 +97,6 @@ public class ProxySPNegoJAASConfigurationTest {
      */
     @Test
     public void testSetValue() {
-        System.out.println("setValue");
         String value = "test";
         ProxySPNegoJAASConfiguration instance = ProxySPNegoJAASConfiguration.JAAS_CONTEXT;
         instance.setValue(value);
@@ -113,7 +108,6 @@ public class ProxySPNegoJAASConfigurationTest {
      */
     @Test
     public void testGetConfig() {
-        System.out.println("getConfig");
         Map<String, String> expResult = new HashMap(){{
            put("spn","");
            put("http_proxy", "");
@@ -131,7 +125,6 @@ public class ProxySPNegoJAASConfigurationTest {
      */
     @Test
     public void testIsValid() {
-        System.out.println("isValid");
         StringBuilder error = new StringBuilder();
         boolean expResult = false;
         boolean result = ProxySPNegoJAASConfiguration.isValid(error);

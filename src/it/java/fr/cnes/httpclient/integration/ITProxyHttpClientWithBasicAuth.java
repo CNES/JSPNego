@@ -3,8 +3,10 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package fr.cnes.httpclient;
+package fr.cnes.httpclient.integration;
 
+import fr.cnes.httpclient.HttpClient;
+import fr.cnes.httpclient.HttpClientFactory;
 import fr.cnes.httpclient.configuration.ProxyConfiguration;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -20,7 +22,6 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.experimental.categories.Category;
 import org.mockserver.client.server.MockServerClient;
-import org.mockserver.integration.ClientAndProxy;
 import org.mockserver.integration.ClientAndServer;
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
 import org.mockserver.model.Header;
@@ -32,31 +33,31 @@ import org.mockserver.verify.VerificationTimes;
  *
  * @author malapert
  */
-@Category(UnitTest.class)
-public class ProxyHttpClientWithoutAuthTest {
-    
-    private static ClientAndProxy mockServerProxy;
+@Category(IntegrationTest.class)
+public class ITProxyHttpClientWithBasicAuth {
+
+    private static ClientAndServer mockServerProxy;
     private static ClientAndServer mockServerTarget;
-    
-    public ProxyHttpClientWithoutAuthTest() {
+
+    public ITProxyHttpClientWithBasicAuth() {
     }
-    
+
     @BeforeClass
     public static void setUpClass() {
-        mockServerProxy = ClientAndProxy.startClientAndDirectProxy(1080, "127.0.0.1",1081);
-        mockServerTarget = startClientAndServer(1081);               
+        mockServerProxy = startClientAndServer(1080);
+        mockServerTarget = startClientAndServer(1081);
     }
-    
+
     @AfterClass
     public static void tearDownClass() {
         mockServerProxy.stop();
-        mockServerTarget.stop();        
+        mockServerTarget.stop();
     }
-    
+
     @Before
     public void setUp() {
     }
-    
+
     @After
     public void tearDown() {
     }
@@ -71,8 +72,8 @@ public class ProxyHttpClientWithoutAuthTest {
                 .respond(
                         response()
                                 .withStatusCode(200)
-                                .withBody("OK target").
-                                withDelay(TimeUnit.SECONDS, 1)
+                                .withBody("OK target")
+                                .withDelay(TimeUnit.SECONDS, 1)
                 );        
     }
 
@@ -85,6 +86,9 @@ public class ProxyHttpClientWithoutAuthTest {
                                 .withHeaders(
                                         new Header("Host", "127.0.0.1:1081")
                                 )                                
+                                .withHeaders(
+                                        new Header("Host", "www.google.fr")
+                                )
                 )                       
                 .respond(
                         response()
@@ -101,26 +105,28 @@ public class ProxyHttpClientWithoutAuthTest {
                         .withPath("/")
                         .withHeaders(
                                 new Header("Host", "127.0.0.1:1081")
+                        )
+                        .withHeaders(
+                                new Header("Host", "www.google.fr")
                         ),
                 VerificationTimes.exactly(1)
         );
     }
-    
 
     @Test
     public void testSomeMethod() throws IOException {
         createExpectationForTarget();
         createExpectationForAuth();
         ProxyConfiguration.HTTP_PROXY.setValue("127.0.0.1:1080");
-        ProxyConfiguration.NO_PROXY.setValue("");
-        ProxyConfiguration.USERNAME.setValue("");
-        ProxyConfiguration.PASSWORD.setValue("");
+        ProxyConfiguration.USERNAME.setValue("foo");
+        ProxyConfiguration.PASSWORD.setValue("bar");
         HttpClient client = HttpClientFactory.create(HttpClientFactory.Type.PROXY_BASIC);
         HttpResponse response = client.execute(new HttpGet("http://127.0.0.1:1081"));
         HttpEntity entity = response.getEntity();
-        String content = EntityUtils.toString(entity);   
+        String content = EntityUtils.toString(entity);
+        System.out.println(content);
         verifyGetRequest();
-        assertTrue(response.getStatusLine().getStatusCode() == 200 && content.equals("OK target"));
+        assertTrue(response.getStatusLine().getStatusCode() == 200 && content.length() > 0);
     }
-    
+
 }

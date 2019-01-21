@@ -20,6 +20,9 @@
  */
 package fr.cnes.httpclient;
 
+import fr.cnes.httpclient.configuration.ProxyConfiguration;
+import fr.cnes.httpclient.configuration.ProxySPNegoAPIConfiguration;
+import fr.cnes.httpclient.configuration.ProxySPNegoJAASConfiguration;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
@@ -68,7 +71,24 @@ public class HttpClientFactory {
      */
     public static HttpClient create(final Type type) {
         LOG.traceEntry("Type: {}", type);
-        return LOG.traceExit(HttpClientFactory.create(type, false, new HashMap<>()));
+        final Map<String, String> config;
+        switch (type) {
+            case PROXY_SPNEGO_JAAS:
+                config = ProxySPNegoJAASConfiguration.getConfig();
+                break;
+            case PROXY_SPNEGO_API:
+                config = ProxySPNegoAPIConfiguration.getConfig();
+                break;
+            case PROXY_BASIC:
+                config = ProxyConfiguration.getConfig();               
+                break;
+            case NO_PROXY:
+                config = new HashMap<>();
+                break;
+            default:
+                throw LOG.throwing(new IllegalArgumentException("Unknown httpclient type"));                
+        }
+        return LOG.traceExit(HttpClientFactory.create(type, false, config));
     }
 
     /**
@@ -82,7 +102,7 @@ public class HttpClientFactory {
      * @throws IllegalArgumentException Unknown httpclient type
      */
     public static HttpClient create(final Type type, final boolean isDisabledSSL, final Map<String, String> config) {
-        LOG.traceEntry("Type: {}\nisDisabledSSL: {}", type, isDisabledSSL);
+        LOG.traceEntry("Type: {}\nisDisabledSSL: {}\nconfig: {}", type, isDisabledSSL, config);
         final HttpClient httpclient;
         switch (type) {
             case PROXY_SPNEGO_JAAS:
@@ -95,7 +115,13 @@ public class HttpClientFactory {
                 break;
             case PROXY_BASIC:
                 LOG.debug("Uses PROXY_BASIC");
-                httpclient = new ProxyHttpClientWithBasicAuth(isDisabledSSL, config);
+                if(config.get("username").isEmpty()) {
+                    LOG.debug("Uses proxy without authentication");
+                    httpclient = new ProxyHttpClientWithoutAuth(isDisabledSSL, config);                    
+                } else {
+                    LOG.debug("Uses proxy with authentication");
+                    httpclient = new ProxyHttpClientWithBasicAuth(isDisabledSSL, config);
+                }                
                 break;
             case NO_PROXY:
                 LOG.debug("Uses NO_PROXY");

@@ -150,7 +150,7 @@ public enum ProxySPNegoAPIConfiguration {
      * @return the value
      */
     public String getValue() {
-        return this.value;
+        return this.value == null ? "" : this.value;
     }
 
     /**
@@ -188,7 +188,7 @@ public enum ProxySPNegoAPIConfiguration {
     public static boolean isValid(final StringBuilder error) {
         boolean isValid = true;
         final StringBuilder validation = new StringBuilder();
-        if (ProxySPNegoAPIConfiguration.HTTP_PROXY.getValue().isEmpty()) {
+        if (ProxySPNegoAPIConfiguration.HTTP_PROXY.getValue() == null || ProxySPNegoAPIConfiguration.HTTP_PROXY.getValue().isEmpty()) {
             validation.append(ProxySPNegoAPIConfiguration.HTTP_PROXY.getKey()).append(
                     " cannot be null or empty\n");
             LOG.error(ProxySPNegoAPIConfiguration.HTTP_PROXY.getKey()+": "+ProxySPNegoAPIConfiguration.HTTP_PROXY.getValue()+" cannot be null or empty\n");            
@@ -199,7 +199,7 @@ public enum ProxySPNegoAPIConfiguration {
             LOG.error(ProxySPNegoAPIConfiguration.KRB5.getKey()+": "+ProxySPNegoAPIConfiguration.KRB5.getValue()+" - Kerberos configuration file must be readable");            
             isValid = false;
         }
-        if (ProxySPNegoAPIConfiguration.PRINCIPAL.getValue().isEmpty()) {
+        if (ProxySPNegoAPIConfiguration.PRINCIPAL.getValue() == null || ProxySPNegoAPIConfiguration.PRINCIPAL.getValue().isEmpty()) {
             validation.append(ProxySPNegoAPIConfiguration.PRINCIPAL.getKey()).append(" must be set");
             LOG.error(ProxySPNegoAPIConfiguration.PRINCIPAL.getKey()+" must be set");                        
             isValid = false;
@@ -217,16 +217,22 @@ public enum ProxySPNegoAPIConfiguration {
                     + "&& USE_KEYTAB = false");
             isValid = false;
         }
-        if (!Boolean.parseBoolean(ProxySPNegoAPIConfiguration.USE_TICKET_CACHE.getValue())
-                && !ProxySPNegoAPIConfiguration.TICKET_CACHE.getValue().isEmpty()) {
-            validation.append("Illegal combination : USE_TICKET_CACHE=false && TICKET_CACHE is set");
+        if (Boolean.parseBoolean(ProxySPNegoAPIConfiguration.USE_TICKET_CACHE.getValue())
+                && ProxySPNegoAPIConfiguration.TICKET_CACHE.getValue() == null) {
+            validation.append(ProxySPNegoAPIConfiguration.TICKET_CACHE.getKey()).append(
+                    " value cannot be null");
             isValid = false;
         } else if (Boolean.parseBoolean(ProxySPNegoAPIConfiguration.USE_TICKET_CACHE.getValue())
                 && !Files.isReadable(Paths.get(ProxySPNegoAPIConfiguration.TICKET_CACHE.getValue()))) {
             validation.append(ProxySPNegoAPIConfiguration.TICKET_CACHE.getValue()).append(
-                    " is not a redable file");
+                    " is not a readable file");
             isValid = false;
-        }
+        } else if (!Boolean.parseBoolean(ProxySPNegoAPIConfiguration.USE_TICKET_CACHE.getValue())
+                && ProxySPNegoAPIConfiguration.TICKET_CACHE.getValue() != null && 
+                !ProxySPNegoAPIConfiguration.TICKET_CACHE.getValue().isEmpty()) {
+            validation.append("Illegal combination : USE_TICKET_CACHE=false && TICKET_CACHE is set");
+            isValid = false;
+        } 
         if (Boolean.parseBoolean(ProxySPNegoAPIConfiguration.RENEW_TGT.getValue())
                 && !Boolean.parseBoolean(ProxySPNegoAPIConfiguration.USE_TICKET_CACHE.getValue())) {
             validation.append("Illegal combination : RENEW_TGT=true &&  USE_TICKET_CACHE=false");

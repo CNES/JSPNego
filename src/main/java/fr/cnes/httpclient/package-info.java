@@ -40,5 +40,49 @@
  * <p>
  * <img src="{@docRoot}/doc-files/httpclient.png" alt="HTTP client">
  * </p>
+ * 
+ * <h2>Request without a proxy</h2>
+ * <pre>
+ * <code>
+ * HttpClient client = HttpClientFactory.create(HttpClientFactory.Type.NO_PROXY);
+ * HttpResponse response = client.execute(new HttpGet("http://www.google.fr"));
+ * </code>
+ * </pre>
+ * 
+ * 
+ * <h2>Request with a proxy using BASIC HTTP</h2>
+ * <pre>
+ * <code>
+ * ProxyConfiguration.HTTP_PROXY.setValue("127.0.0.1:1080");
+ * ProxyConfiguration.USERNAME.setValue("foo");
+ * ProxyConfiguration.PASSWORD.setValue("bar");
+ * HttpClient client = HttpClientFactory.create(HttpClientFactory.Type.PROXY_BASIC);
+ * HttpResponse response = client.execute(new HttpGet("http://www.google.fr"));
+ * </code>
+ * </pre>
+ * 
+ * <h2>Request with a proxy using JSPNego (JAAS)</h2>
+ * <pre>
+ * <code>
+ * ProxySPNegoJAASConfiguration.HTTP_PROXY.setValue("127.0.0.1:1080");
+ * ProxySPNegoJAASConfiguration.JAAS_CONTEXT.setValue("KRB5");
+ * ProxySPNegoJAASConfiguration.JAAS.setValue("/tmp/jaas.conf");
+ * ProxySPNegoJAASConfiguration.SERVICE_PROVIDER_NAME.setValue("HTTP@127.0.0.1");
+ * HttpClient client = HttpClientFactory.create(HttpClientFactory.Type.PROXY_SPNEGO_JAAS);
+ * HttpResponse response = client.execute(new HttpGet("http://www.google.fr")); 
+ * 
+ * with jaas.conf:
+ * KRB5 {
+ *   com.sun.security.auth.module.Krb5LoginModule required
+ *   useKeyTab=true
+ *   keyTab="/home/ad/doi_kerberos/doi_kerberos.keytab"
+ *   debug=true
+ *   principal="doi_kerberos@SIS.CNES.FR";
+ * }; 
+ * </code>
+ * </pre>
+ * 
+ * <h2>Request with a proxy using JSPNego (API)</h2>
+ * TODO
  */
 package fr.cnes.httpclient;

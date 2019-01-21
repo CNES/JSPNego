@@ -33,5 +33,45 @@
  * <p>
  * <img src="{@docRoot}/doc-files/configuration.png" alt="configuration for HTTP client">
  * </p> 
+ * 
+ * <h2>Proxy configuration with HTTP basic (without authentication)</h2>
+ * <pre>
+ * <code>
+ * ProxyConfiguration.HTTP_PROXY.setValue("127.0.0.1:1080");
+ * ProxyConfiguration.USERNAME.setValue("");
+ * ProxyConfiguration.PASSWORD.setValue("");
+ * </code>
+ * </pre>
+ * 
+ * <h2>Proxy configuration with HTTP basic (with authentication)</h2>
+ * <pre>
+ * <code>
+ * ProxyConfiguration.HTTP_PROXY.setValue("127.0.0.1:1080");
+ * ProxyConfiguration.USERNAME.setValue("foo");
+ * ProxyConfiguration.PASSWORD.setValue("bar");
+ * </code>
+ * </pre>
+ * 
+ * <h2>Proxy configuration with JSPNego using JAAS</h2>
+ * <pre>
+ * <code>
+ * ProxySPNegoJAASConfiguration.HTTP_PROXY.setValue("127.0.0.1:1080");
+ * ProxySPNegoJAASConfiguration.JAAS_CONTEXT.setValue("KRB5");
+ * ProxySPNegoJAASConfiguration.JAAS.setValue("/tmp/jaas.conf");
+ * ProxySPNegoJAASConfiguration.SERVICE_PROVIDER_NAME.setValue("HTTP@127.0.0.1");
+ * 
+ * with jaas.conf:
+ * KRB5 {
+ *   com.sun.security.auth.module.Krb5LoginModule required
+ *   useKeyTab=true
+ *   keyTab="/home/ad/doi_kerberos/doi_kerberos.keytab"
+ *   debug=true
+ *   principal="doi_kerberos@SIS.CNES.FR";
+ * };
+ * </code>
+ * </pre>
+ * 
+ * <h2>Proxy configuration with JSPNego using API</h2>
+ * TODO
  */
 package fr.cnes.httpclient.configuration;

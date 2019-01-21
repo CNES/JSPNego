@@ -79,6 +79,10 @@ public class ProxyHttpClientWithBasicAuth extends ProxyHttpClientWithoutAuth {
             throw LOG.throwing(new IllegalArgumentException(error.toString()));
         }
         final CredentialsProvider credsProvider = new BasicCredentialsProvider();
+        LOG.debug(
+                "Authentication with username={} pwd=**** on {}", 
+                ProxyConfiguration.USERNAME.getValue(),proxy
+        );
         credsProvider.setCredentials(
                 new AuthScope(proxy),
                 new UsernamePasswordCredentials(

@@ -9,7 +9,8 @@ import fr.cnes.httpclient.HttpClient;
 import fr.cnes.httpclient.HttpClientFactory;
 import fr.cnes.httpclient.configuration.ProxyConfiguration;
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
+import java.io.InputStream;
+import java.util.Properties;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -20,113 +21,75 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.Assume;
 import org.junit.experimental.categories.Category;
-import org.mockserver.client.server.MockServerClient;
-import org.mockserver.integration.ClientAndServer;
-import static org.mockserver.integration.ClientAndServer.startClientAndServer;
-import org.mockserver.model.Header;
-import static org.mockserver.model.HttpRequest.request;
-import static org.mockserver.model.HttpResponse.response;
-import org.mockserver.verify.VerificationTimes;
 
-/**
- *
- * @author malapert
- */
 @Category(IntegrationTest.class)
 public class ITProxyHttpClientWithBasicAuth {
 
-    private static ClientAndServer mockServerProxy;
-    private static ClientAndServer mockServerTarget;
+    private static Properties properties;
+    private static String host;
+    private static String port;
+    private static String login;
+    private static String pwd;
 
     public ITProxyHttpClientWithBasicAuth() {
     }
 
     @BeforeClass
-    public static void setUpClass() {
-        mockServerProxy = startClientAndServer(1080);
-        mockServerTarget = startClientAndServer(1081);
+    public static void setUpClass() throws IOException {    
+        properties = InitConfig.getProperties(InitConfig.CONFIG_IT);
     }
 
     @AfterClass
     public static void tearDownClass() {
-        mockServerProxy.stop();
-        mockServerTarget.stop();
     }
 
     @Before
     public void setUp() {
+        host = properties.getProperty(InitConfig.PROXY_HOST);
+        port = properties.getProperty(InitConfig.PROXY_PORT);
+        login = properties.getProperty(InitConfig.PROXY_LOGIN);
+        pwd = properties.getProperty(InitConfig.PROXY_PWD);
+        Assume.assumeTrue("HTTP basic authentication for proxy is not configured", isProxyConfigured());
+    }
+    
+    private boolean isProxyConfigured() {
+        int error = 0;
+        if(host == null || host.isEmpty() ) {
+            System.out.println("Please, fill "+InitConfig.PROXY_HOST+" in config-it.properties");
+            error++;
+        }
+        if(port == null || port.isEmpty() ) {
+            System.out.println("Please, fill "+InitConfig.PROXY_PORT+" in config-it.properties");
+            error++;
+        }  
+        if(login == null || login.isEmpty()) {
+            System.out.println("Please, fill "+InitConfig.PROXY_LOGIN+" in config-it.properties");
+            error++;
+        } 
+        if(pwd == null || pwd.isEmpty()) {
+            System.out.println("Please, fill "+InitConfig.PROXY_PWD+" in config-it.properties");
+            error++;
+        }           
+        return error == 0;
     }
 
     @After
     public void tearDown() {
     }
-    
-    private void createExpectationForTarget() {
-        new MockServerClient("127.0.0.1", 1081)
-                .when(
-                        request()
-                                .withMethod("GET")  
-                                .withPath("/")                                                              
-                )                       
-                .respond(
-                        response()
-                                .withStatusCode(200)
-                                .withBody("OK target")
-                                .withDelay(TimeUnit.SECONDS, 1)
-                );        
-    }
-
-    private void createExpectationForAuth() {
-        new MockServerClient("127.0.0.1", 1080)
-                .when(
-                        request()
-                                .withMethod("GET")  
-                                .withPath("/")
-                                .withHeaders(
-                                        new Header("Host", "127.0.0.1:1081")
-                                )                                
-                                .withHeaders(
-                                        new Header("Host", "www.google.fr")
-                                )
-                )                       
-                .respond(
-                        response()
-                                .withStatusCode(200)
-                                .withBody("OK").
-                                withDelay(TimeUnit.SECONDS, 1)
-                );
-    }
-
-    private void verifyGetRequest() {
-        new MockServerClient("127.0.0.1", 1080).verify(
-                request()
-                        .withMethod("GET")
-                        .withPath("/")
-                        .withHeaders(
-                                new Header("Host", "127.0.0.1:1081")
-                        )
-                        .withHeaders(
-                                new Header("Host", "www.google.fr")
-                        ),
-                VerificationTimes.exactly(1)
-        );
-    }
 
     @Test
     public void testSomeMethod() throws IOException {
-        createExpectationForTarget();
-        createExpectationForAuth();
-        ProxyConfiguration.HTTP_PROXY.setValue("127.0.0.1:1080");
-        ProxyConfiguration.USERNAME.setValue("foo");
-        ProxyConfiguration.PASSWORD.setValue("bar");
+        ProxyConfiguration.HTTP_PROXY.setValue(host+":"+port);
+        ProxyConfiguration.USERNAME.setValue(login);
+        ProxyConfiguration.PASSWORD.setValue(pwd);
         HttpClient client = HttpClientFactory.create(HttpClientFactory.Type.PROXY_BASIC);
-        HttpResponse response = client.execute(new HttpGet("http://127.0.0.1:1081"));
+        HttpResponse response = client.execute(new HttpGet("https://www.google.fr"));
         HttpEntity entity = response.getEntity();
         String content = EntityUtils.toString(entity);
         System.out.println(content);
-        verifyGetRequest();
-        assertTrue(response.getStatusLine().getStatusCode() == 200 && content.length() > 0);
+        assertTrue(response.getStatusLine().getStatusCode() == 200 && content.contains("<title>Google</title>"));
     }
 
 }

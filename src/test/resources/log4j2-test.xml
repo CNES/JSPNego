@@ -14,7 +14,7 @@
         <Logger name="testTitle">
             <AppenderRef ref="CONSOLE_TITLE"/>                        
         </Logger>          
-        <Root level="info">
+        <Root level="off">
             <AppenderRef ref="CONSOLE"/>
         </Root>
     </Loggers>

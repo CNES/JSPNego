@@ -102,7 +102,7 @@ public enum ProxySPNegoAPIConfiguration {
      */
     SERVICE_PROVIDER_NAME("spn", ""),
     /**
-     * Kereros configuration file/
+     * Kereros configuration. Default value /etc/krb5.conf
      */
     KRB5("krb5File", "/etc/krb5.conf"),
     /**

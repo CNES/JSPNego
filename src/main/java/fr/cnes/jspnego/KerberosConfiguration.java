@@ -1,7 +1,7 @@
 package fr.cnes.jspnego;
 
 /*
- * Copyright (C) 2017-2018 Centre National d'Etudes Spatiales (CNES).
+ * Copyright (C) 2017-2019 Centre National d'Etudes Spatiales (CNES).
  *
  * This file is part of DOI-server.
  *

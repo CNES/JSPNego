@@ -5,31 +5,15 @@
  */
 package fr.cnes.jspnego;
 
-import fr.cnes.httpclient.HttpClient;
-import fr.cnes.httpclient.HttpClientFactory;
-import fr.cnes.httpclient.ProxySPNegoHttpClientWithJAAS;
-import fr.cnes.httpclient.configuration.ProxySPNegoJAASConfiguration;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.logging.Level;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.AfterClass;
-import static org.junit.Assert.assertTrue;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
 
 /**
- * @author malapert
+ * @author Jean-Christophe Malapert
  */
 //@Category(UnitTest.class)
 public class ProxySPNegoHttpClientTest {

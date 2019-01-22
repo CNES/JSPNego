@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Centre National d'Etudes Spatiales (CNES).
+ * Copyright (C) 2017-2019 Centre National d'Etudes Spatiales (CNES).
  *
  * This file is part of DOI-server.
  *
@@ -146,7 +146,7 @@ public abstract class AbstractProxySPNegoHttpClient extends ProxyHttpClientWitho
                 LOG.debug("set noproxy from SPNEGO_JAAS : "+noProxyStr);                
                 break;
             default:
-                throw new IllegalArgumentException(this.getType().name() + " is not supported");
+                throw LOG.throwing(new IllegalArgumentException(this.getType().name() + " is not supported"));
         }
         if (!isValid) {
             LOG.error("Error validation : {}", error);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Centre National d'Etudes Spatiales (CNES).
+ * Copyright (C) 2017-2019 Centre National d'Etudes Spatiales (CNES).
  *
  * This file is part of DOI-server.
  *
@@ -38,8 +38,9 @@ import org.ietf.jgss.GSSName;
 import org.ietf.jgss.Oid;
 
 /**
- * GSS (Generic Security Service) client interface
- *
+ * GSS (Generic Security Service) client interface.
+ * The Generic Security Service Application Program Interface (GSSAPI, also GSS-API) is an 
+ * application programming interface for programs to access security services.
  * @author Jean-Christophe Malapert (jean-christophe.malapert@cnes.fr)
  * @author S. ETCHEVERRY
  */
@@ -118,7 +119,7 @@ public abstract class AbstractGSSClient {
      * Generates the Kerberos token.
      *
      * @return the Kerberos token
-     * @throws GSSException
+     * @throws GSSException negotiationAction exception
      */
     public byte[] generateGSSToken() throws GSSException {
         LOG.traceEntry();

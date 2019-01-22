@@ -1,7 +1,7 @@
 package fr.cnes.jspnego;
 
 /*
- * Copyright (C) 2017-2018 Centre National d'Etudes Spatiales (CNES).
+ * Copyright (C) 2017-2019 Centre National d'Etudes Spatiales (CNES).
  *
  * This file is part of DOI-server.
  *
@@ -98,6 +98,7 @@ public class SPNegoScheme extends AuthSchemeBase {
      * Scheme for SPNego protocol.
      *
      * @param type type of SPNego
+     * @throws IllegalArgumentException Cannot support type: PROXY_SPNEGO_API, PROXY_SPNEGO_JAAS
      */
     public SPNegoScheme(final Type type) {
         super();

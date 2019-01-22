@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Centre National d'Etudes Spatiales (CNES).
+ * Copyright (C) 2017-2019 Centre National d'Etudes Spatiales (CNES).
  *
  * This file is part of DOI-server.
  *
@@ -19,7 +19,14 @@
  * MA 02110-1301  USA
  */
 /**
- * This package implements the protocol SPNego (Simple and Protected GSSAPI Negotiation Mechanism)
+ * This package implements the protocol SPNego (Simple and Protected GSSAPI Negotiation Mechanism).
+ * SPNEGO, often pronounced "spenay-go", is a {@link fr.cnes.jspnego.AbstractGSSClient GSSAPI} 
+ * "pseudo mechanism" used by client-server software to negotiate the choice of security technology. 
+ * SPNEGO is used when a client application wants to authenticate to a remote server, but neither 
+ * end is sure what authentication protocols the other supports. The pseudo-mechanism uses a 
+ * protocol to determine what common GSSAPI mechanisms are available, selects one and then 
+ * dispatches all further security operations to it. This can help organizations deploy new security
+ * mechanisms in a phased manner.
  * <p>
  * <img src="{@docRoot}/doc-files/gss.png" alt="GSS client">
  * </p> 

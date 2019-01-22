@@ -1,13 +1,20 @@
 # JSPNego
-This JAVA library is built to make HTTP requests through a proxy using a Single Sign On (SSO).        
-The SSO uses <i>The Simple and Protected GSS-API Negotiation Mechanism (IETF RFC 2478)</i> 
-(<b>SPNEGO</b>) as authentication protocol.
+This JAVA library is built to make HTTP requests through/without a proxy. Several proxies are 
+supported :
+<ul>
+<li>Proxy without authentication</li>
+<li>Proxy with basic authentication</li>
+<li>Proxy with JSPNego with JAAS configuration file</li>
+<li>Proxy with JSPNego using the API</li>
+</ul> 
+JSPNego is a Single Sign On (SSO). This SSO uses <i>The Simple and Protected GSS-API Negotiation 
+Mechanism (IETF RFC 2478)</i> (<b>SPNEGO</b>) as authentication protocol.
 
 
 ### Synopsis
 
 This document provides the motivation of the project and the different instructions to both install
-and use the JSPNego. 
+and use a proxy with the following authentications: JSPNego, basic authentication. 
 
 ### Motivation
 
@@ -38,14 +45,16 @@ Clone the repository
 git clone https://github.com/CNES/JSPNego.git && cd JSPNego
 ```
 
-Compile and run the tests
+* Compile and run the tests
 
 ```
 mvn install
 ```
 
+* Run the integration tests
+
 ```
-mvn test -DskipTests=false
+mvn verify -P integration-test
 ```
 
 ## Example Use

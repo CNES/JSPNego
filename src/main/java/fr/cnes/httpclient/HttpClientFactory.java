@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Centre National d'Etudes Spatiales (CNES).
+ * Copyright (C) 2017-2019 Centre National d'Etudes Spatiales (CNES).
  *
  * This file is part of DOI-server.
  *
@@ -68,9 +68,10 @@ public class HttpClientFactory {
      *
      * @param type type of http client
      * @return the Http client.
+     * @throws IllegalArgumentException Unknown httpclient type
      */
     public static HttpClient create(final Type type) {
-        LOG.traceEntry("Type: {}", type);
+        LOG.traceEntry("Type: {}", type.name());
         final Map<String, String> config;
         switch (type) {
             case PROXY_SPNEGO_JAAS:

@@ -62,7 +62,7 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
     /**
      * requestConfig that contains the proxy configuration.
      */
-    private RequestConfig requestConfig;
+    private volatile RequestConfig requestConfig;
 
     /**
      * Creates an AbstractProxyHttpClient based on http client options.

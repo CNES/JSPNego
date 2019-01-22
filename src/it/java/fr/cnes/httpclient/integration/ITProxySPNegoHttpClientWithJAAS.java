@@ -113,7 +113,6 @@ public class ITProxySPNegoHttpClientWithJAAS {
         HttpResponse response = client.execute(new HttpGet("https://www.google.fr"));
         HttpEntity entity = response.getEntity();
         String content = EntityUtils.toString(entity);
-        System.out.println(content);
         assertTrue(response.getStatusLine().getStatusCode() == 200 && content.contains("<title>Google</title>"));
     }
     

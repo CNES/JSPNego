@@ -88,7 +88,7 @@ public class SPNegoScheme extends AuthSchemeBase {
     /**
      * Authentication process state.
      */
-    private volatile State state;
+    private State state;
     /**
      * base64 decoded challenge.
      */

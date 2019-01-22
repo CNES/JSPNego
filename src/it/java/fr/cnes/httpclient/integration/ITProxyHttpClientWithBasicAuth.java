@@ -94,7 +94,7 @@ public class ITProxyHttpClientWithBasicAuth {
     }
 
     @Test
-    public void testSomeMethod() throws IOException {
+    public void testRequest() throws IOException {
         ProxyConfiguration.HTTP_PROXY.setValue(host+":"+port);
         ProxyConfiguration.USERNAME.setValue(login);
         ProxyConfiguration.PASSWORD.setValue(pwd);
@@ -104,5 +104,25 @@ public class ITProxyHttpClientWithBasicAuth {
         String content = EntityUtils.toString(entity);
         assertTrue(response.getStatusLine().getStatusCode() == 200 && content.contains("<title>Google</title>"));
     }
+    
+    @Test
+    public void testRequestPerfo() throws IOException {
+        long startTime = System.currentTimeMillis();
+        ProxyConfiguration.HTTP_PROXY.setValue(host+":"+port);
+        ProxyConfiguration.USERNAME.setValue(login);
+        ProxyConfiguration.PASSWORD.setValue(pwd);
+        HttpClient client = HttpClientFactory.create(HttpClientFactory.Type.PROXY_BASIC);     
+        int nbRequestOK = 0;
+        for (int i=0 ; i<50; i++) {
+            HttpResponse response = client.execute(new HttpGet("https://www.google.fr"));
+            if (response.getStatusLine().getStatusCode() == 200) {
+                nbRequestOK++;
+            }
+        }
+        long stopTime = System.currentTimeMillis();
+        long runTime = stopTime - startTime;
+        System.out.println("Run time (s): "+runTime/1000f);
+        assertTrue(nbRequestOK == 50 && runTime < 1000);
+    }     
 
 }

@@ -104,17 +104,41 @@ public class ITProxySPNegoHttpClientWithAPI {
     }
 
     @Test
-    public void testSomeMethod() throws IOException {
+    public void testRequest() throws IOException {
         ProxySPNegoAPIConfiguration.HTTP_PROXY.setValue(host+":"+port);
         ProxySPNegoAPIConfiguration.KEY_TAB.setValue(keytab);
         ProxySPNegoAPIConfiguration.PRINCIPAL.setValue(login);
         ProxySPNegoAPIConfiguration.SERVICE_PROVIDER_NAME.setValue(spn);
         ProxySPNegoAPIConfiguration.USE_KEYTAB.setValue("true");
+        ProxySPNegoAPIConfiguration.TICKET_CACHE.setValue("");
         HttpClient client = HttpClientFactory.create(HttpClientFactory.Type.PROXY_SPNEGO_API);
         HttpResponse response = client.execute(new HttpGet("https://www.google.fr"));
         HttpEntity entity = response.getEntity();
         String content = EntityUtils.toString(entity);
         assertTrue(response.getStatusLine().getStatusCode() == 200 && content.contains("<title>Google</title>"));
     }
+    
+    @Test
+    public void testRequestPerfo() throws IOException {
+        long startTime = System.currentTimeMillis();
+        ProxySPNegoAPIConfiguration.HTTP_PROXY.setValue(host+":"+port);
+        ProxySPNegoAPIConfiguration.KEY_TAB.setValue(keytab);
+        ProxySPNegoAPIConfiguration.PRINCIPAL.setValue(login);
+        ProxySPNegoAPIConfiguration.SERVICE_PROVIDER_NAME.setValue(spn);
+        ProxySPNegoAPIConfiguration.USE_KEYTAB.setValue("true");
+        ProxySPNegoAPIConfiguration.TICKET_CACHE.setValue("");
+        HttpClient client = HttpClientFactory.create(HttpClientFactory.Type.PROXY_SPNEGO_API);      
+        int nbRequestOK = 0;
+        for (int i=0 ; i<50; i++) {
+            HttpResponse response = client.execute(new HttpGet("https://www.google.fr"));
+            if (response.getStatusLine().getStatusCode() == 200) {
+                nbRequestOK++;
+            }
+        }
+        long stopTime = System.currentTimeMillis();
+        long runTime = stopTime - startTime;
+        System.out.println("Run time (s): "+runTime/1000f);
+        assertTrue(nbRequestOK == 50 && runTime < 1000);
+    }    
     
 }

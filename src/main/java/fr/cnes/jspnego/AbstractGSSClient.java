@@ -68,13 +68,13 @@ public abstract class AbstractGSSClient {
      * allows a client application to request that the service authenticate an account even if the
      * client does not have the account name.
      */
-    private volatile String servicePrincipalName;
+    private String servicePrincipalName;
 
     /**
      * The initiator subject. This object will hold the TGT and all service tickets in its private
      * credentials cache.
      */
-    private volatile Subject subject;
+    private Subject subject;
 
     /**
      * Checks whether the principal is already logged.

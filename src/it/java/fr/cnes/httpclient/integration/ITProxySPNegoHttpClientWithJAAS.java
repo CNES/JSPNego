@@ -104,7 +104,7 @@ public class ITProxySPNegoHttpClientWithJAAS {
     }
 
     @Test
-    public void testSomeMethod() throws IOException {
+    public void testRequest() throws IOException {
         ProxySPNegoJAASConfiguration.HTTP_PROXY.setValue(host+":"+port);
         ProxySPNegoJAASConfiguration.JAAS.setValue(jaasFile);
         ProxySPNegoJAASConfiguration.JAAS_CONTEXT.setValue(jaasCtx);
@@ -114,6 +114,27 @@ public class ITProxySPNegoHttpClientWithJAAS {
         HttpEntity entity = response.getEntity();
         String content = EntityUtils.toString(entity);
         assertTrue(response.getStatusLine().getStatusCode() == 200 && content.contains("<title>Google</title>"));
+    }
+    
+    @Test
+    public void testRequestPerfo() throws IOException {
+        long startTime = System.currentTimeMillis();
+        ProxySPNegoJAASConfiguration.HTTP_PROXY.setValue(host+":"+port);
+        ProxySPNegoJAASConfiguration.JAAS.setValue(jaasFile);
+        ProxySPNegoJAASConfiguration.JAAS_CONTEXT.setValue(jaasCtx);
+        ProxySPNegoJAASConfiguration.SERVICE_PROVIDER_NAME.setValue(spn);
+        HttpClient client = HttpClientFactory.create(HttpClientFactory.Type.PROXY_SPNEGO_JAAS);        
+        int nbRequestOK = 0;
+        for (int i=0 ; i<50; i++) {
+            HttpResponse response = client.execute(new HttpGet("https://www.google.fr"));
+            if (response.getStatusLine().getStatusCode() == 200) {
+                nbRequestOK++;
+            }
+        }
+        long stopTime = System.currentTimeMillis();
+        long runTime = stopTime - startTime;
+        System.out.println("Run time (s): "+runTime/1000f);
+        assertTrue(nbRequestOK == 50 && runTime < 1000);
     }
     
 }

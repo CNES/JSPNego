@@ -127,18 +127,20 @@ public class ITProxySPNegoHttpClientWithAPI {
         ProxySPNegoAPIConfiguration.SERVICE_PROVIDER_NAME.setValue(spn);
         ProxySPNegoAPIConfiguration.USE_KEYTAB.setValue("true");
         ProxySPNegoAPIConfiguration.TICKET_CACHE.setValue("");
-        HttpClient client = HttpClientFactory.create(HttpClientFactory.Type.PROXY_SPNEGO_API);      
+        //HttpClient client = HttpClientFactory.create(HttpClientFactory.Type.PROXY_SPNEGO_API);      
         int nbRequestOK = 0;
         for (int i=0 ; i<50; i++) {
+            HttpClient client = HttpClientFactory.create(HttpClientFactory.Type.PROXY_SPNEGO_API);
             HttpResponse response = client.execute(new HttpGet("https://www.google.fr"));
             if (response.getStatusLine().getStatusCode() == 200) {
                 nbRequestOK++;
             }
+            client.close();
         }
         long stopTime = System.currentTimeMillis();
         long runTime = stopTime - startTime;
-        System.out.println("Run time (s): "+runTime/1000f);
-        assertTrue(nbRequestOK == 50 && runTime < 1000);
+        System.out.println("Mean run time per request: "+runTime/50f/1000f+" s");
+        assertTrue(nbRequestOK == 50 && runTime/50f < 1000);
     }    
     
 }

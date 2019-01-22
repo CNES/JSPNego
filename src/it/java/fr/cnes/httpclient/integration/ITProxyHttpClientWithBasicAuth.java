@@ -111,18 +111,20 @@ public class ITProxyHttpClientWithBasicAuth {
         ProxyConfiguration.HTTP_PROXY.setValue(host+":"+port);
         ProxyConfiguration.USERNAME.setValue(login);
         ProxyConfiguration.PASSWORD.setValue(pwd);
-        HttpClient client = HttpClientFactory.create(HttpClientFactory.Type.PROXY_BASIC);     
+        //HttpClient client = HttpClientFactory.create(HttpClientFactory.Type.PROXY_BASIC);     
         int nbRequestOK = 0;
         for (int i=0 ; i<50; i++) {
+            HttpClient client = HttpClientFactory.create(HttpClientFactory.Type.PROXY_BASIC);    
             HttpResponse response = client.execute(new HttpGet("https://www.google.fr"));
             if (response.getStatusLine().getStatusCode() == 200) {
                 nbRequestOK++;
             }
+            client.close();
         }
         long stopTime = System.currentTimeMillis();
         long runTime = stopTime - startTime;
-        System.out.println("Run time (s): "+runTime/1000f);
-        assertTrue(nbRequestOK == 50 && runTime < 1000);
+        System.out.println("Mean run time per request: "+runTime/50f/1000f+" s");
+        assertTrue(nbRequestOK == 50 && runTime/50f < 1000);
     }     
 
 }

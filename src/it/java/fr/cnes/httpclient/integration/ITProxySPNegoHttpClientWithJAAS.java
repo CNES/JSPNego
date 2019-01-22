@@ -123,18 +123,20 @@ public class ITProxySPNegoHttpClientWithJAAS {
         ProxySPNegoJAASConfiguration.JAAS.setValue(jaasFile);
         ProxySPNegoJAASConfiguration.JAAS_CONTEXT.setValue(jaasCtx);
         ProxySPNegoJAASConfiguration.SERVICE_PROVIDER_NAME.setValue(spn);
-        HttpClient client = HttpClientFactory.create(HttpClientFactory.Type.PROXY_SPNEGO_JAAS);        
+        //HttpClient client = HttpClientFactory.create(HttpClientFactory.Type.PROXY_SPNEGO_JAAS);        
         int nbRequestOK = 0;
         for (int i=0 ; i<50; i++) {
+            HttpClient client = HttpClientFactory.create(HttpClientFactory.Type.PROXY_SPNEGO_JAAS);     
             HttpResponse response = client.execute(new HttpGet("https://www.google.fr"));
             if (response.getStatusLine().getStatusCode() == 200) {
                 nbRequestOK++;
-            }
+            }   
+            client.close();
         }
         long stopTime = System.currentTimeMillis();
         long runTime = stopTime - startTime;
-        System.out.println("Run time (s): "+runTime/1000f);
-        assertTrue(nbRequestOK == 50 && runTime < 1000);
+        System.out.println("Mean run time per request: "+runTime/50f/1000f+" s");
+        assertTrue(nbRequestOK == 50 && runTime/50f < 1000);
     }
     
 }

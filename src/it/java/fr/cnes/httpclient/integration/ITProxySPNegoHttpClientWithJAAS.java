@@ -123,16 +123,21 @@ public class ITProxySPNegoHttpClientWithJAAS {
         ProxySPNegoJAASConfiguration.JAAS.setValue(jaasFile);
         ProxySPNegoJAASConfiguration.JAAS_CONTEXT.setValue(jaasCtx);
         ProxySPNegoJAASConfiguration.SERVICE_PROVIDER_NAME.setValue(spn);
-        //HttpClient client = HttpClientFactory.create(HttpClientFactory.Type.PROXY_SPNEGO_JAAS);        
+        HttpClient client = HttpClientFactory.create(HttpClientFactory.Type.PROXY_SPNEGO_JAAS);        
         int nbRequestOK = 0;
+        //The client is using a pool of connection to reach the web server. 
+        //See HttpClientBuilder#build(). When creating a default httpclient and nothing is specified
+        //it creates a pool with size of 2. So after 2 is used, it waits indefinitely trying to get 
+        //the third connection from the pool.You must read the response or close the connection, in 
+        //order to re-use the client object.        
         for (int i=0 ; i<50; i++) {
-            HttpClient client = HttpClientFactory.create(HttpClientFactory.Type.PROXY_SPNEGO_JAAS);     
             HttpResponse response = client.execute(new HttpGet("https://www.google.fr"));
             if (response.getStatusLine().getStatusCode() == 200) {
                 nbRequestOK++;
-            }   
-            client.close();
+            } 
+            response.getEntity().getContent().close();            
         }
+        client.close();
         long stopTime = System.currentTimeMillis();
         long runTime = stopTime - startTime;
         System.out.println("Mean run time per request: "+runTime/50f/1000f+" s");

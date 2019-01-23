@@ -1,10 +1,10 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>fr.cnes.lib.proxy</groupId>
-    <artifactId>LibraryForProxyWeb</artifactId>
+    <groupId>fr.cnes.jproxy</groupId>
+    <artifactId>jproxy</artifactId>
     <version>1.0.0</version>
-    <name>Java Library for the CNES Technical Web Proxy</name>
+    <name>JProxy</name>
     <inceptionYear>2018</inceptionYear>
     <licenses>
         <license>
@@ -40,8 +40,8 @@
         </profile>
     </profiles>      
     <url>http://github.com/Cnes/JSPNego</url>    
-    <description>The Technical Web Proxy allows CNES users to connect on the Internet. Before that, an authentication on the proxy is required.
-        The aim of the library is to provide an easy way to authenticate the user using Kerberos making him allowed to go through the Technical Web Proxy.</description>
+    <description>A JAVA library to make HTTP requests through a proxy. The supported proxies are the follwoing
+    no proxy, proxy without authentication, proxy with basic authentication, proxy with JSPNego</description>
     <developers>
         <developer>
             <id>se</id>
@@ -369,7 +369,7 @@
                             <docletPath>${basedir}/ConfTools/pdfdoclet-1.0.3-all.jar</docletPath>
                             <useStandardDocletOptions>false</useStandardDocletOptions>
                             <additionalparam>
-                                -pdf javadoc.pdf -config ${basedir}/ConfTools/config_jsplitpolygon.properties
+                                -pdf javadoc.pdf -config ${basedir}/ConfTools/config_pdf.properties
                             </additionalparam>
                         </configuration>
                     </reportSet>

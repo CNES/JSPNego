@@ -61,19 +61,19 @@ public final class ProxySPNegoHttpClientWithJAAS extends AbstractProxySPNegoHttp
 
     /**
      * Creates a HTTP client that makes requests to a proxy authenticated with SSO and configured by
-     * a JAAAS configuration file. Uses
-     * {@link fr.cnes.httpclient.configuration.ProxySPNegoJAASConfiguration} class to configure this
-     * proxy.
+     * a JAAAS configuration file.
+     * Uses {@link fr.cnes.httpclient.configuration.ProxySPNegoJAASConfiguration} class to configure 
+     * this proxy.
      */
     public ProxySPNegoHttpClientWithJAAS() {
         this(false);
     }
 
     /**
-     * Creates a HTTP client that makes requests to a proxy authenticated with SSO and configured by
-     * a JAAAS configuration file. Uses
-     * {@link fr.cnes.httpclient.configuration.ProxySPNegoJAASConfiguration} class to configure this
-     * proxy.
+     * Creates a HTTP client that makes requests to a proxy authenticated with SSO (JAAS 
+     * configuration file). 
+     * The {@link fr.cnes.httpclient.configuration.ProxySPNegoJAASConfiguration} must be configured 
+     * before using this constructor.
      *
      * @param isDisabledSSL True when the SSL certificate check is disabled otherwise False.
      */
@@ -82,13 +82,13 @@ public final class ProxySPNegoHttpClientWithJAAS extends AbstractProxySPNegoHttp
     }
 
     /**
-     * Creates a HTTP client that makes requests to a proxy authenticated with SSO and configured by
-     * a JAAAS configuration file. Uses
-     * {@link fr.cnes.httpclient.configuration.ProxySPNegoJAASConfiguration} class to configure this
-     * proxy.
+     * Creates a HTTP client that makes requests to a proxy authenticated with SSO (JAAS 
+     * configuration file). 
+     * The {@link fr.cnes.httpclient.configuration.ProxySPNegoJAASConfiguration} must be configured 
+     * before using this constructor.
      *
      * @param isDisabledSSL True when the SSL certificate check is disabled otherwise False.
-     * @param config options for Http client
+     * @param config Options for HTTP client
      */
     public ProxySPNegoHttpClientWithJAAS(final boolean isDisabledSSL,
             final Map<String, String> config) {

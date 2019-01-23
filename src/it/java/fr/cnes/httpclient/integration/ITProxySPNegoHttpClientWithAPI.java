@@ -22,6 +22,7 @@ package fr.cnes.httpclient.integration;
 
 import fr.cnes.httpclient.HttpClient;
 import fr.cnes.httpclient.HttpClientFactory;
+import fr.cnes.httpclient.ProxySPNegoHttpClientWithAPI;
 import fr.cnes.httpclient.configuration.ProxySPNegoAPIConfiguration;
 import java.io.IOException;
 import java.util.Properties;
@@ -104,7 +105,7 @@ public class ITProxySPNegoHttpClientWithAPI {
     }
 
     @Test
-    public void testRequest() throws IOException {
+    public void testRequestFactory() throws IOException {
         ProxySPNegoAPIConfiguration.HTTP_PROXY.setValue(host+":"+port);
         ProxySPNegoAPIConfiguration.KEY_TAB.setValue(keytab);
         ProxySPNegoAPIConfiguration.PRINCIPAL.setValue(login);
@@ -115,8 +116,25 @@ public class ITProxySPNegoHttpClientWithAPI {
         HttpResponse response = client.execute(new HttpGet("https://www.google.fr"));
         HttpEntity entity = response.getEntity();
         String content = EntityUtils.toString(entity);
+        client.close();
         assertTrue(response.getStatusLine().getStatusCode() == 200 && content.contains("<title>Google</title>"));
     }
+    
+    @Test
+    public void testRequestAPI() throws IOException {
+        ProxySPNegoAPIConfiguration.HTTP_PROXY.setValue(host+":"+port);
+        ProxySPNegoAPIConfiguration.KEY_TAB.setValue(keytab);
+        ProxySPNegoAPIConfiguration.PRINCIPAL.setValue(login);
+        ProxySPNegoAPIConfiguration.SERVICE_PROVIDER_NAME.setValue(spn);
+        ProxySPNegoAPIConfiguration.USE_KEYTAB.setValue("true");
+        ProxySPNegoAPIConfiguration.TICKET_CACHE.setValue("");
+        HttpClient client = new ProxySPNegoHttpClientWithAPI();
+        HttpResponse response = client.execute(new HttpGet("https://www.google.fr"));
+        HttpEntity entity = response.getEntity();
+        String content = EntityUtils.toString(entity);
+        client.close();
+        assertTrue(response.getStatusLine().getStatusCode() == 200 && content.contains("<title>Google</title>"));
+    }    
     
     @Test
     public void testRequestPerfo() throws IOException {

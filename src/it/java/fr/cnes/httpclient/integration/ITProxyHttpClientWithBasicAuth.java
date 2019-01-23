@@ -22,6 +22,7 @@ package fr.cnes.httpclient.integration;
 
 import fr.cnes.httpclient.HttpClient;
 import fr.cnes.httpclient.HttpClientFactory;
+import fr.cnes.httpclient.ProxyHttpClientWithBasicAuth;
 import fr.cnes.httpclient.configuration.ProxyConfiguration;
 import java.io.IOException;
 import java.util.Properties;
@@ -94,7 +95,7 @@ public class ITProxyHttpClientWithBasicAuth {
     }
 
     @Test
-    public void testRequest() throws IOException {
+    public void testRequestFactory() throws IOException {
         ProxyConfiguration.HTTP_PROXY.setValue(host+":"+port);
         ProxyConfiguration.USERNAME.setValue(login);
         ProxyConfiguration.PASSWORD.setValue(pwd);
@@ -102,8 +103,22 @@ public class ITProxyHttpClientWithBasicAuth {
         HttpResponse response = client.execute(new HttpGet("https://www.google.fr"));
         HttpEntity entity = response.getEntity();
         String content = EntityUtils.toString(entity);
+        client.close();
         assertTrue(response.getStatusLine().getStatusCode() == 200 && content.contains("<title>Google</title>"));
     }
+    
+    @Test
+    public void testRequestBasicAuth() throws IOException {
+        ProxyConfiguration.HTTP_PROXY.setValue(host+":"+port);
+        ProxyConfiguration.USERNAME.setValue(login);
+        ProxyConfiguration.PASSWORD.setValue(pwd);
+        HttpClient client = new ProxyHttpClientWithBasicAuth();
+        HttpResponse response = client.execute(new HttpGet("https://www.google.fr"));
+        HttpEntity entity = response.getEntity();
+        String content = EntityUtils.toString(entity);
+        client.close();
+        assertTrue(response.getStatusLine().getStatusCode() == 200 && content.contains("<title>Google</title>"));
+    }    
     
     @Test
     public void testRequestPerfo() throws IOException {

@@ -46,17 +46,16 @@ public final class ProxySPNegoHttpClientWithAPI extends AbstractProxySPNegoHttpC
             getName());
 
     /**
-     * Creates a Http client based on a proxy having a SSO authentication and configuration based on
-     * an API programmatic.
+     * Creates a HTTP client based on a proxy having a SSO authentication (API).     
      */
     public ProxySPNegoHttpClientWithAPI() {
         this(false);
     }
 
     /**
-     * Creates a Http client based on a proxy having a SSO authentication and configuration based on
-     * an API programmatic.
-     *
+     * Creates a HTTP client based on a proxy having a SSO authentication (API).
+     * The {@link fr.cnes.httpclient.configuration.ProxySPNegoAPIConfiguration} must be configured 
+     * before using this constructor.   
      * @param isDisabledSSL True when the SSL certificate check is disabled otherwise False.
      */
     public ProxySPNegoHttpClientWithAPI(final boolean isDisabledSSL) {
@@ -64,11 +63,12 @@ public final class ProxySPNegoHttpClientWithAPI extends AbstractProxySPNegoHttpC
     }
 
     /**
-     * Creates a Http client based on a proxy having a SSO authentication and configuration based on
-     * an API programmatic.
-     *
+     * Creates a HTTP client based on a proxy having a SSO authentication (API) and options for 
+     * HTTP client.
+     * The {@link fr.cnes.httpclient.configuration.ProxySPNegoAPIConfiguration} must be configured 
+     * before using this constructor.   
      * @param isDisabledSSL True when the SSL certificate check is disabled otherwise False.
-     * @param config options for Http client
+     * @param config options for HTTP client
      */
     public ProxySPNegoHttpClientWithAPI(final boolean isDisabledSSL,
             final Map<String, String> config) {

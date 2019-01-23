@@ -58,26 +58,57 @@ public abstract class AbstractProxySPNegoHttpClient extends ProxyHttpClientWitho
             getName());
 
     /**
-     * Creates an AbstractProxySPNegoHttpClient
+     * Creates an AbstractProxySPNegoHttpClient.
+     * The {@link fr.cnes.httpclient.configuration.ProxySPNegoAPIConfiguration} or 
+     * The {@link fr.cnes.httpclient.configuration.ProxySPNegoJAASConfiguration} must be configured 
+     * according to the proxy type before using this constructor.
      *
      * @param isDisabledSSL True when SSL certificates are disabled otherwise False
      * @param type Type of SPNego
      */
     protected AbstractProxySPNegoHttpClient(final boolean isDisabledSSL, final Type type) {
-        this(isDisabledSSL, type, new HashMap());
+        this(
+                isDisabledSSL, 
+                type, 
+                new HashMap()
+        );
     }
 
+    /**
+     * Creates an AbstractProxySPNegoHttpClient based on options for HTTP client.
+     * The {@link fr.cnes.httpclient.configuration.ProxySPNegoAPIConfiguration} or 
+     * The {@link fr.cnes.httpclient.configuration.ProxySPNegoJAASConfiguration} must be configured 
+     * according to the proxy type before using this constructor.
+     
+     * @param isDisabledSSL True when SSL certificates are disabled otherwise False
+     * @param type Type of SPNego
+     * @param config options for HTTP client
+     */
+    protected AbstractProxySPNegoHttpClient(final boolean isDisabledSSL, final Type type,
+            final Map<String, String> config) {
+        this(
+                isDisabledSSL, 
+                new HashMap() {{
+                    putAll(config);
+                    putAll(type.equals(Type.PROXY_SPNEGO_API) 
+                            ? ProxySPNegoAPIConfiguration.getConfig() 
+                            : ProxySPNegoJAASConfiguration.getConfig());
+                }},
+                type
+        );        
+    }
+    
     /**
      * Creates an AbstractProxySPNegoHttpClient based on options for Http client.
      *
      * @param isDisabledSSL True when SSL certificates are disabled otherwise False
      * @param type Type of SPNego
-     * @param config options for Http client
+     * @param config options for Http client that contains the SPNego configuration
      */
-    protected AbstractProxySPNegoHttpClient(final boolean isDisabledSSL, final Type type,
-            final Map<String, String> config) {
+    private AbstractProxySPNegoHttpClient(final boolean isDisabledSSL, 
+            final Map<String, String> config, final Type type) {
         super(isDisabledSSL, config, type);
-    }
+    }    
 
     /**
      * Creates a dummy kerberos credential provider for the kerberized proxy.
@@ -120,7 +151,7 @@ public abstract class AbstractProxySPNegoHttpClient extends ProxyHttpClientWitho
      *
      * @param builder builder
      * @return builder including proxy
-     * @throws IllegalArgumentException when an unknow type or when a validation error happens in
+     * @throws IllegalArgumentException when an unknown type or when a validation error happens in
      * ProxySPNegoJAASConfiguration or ProxySPNegoAPIConfiguration
      */
     @Override

@@ -34,11 +34,13 @@ import org.apache.logging.log4j.Logger;
  */
 public enum ProxySPNegoJAASConfiguration {
     /**
-     * HTTP proxy variable (as hostname:port). By default loads the http_proxy variable.
+     * HTTP proxy variable (as hostname:port). 
+     * By default it loads the <b>http_proxy</b> variable.
      */
     HTTP_PROXY("http_proxy", System.getenv("http_proxy")),
     /**
-     * No proxy variable. A set of separated hostname/IP by comma.
+     * No proxy variable. 
+     * A set of separated hostname/IP by comma. By default it loads <b>no_proxy</b> variable.
      */
     NO_PROXY("no_proxy", System.getenv("no_proxy")),
     /**

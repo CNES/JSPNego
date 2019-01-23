@@ -19,21 +19,21 @@
  * MA 02110-1301  USA
  */
 /**
- * Clients to make Http requests.
+ * Client to make Http requests.
  *
  * It exists several clients:
  * <ul>
- * <li>HttpClient to execute requests without a proxy</li>
- * <li>ProxyHttpClientWithoutAuth to execute requests through a proxy without authentication</li>
- * <li>ProxyHttpClientWithBasicAuth to execute requests through a proxy with a basic
+ * <li>HttpClient to execute requests {@link fr.cnes.httpclient.HttpClient without a proxy}</li>
+ * <li>{@link fr.cnes.httpclient.ProxyHttpClientWithoutAuth} to execute requests through a proxy without authentication</li>
+ * <li>{@link fr.cnes.httpclient.ProxyHttpClientWithBasicAuth} to execute requests through a proxy with a basic
  * authentication</li>
- * <li>ProxySPNegoHttpClientWithAPI to execute requests through a proxy with a SSO authentication
+ * <li>{@link fr.cnes.httpclient.ProxySPNegoHttpClientWithAPI} to execute requests through a proxy with a SSO authentication
  * and configured by a programmatic API.</li>
- * <li>ProxySPNegoJAASClientWithAPI to execute requests through a proxy with a SSO authentication
+ * <li>{@link fr.cnes.httpclient.ProxySPNegoHttpClientWithJAAS} to execute requests through a proxy with a SSO authentication
  * and configured by a configuration file.</li>
  * </ul>
  *
- * In addition to that, a factory is available to create one of the clients. However, before
+ * In addition to that, a {@link fr.cnes.httpclient.HttpClientFactory factory} is available to create one of the clients. However, before
  * creating a proxy, the proxy must be configured using the configuration
  * {@link fr.cnes.httpclient.configuration package}.
  * 
@@ -41,7 +41,7 @@
  * <img src="{@docRoot}/doc-files/httpclient.png" alt="HTTP client">
  * </p>
  * 
- * <h2>Request without a proxy</h2>
+ * <h2>1 - Request without a proxy</h2>
  * <pre>
  * <code>
  * HttpClient client = HttpClientFactory.create(HttpClientFactory.Type.NO_PROXY);
@@ -49,8 +49,16 @@
  * </code>
  * </pre>
  * 
+ * <h2>2 - Request with a proxy without authentication</h2>
+ * <pre>
+ * <code>
+ * ProxyConfiguration.HTTP_PROXY.setValue("127.0.0.1:1080");
+ * HttpClient client = HttpClientFactory.create(HttpClientFactory.Type.PROXY_BASIC);
+ * HttpResponse response = client.execute(new HttpGet("http://www.google.fr"));
+ * </code>
+ * </pre> 
  * 
- * <h2>Request with a proxy using BASIC HTTP</h2>
+ * <h2>3 - Request with a proxy using HTTP BASIC</h2>
  * <pre>
  * <code>
  * ProxyConfiguration.HTTP_PROXY.setValue("127.0.0.1:1080");
@@ -61,7 +69,7 @@
  * </code>
  * </pre>
  * 
- * <h2>Request with a proxy using JSPNego (JAAS)</h2>
+ * <h2>4 - Request with a proxy using JSPNego (JAAS)</h2>
  * <pre>
  * <code>
  * ProxySPNegoJAASConfiguration.HTTP_PROXY.setValue("127.0.0.1:1080");
@@ -82,7 +90,18 @@
  * </code>
  * </pre>
  * 
- * <h2>Request with a proxy using JSPNego (API)</h2>
- * TODO
+ * <h2>5 - Request with a proxy using JSPNego (API)</h2>
+ * <pre>
+ * <code>
+ * ProxySPNegoAPIConfiguration.HTTP_PROXY.setValue("127.0.0.1:1080");
+ * ProxySPNegoAPIConfiguration.KEY_TAB.setValue("/tmp/doi_kerberos.keytab");
+ * ProxySPNegoAPIConfiguration.PRINCIPAL.setValue("test@SIS.CNES.FR");
+ * ProxySPNegoAPIConfiguration.SERVICE_PROVIDER_NAME.setValue("HTTP@127.0.0.1");
+ * ProxySPNegoAPIConfiguration.USE_KEYTAB.setValue("true");
+ * ProxySPNegoAPIConfiguration.TICKET_CACHE.setValue("");
+ * HttpClient client = HttpClientFactory.create(HttpClientFactory.Type.PROXY_SPNEGO_API);
+ * HttpResponse response = client.execute(new HttpGet("http://www.google.fr")); 
+ * </code>
+ * </pre> 
  */
 package fr.cnes.httpclient;

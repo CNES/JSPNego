@@ -28,6 +28,7 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -47,25 +48,33 @@ public class ProxyHttpClientWithBasicAuth extends ProxyHttpClientWithoutAuth {
 
     /**
      * Creates a HTTP client using a proxy with a basic authentication.
+     * The {@link fr.cnes.httpclient.configuration.ProxyConfiguration} must be configured before using this constructor.
      */
     public ProxyHttpClientWithBasicAuth() {
         this(false, new HashMap());
     }
 
     /**
-     * Creates a HTTP client using a proxy with a basic authentication.
-     *
+     * Creates a HTTP client using a proxy with a basic authentication and options for HTTP client.
+     * The {@link fr.cnes.httpclient.configuration.ProxyConfiguration} must be configured before using this constructor.
+     * 
      * @param isDisabledSSL True when the SSL certificate check is disabled otherwise False.
      * @param config Options for HttpClient
      */
     public ProxyHttpClientWithBasicAuth(final boolean isDisabledSSL, final Map<String, String> config) {
-        super(isDisabledSSL, config);
+        super(
+                isDisabledSSL, 
+                new HashMap() {{
+                    putAll(config); 
+                    putAll(ProxyConfiguration.getConfig());
+                }}
+        );
     }
 
     /**
      * Provides credentials by setting username/password.
      *
-     * @param proxy Http proxy
+     * @param proxy HTTP proxy
      * @return credentials
      * @throws IllegalArgumentException when a validation error happens in ProxyConfiguration
      */

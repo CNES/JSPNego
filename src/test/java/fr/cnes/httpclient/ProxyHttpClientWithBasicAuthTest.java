@@ -122,9 +122,13 @@ public class ProxyHttpClientWithBasicAuthTest {
                 VerificationTimes.exactly(1)
         );
     }
+    
+    private void verifyGetRequestReset() {
+        new MockServerClient("127.0.0.1", 1080).reset();
+    }    
 
     @Test
-    public void testSomeMethod() throws IOException {
+    public void testSomeMethodFactory() throws IOException {
         createExpectationForTarget();
         createExpectationForAuth();
         ProxyConfiguration.HTTP_PROXY.setValue("127.0.0.1:1080");
@@ -134,8 +138,27 @@ public class ProxyHttpClientWithBasicAuthTest {
         HttpResponse response = client.execute(new HttpGet("http://127.0.0.1:1081"));
         HttpEntity entity = response.getEntity();
         String content = EntityUtils.toString(entity);
-        verifyGetRequest();
+        client.close();
+        verifyGetRequest();  
+        verifyGetRequestReset();
         assertTrue(response.getStatusLine().getStatusCode() == 200 && content.equals("OK target"));
     }
+   
+    @Test
+    public void testSomeMethodBasicAuth() throws IOException {
+        createExpectationForTarget();
+        createExpectationForAuth();
+        ProxyConfiguration.HTTP_PROXY.setValue("127.0.0.1:1080");
+        ProxyConfiguration.USERNAME.setValue("foo");
+        ProxyConfiguration.PASSWORD.setValue("bar");
+        HttpClient client = new ProxyHttpClientWithBasicAuth();
+        HttpResponse response = client.execute(new HttpGet("http://127.0.0.1:1081"));
+        HttpEntity entity = response.getEntity();
+        String content = EntityUtils.toString(entity);
+        client.close();
+        verifyGetRequest();  
+        verifyGetRequestReset();
+        assertTrue(response.getStatusLine().getStatusCode() == 200 && content.equals("OK target"));
+    }    
 
 }

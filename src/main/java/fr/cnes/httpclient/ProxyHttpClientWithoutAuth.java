@@ -51,6 +51,7 @@ public class ProxyHttpClientWithoutAuth extends AbstractProxyHttpClient {
 
     /**
      * Creates a HTTP client using a proxy with no authentication.
+     * The {@link fr.cnes.httpclient.configuration.ProxyConfiguration} must be configured before using this constructor.
      */
     public ProxyHttpClientWithoutAuth() {
         this(false);
@@ -58,29 +59,36 @@ public class ProxyHttpClientWithoutAuth extends AbstractProxyHttpClient {
 
     /**
      * Creates a HTTP client using a proxy with no authentication.
-     *
+     * The {@link fr.cnes.httpclient.configuration.ProxyConfiguration} must be configured before using this constructor.
      * @param isDisabledSSL True when the SSL certificate check is disabled otherwise False.
      */
     public ProxyHttpClientWithoutAuth(final boolean isDisabledSSL) {
-        this(isDisabledSSL, new HashMap(), Type.PROXY_BASIC);
+        this(isDisabledSSL, new HashMap());
     }
     
     /**
-     * Creates a HTTP client using a proxy with no authentication and options for Http client.
-     *
+     * Creates a HTTP client using a proxy with no authentication and options for HTTP client.
+     * The {@link fr.cnes.httpclient.configuration.ProxyConfiguration} must be configured before using this constructor.
      * @param isDisabledSSL True when the SSL certificate check is disabled otherwise False.
-     * @param config options for Http client
+     * @param config options for HTTP client
      */
     public ProxyHttpClientWithoutAuth(final boolean isDisabledSSL, final Map<String, String> config) {
-        this(isDisabledSSL, config, Type.PROXY_BASIC);
+        this(
+                isDisabledSSL, 
+                new HashMap(){{
+                    putAll(config);
+                    putAll(ProxyConfiguration.getConfig());
+                }},
+                Type.PROXY_BASIC
+        );
     }    
 
     /**
-     * Creates a HTTP client using a proxy with no authentication and options for Http client.
+     * Creates a HTTP client using a proxy with no authentication and options for HTTP client.
      *
      * @param isDisabledSSL True when the SSL certificate check is disabled otherwise False.
-     * @param config options for Http client
-     * @param type type of http client
+     * @param config options for HTTP client that must contain proxy parameters
+     * @param type proxy type
      */
     protected ProxyHttpClientWithoutAuth(final boolean isDisabledSSL, final Map<String, String> config, final Type type) {
         super(isDisabledSSL, config, type);

@@ -64,7 +64,7 @@ public abstract class AbstractGSSClient {
 
     /**
      * A service principal name (SPN) is a unique identifier of a service instance. SPNs are used by
-     * Kerberos authentication to associate a service instance with a service logon account. This
+     * Kerberos authentication to associate a service instance with a service login account. This
      * allows a client application to request that the service authenticate an account even if the
      * client does not have the account name.
      */

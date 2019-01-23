@@ -34,11 +34,13 @@ import org.apache.logging.log4j.Logger;
  */
 public enum ProxySPNegoAPIConfiguration {
     /**
-     * HTTP proxy variable (as hostname:port). By default loads the http_proxy variable.
+     * HTTP proxy variable (as hostname:port). 
+     * By default it loads the <b>http_proxy</b> variable.
      */
     HTTP_PROXY("http_proxy", System.getenv("http_proxy")),
     /**
-     * No proxy variable. A set of separated hostname/IP by comma.
+     * No proxy variable. 
+     * A set of separated hostname/IP by comma. By default it loads <b>no_proxy</b> variable.
      */
     NO_PROXY("no_proxy", System.getenv("no_proxy")),
     /**
@@ -54,7 +56,7 @@ public enum ProxySPNegoAPIConfiguration {
     /**
      * Set this to the name of the ticket cache that contains user's TGT. If this is set,
      * useTicketCache must also be set to true; Otherwise a configuration error will be returned.
-     * Default is environment variable KRB5CCNAME
+     * By default, it loads <b>KRB5CCNAME</b> variable.
      */
     TICKET_CACHE("ticketCache", System.getenv("KRB5CCNAME")),
     /**
@@ -90,7 +92,7 @@ public enum ProxySPNegoAPIConfiguration {
      * "testuser" or a service name such as "host/testhost.eng.sun.com". You can use the principal
      * option to set the principal when there are credentials for multiple principals in the keyTab
      * or when you want a specific ticket cache only. The principal can also be set using the system
-     * property sun.security.krb5.principal.
+     * property <b>sun.security.krb5.principal</b>.
      */
     PRINCIPAL("principal", System.getenv("sun.security.krb5.principal")),
     /**

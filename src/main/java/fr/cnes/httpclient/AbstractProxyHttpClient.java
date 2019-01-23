@@ -48,7 +48,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Handles a Http client through a proxy.
+ * Interface that handles a HTTP client through a proxy.
  *
  * @author Jean-Christophe Malapert
  */
@@ -65,18 +65,18 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
     private RequestConfig requestConfig;
 
     /**
-     * Creates an AbstractProxyHttpClient based on http client options.
+     * Creates an AbstractProxyHttpClient based on secured SSL, the type of proxy and its configuration.
      *
      * @param isDisabledSSL True when SSL certificates are disabled otherwise False
-     * @param config options for Http client
-     * @param type type of Http client
+     * @param config proxy parameters
+     * @param type proxy type
      */
     protected AbstractProxyHttpClient(final boolean isDisabledSSL, final Map<String, String> config, final Type type) {
         super(isDisabledSSL, config, type);
     }
 
     /**
-     * Creates builder proxy.
+     * Creates a builder proxy.
      *
      * @param builder builder
      * @return builder
@@ -85,11 +85,11 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
     protected abstract HttpClientBuilder createBuilderProxy(final HttpClientBuilder builder);
 
     /**
-     * Creates proxy builder.
-     *
+     * Creates a proxy builder based on a previous builder, the proxy host and the excluded hosts.
+     * 
      * @param builder builder
      * @param proxy proxy
-     * @param excludedHosts excluded hosts
+     * @param excludedHosts hosts for which the proxy is not needed
      * @return builder including proxy
      */
     protected final HttpClientBuilder createBuilder(final HttpClientBuilder builder,
@@ -118,7 +118,7 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
     }
 
     /**
-     * Build the proxy.
+     * Builds the proxy.
      *
      * @param value proxy value as hostname:port
      * @return the proxy
@@ -134,7 +134,7 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
     /**
      * Sets the proxy configuration.
      *
-     * @param proxy http proxy
+     * @param proxy HTTP proxy
      */
     protected final void setProxyConfiguration(final HttpHost proxy) {
         LOG.traceEntry("proxy : {}", proxy);
@@ -156,8 +156,8 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
      * Configures route.
      *
      * @param proxy proxy
-     * @param excludedHosts host for which hth proxy is not needed
-     * @return Http router planner
+     * @param excludedHosts hosts for which the proxy is not needed
+     * @return HTTP router planner
      */
     protected final HttpRoutePlanner configureRouterPlanner(final HttpHost proxy,
             final List<String> excludedHosts) {
@@ -205,7 +205,7 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
      * Creates the credentials.
      *
      * @param proxy proxy
-     * @return the credentials
+     * @return the credentials or {@code null}
      */
     protected abstract CredentialsProvider createCredsProvider(final HttpHost proxy);
 

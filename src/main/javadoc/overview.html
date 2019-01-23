@@ -1,18 +1,18 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Java Library for the CNES Technical Web Proxy</title>
+        <title>JProxy, a Java Library for handling proxy authentication</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
     <body>
-        JAVA library is built to make HTTP requests. HTTP request can be done without or with proxy.
-        When a proxy is used, HTTP request can be done:
+        JProxy is built to make HTTP requests. HTTP request can be done without or with a proxy.
+        When a proxy is used, HTTP requests can be done through:
         <ul>
-            <li>proxy without authentication</li>
-            <li>proxy with basic authentication</li>
-            <li>proxy with SSO authentication using SPNego via a JAAS configuration file</li>
-            <li>proxy with SSO authentication using SPNego via an API programmatic</li>
+            <li>{@link fr.cnes.httpclient.ProxyHttpClientWithoutAuth a proxy without authentication}</li>
+            <li>{@link fr.cnes.httpclient.ProxyHttpClientWithBasicAuth a proxy with basic authentication}</li>
+            <li>{@link fr.cnes.httpclient.ProxySPNegoHttpClientWithJAAS a proxy with SSO authentication using SPNego via a JAAS configuration file}</li>
+            <li>{@link fr.cnes.httpclient.ProxySPNegoHttpClientWithAPI a proxy with SSO authentication using SPNego via a programmatic API}</li>
         </ul>
         The SSO uses <i>The Simple and Protected GSS-API Negotiation Mechanism (IETF RFC 2478)</i> 
         (<b>SPNEGO</b>) as authentication protocol.
@@ -20,7 +20,7 @@
             <img src="{@docRoot}/doc-files/httpclient.png" alt="HTTP client">
         </p>
         
-        <h2>Architecture</h2>
+        <h2>1 - Architecture</h2>
         <img src="{@docRoot}/doc-files/proxyKerberos.png" alt="Proxy Kerberos"><br>
         A client to make an HTTP request through a proxy using SSO follow the following steps:
         <ul>
@@ -35,7 +35,7 @@
             <li>9-10 - Check the authorization according to IPA registry
         </ul>
         
-        <h2>Keytab creation</h2>
+        <h2>2 - Keytab creation</h2>
         A keytab (short for “key table”) stores long-term keys for one or more principals. Keytabs are
         normally represented by files in a standard format, although in rare cases they can be
         represented in other ways. Keytabs are used most often to allow server applications to accept
@@ -52,25 +52,147 @@
             ipa-getkeytab -p <i>login></i>@<i>server</i> -k <i>keytabPath</i> -P       
         </pre> 
         
-        A keytab can be displayed using the <i>klist</i>. A Keytabs can be destroyed using <i>kdestroy</i>.
- 
-        <h2>The code to request a page through a proxy using SSO</h2>
-        <pre>
-        ProxySPNegoJAASConfiguration.HTTP_PROXY.setValue(proxyHost+":"+proxyPort);
-        ProxySPNegoJAASConfiguration.JAAS_CONTEXT.setValue("KRB5");
-        ProxySPNegoJAASConfiguration.JAAS.setValue("/tmp/jaas.conf");
-        ProxySPNegoJAASConfiguration.SERVICE_PROVIDER_NAME.setValue("HTTP@"+proxyHost);
+        A keytab can be displayed using the <i>klist</i>. A Keytab can be destroyed using <i>kdestroy</i>.
 
+        <h2>3 - The code to request a page through a proxy without authentication</h2>
+        First of all, we configure the proxy using <i>{@link fr.cnes.httpclient.configuration.ProxyConfiguration}</i>.
+        <pre>
+        // defines the proxy address
+        ProxyConfiguration.HTTP_PROXY.setValue(host+":"+port);           
+        </pre>
+        Next, creates a <i>{@link fr.cnes.httpclient.ProxyHttpClientWithoutAuth}</i> object and make the request.
+        <pre>
+        HttpResponse response;
+        HttpClient httpclient = null;
+        try {
+            httpclient = new ProxyHttpClientWithoutAuth();
+            HttpUriRequest request = new HttpGet("https://www.google.com");           
+            response = httpclient.execute(request);
+            httpclient.close();
+        } catch (IOException e) {
+            LOG.error(e);
+            response = null;
+        } 
+        </pre>  
+        
+        <h2>4 - The code to request a page through a proxy using a basic authentication</h2>
+        First of all, we configure the proxy using <i>{@link fr.cnes.httpclient.configuration.ProxyConfiguration}</i>.
+        <pre>
+        // defines the proxy address
+        ProxyConfiguration.HTTP_PROXY.setValue(host+":"+port);
+        // defines the login if the proxy is a proxy with authentication
+        ProxyConfiguration.USERNAME.setValue(login);
+        // defines the password if the proxy is a proxy with authentication
+        ProxyConfiguration.PASSWORD.setValue(pwd);           
+        </pre>
+        Next, creates a <i>{@link fr.cnes.httpclient.ProxyHttpClientWithBasicAuth}</i> object and make the request.
+        <pre>
+        HttpResponse response;
+        HttpClient httpclient = null;
+        try {
+            httpclient = new ProxyHttpClientWithBasicAuth();
+            HttpUriRequest request = new HttpGet("https://www.google.com");           
+            response = httpclient.execute(request);
+            httpclient.close();
+        } catch (IOException e) {
+            LOG.error(e);
+            response = null;
+        } 
+        </pre>        
+        
+        <h2>5 - The code to request a page through a proxy using SSO (API)</h2>
+        First of all, we configure the proxy using <i>{@link fr.cnes.httpclient.configuration.ProxySPNegoAPIConfiguration}</i>.
+        <pre>
+        // defines the proxy address
+        ProxySPNegoAPIConfiguration.HTTP_PROXY.setValue(host+":"+port);
+        // uses the keytab
+        ProxySPNegoAPIConfiguration.USE_KEYTAB.setValue("true");
+        // defines the keytab file
+        ProxySPNegoAPIConfiguration.KEY_TAB.setValue(keytab);
+        // defines the login
+        ProxySPNegoAPIConfiguration.PRINCIPAL.setValue(login);
+        // defines the service principle name
+        ProxySPNegoAPIConfiguration.SERVICE_PROVIDER_NAME.setValue(spn);
+        // defines an empty ticket cache (if not set, loads an environment variable)
+        ProxySPNegoAPIConfiguration.TICKET_CACHE.setValue("");            
+        </pre>
+        Next, creates a <i>{@link fr.cnes.httpclient.ProxySPNegoHttpClientWithAPI}</i> object and make the request.
+        <pre>
+        HttpResponse response;
+        HttpClient httpclient = null;
+        try {
+            httpclient = new ProxySPNegoHttpClientWithAPI();
+            HttpUriRequest request = new HttpGet("https://www.google.com");           
+            response = httpclient.execute(request);
+            httpclient.close();
+        } catch (IOException e) {
+            LOG.error(e);
+            response = null;
+        } 
+        </pre>
+        
+        <h2>6 - The code to request a page through a proxy using SSO (JAAS configuration file)</h2>
+        First of all, we configure the proxy using <i>{@link fr.cnes.httpclient.configuration.ProxySPNegoJAASConfiguration}</i>.
+        <pre>
+        // defines the proxy address
+        ProxySPNegoJAASConfiguration.HTTP_PROXY.setValue(proxyHost+":"+proxyPort);
+        // defines the context to load in jaas.conf
+        ProxySPNegoJAASConfiguration.JAAS_CONTEXT.setValue("KRB5");
+        // configuration file
+        ProxySPNegoJAASConfiguration.JAAS.setValue("/tmp/jaas.conf");
+        // defines the service principle name
+        ProxySPNegoJAASConfiguration.SERVICE_PROVIDER_NAME.setValue("HTTP@"+proxyHost);
+        </pre>
+        <i>jaas.conf</i> contains the parameters for JSPNego protocol. Here is an example of <i>jaas.conf</i>
+        <pre>
+            KRB5 {
+                com.sun.security.auth.module.Krb5LoginModule required
+                useKeyTab=true
+                keyTab="/home/ad/doi_kerberos/doi_kerberos.keytab"
+                debug=true
+                principal="doi_kerberos@SIS.CNES.FR";
+            };
+        </pre>
+        The possible parameters in <i>jaas.conf</i> can be found in <i>{@link fr.cnes.httpclient.configuration.ProxySPNegoAPIConfiguration}</i>.
+        Next, creates a <i>{@link fr.cnes.httpclient.ProxySPNegoHttpClientWithJAAS}</i> object and make the request.
+        <pre>
         HttpResponse response;
         HttpClient httpclient = null;
         try {
             httpclient = new ProxySPNegoHttpClientWithJAAS();
             HttpUriRequest request = new HttpGet("https://www.google.com");           
             response = httpclient.execute(request);
+            httpclient.close();
         } catch (IOException e) {
             LOG.error(e);
             response = null;
         } 
-        </pre>        
+        </pre> 
+        
+        <h2>7 - The code to request a page through a proxy using a factory</h2>
+        First of all, we configure the proxy as usual.
+        Next create the {@link fr.cnes.httpclient.HttpClientFactory factory}:
+        <pre>
+        HttpClient client = HttpClientFactory.create(HttpClientFactory.Type.PROXY_SPNEGO_JAAS);
+        HttpResponse response = client.execute(new HttpGet("https://www.google.fr"));
+        HttpEntity entity = response.getEntity();
+        String content = EntityUtils.toString(entity);            
+        </pre>
+        
+        <h2>8 - HTTP requests in a loop</h2>
+        <pre>
+        HttpClient client = HttpClientFactory.create(HttpClientFactory.Type.PROXY_SPNEGO_JAAS);        
+        //The client is using a pool of connection to reach the web server. 
+        //See HttpClientBuilder#build(). When creating a default httpclient and nothing is specified
+        //it creates a pool with size of 2. So after 2 is used, it waits indefinitely trying to get 
+        //the third connection from the pool.You must read the response or close the connection, in 
+        //order to re-use the client object.        
+        for (int i=0 ; i<50; i++) {
+            HttpResponse response = client.execute(new HttpGet("https://www.google.fr"));
+            response.getEntity().getContent().close();            
+        }
+        client.close();
+        </pre>
+
     </body>
 </html>

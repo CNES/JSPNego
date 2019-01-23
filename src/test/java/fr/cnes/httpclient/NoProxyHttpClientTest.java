@@ -91,14 +91,30 @@ public class NoProxyHttpClientTest {
                 VerificationTimes.exactly(1)
         );
     }
+    
+    private void verifyGetRequestReset() {
+        new MockServerClient("127.0.0.1", 1080).reset();
+    }      
 
     @Test
-    public void testSomeMethod() throws IOException {
+    public void testSomeMethodFactory() throws IOException {
         createExpectationForAuth();
         HttpClient client = HttpClientFactory.create(HttpClientFactory.Type.NO_PROXY);
         HttpResponse response = client.execute(new HttpGet("http://127.0.0.1:1080/test.html"));
+        client.close();
         verifyGetRequest();
+        verifyGetRequestReset();
         assertTrue(response.getStatusLine().getStatusCode() == 200);
     }
 
+    @Test
+    public void testSomeMethodNoProxy() throws IOException {
+        createExpectationForAuth();
+        HttpClient client = new HttpClient();
+        HttpResponse response = client.execute(new HttpGet("http://127.0.0.1:1080/test.html"));
+        client.close();
+        verifyGetRequest();
+        verifyGetRequestReset();
+        assertTrue(response.getStatusLine().getStatusCode() == 200);
+    }    
 }

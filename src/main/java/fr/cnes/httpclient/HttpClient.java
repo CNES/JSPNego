@@ -171,24 +171,25 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
     private static final Logger LOG = LogManager.getLogger(HttpClient.class.getName());
 
     /**
-     * Http client.
+     * HTTP client.
      */
     private final CloseableHttpClient httpClient;
     
     /**
-     * Httpclient type.
+     * proxy type.
      */
     private final HttpClientFactory.Type type;    
 
     /**
-     * Creates a Http client.
+     * Creates a HTTP client without proxy that does not ignore the SSL certificates.
      */
     public HttpClient() {
         this(false);
     }
 
     /**
-     * Creates a http client that ignores the SSL certificates.
+     * Creates a HTTP client without proxy based on an option to make disable the SSL certificates 
+     * checking.
      *
      * @param isDisabledSSL True when SSL certificates are disabled otherwise False
      */
@@ -197,21 +198,24 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
     }
 
     /**
-     * Creates a http client that ignores the SSL certificates.
+     * Creates a HTTP client without proxy based on an option to make disable the SSL certificates 
+     * checking and options for HTTP client.
      *
      * @param isDisabledSSL True when SSL certificates are disabled otherwise False
-     * @param config Options for HTTP client.
+     * @param config options for HTTP client.
      */
     public HttpClient(final boolean isDisabledSSL, final Map<String, String> config) {
         this(isDisabledSSL, config, Type.NO_PROXY);
     }
     
     /**
-     * Creates a type of http client that ignores the SSL certificates.
+     * Creates a HTTP client based on an option to make disabled the SSL certificates checking and 
+     * configuration parameters and a proxy type.
+     * and its configuration.
      *
      * @param isDisabledSSL True when SSL certificates are disabled otherwise False
-     * @param config Options for HTTP client.
-     * @param type type of http client
+     * @param config options for HTTP client that contain the proxy parameters
+     * @param type proxy type
      */    
     protected HttpClient(final boolean isDisabledSSL, final Map<String, String> config, final Type type) {
         this.type = type;
@@ -219,41 +223,40 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
     }
 
     /**
-     * Creates the Http client builder.
+     * Creates the HTTP client builder based on proxy parameters.
      *
      * @param isDisabledSSL True when SSL certificates are disabled otherwise False
-     * @param config options for Http client
-     * @return the Http client builder
+     * @param config options for HTTP client that might contain the proxy parameters
+     * @return the HTTP client builder
      */
     protected final HttpClientBuilder createBuilder(final boolean isDisabledSSL,
             final Map<String, String> config) {
         LOG.traceEntry("isDisabledSSL: {}\nconfig: {}", isDisabledSSL, config);
-        HttpClientBuilder builder = HttpClients.custom();
+        
+        final HttpClientBuilder builder = HttpClients.custom();
         if (isDisabledSSL) {
             LOG.warn("SSL Certificate checking is disabled. The connection is insecured.");
-            builder = builder.setSSLContext(disableSSLCertificateChecking())
+            builder.setSSLContext(disableSSLCertificateChecking())
                     .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
-        } else {            
-            SSLContext sslCtx = createJKSContext(config);
-            if (sslCtx != null) {
-                LOG.info("Creating a SSL configuration with JKS");
-                builder.setSSLContext(sslCtx);
-            }
+        } else {         
+            final SSLContext sslCtx = createJKSContext(config);            
+            builder.setSSLContext(sslCtx);            
         }
 
         return LOG.traceExit(createBuilderExtension(builder, config));
     }
 
     /**
-     * Creates builder extension.
+     * Creates the builder extension based on proxy parameters.
      *
      * @param builder builder
-     * @param config options for Http client
+     * @param config options for HTTP client that might contain the proxy parameters
      * @return builder with extensions.
      */
     protected HttpClientBuilder createBuilderExtension(final HttpClientBuilder builder,
             final Map<String, String> config) {
         LOG.traceEntry("builder: {}\nconfig: {}", builder, config);
+        
         HttpClientBuilder extBuilder = createBuilderProxy(builder);
         extBuilder = createRedirect(extBuilder);
         if (config.containsKey(CONNECTION_MAX_PER_ROUTE) && config.containsKey(CONNECTION_MAX_TOTAL)) {
@@ -285,7 +288,7 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
     }
 
     /**
-     * Creates connection number builder.
+     * Creates a builder that configures the max connection per route and the max connection total.
      *
      * @param builder builder
      * @param connPerRoute connection per route
@@ -316,7 +319,7 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
     }
 
     /**
-     * Creates redirect.
+     * Creates redirect strategy.
      *
      * @param builder builder
      * @return builder
@@ -358,11 +361,12 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
     
     /**
      * Configures key store.
-     * @param config keystore parameters
-     * @return Key manager or null
+     * @param config options that might contain keystore parameters
+     * @return Key manager or {@code null}
      */
     private KeyManagerFactory configureKeyStore(final Map<String, String> config) {
         LOG.traceEntry("config: {}", config);
+        
         final String keyStoreType = config.getOrDefault(KEYSTORE_TYPE, System.getProperty("javax.net.ssl.keyStoreType"));
         final String keyStorePath = config.getOrDefault(KEYSTORE_PATH, System.getProperty("javax.net.ssl.keyStore"));
         final String keyStorePwd = config.getOrDefault(KEYSTORE_PWD, System.getProperty("javax.net.ssl.keyStorePassword"));
@@ -384,16 +388,18 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
         } else {
             kmf = null;
         }
+        
         return LOG.traceExit(kmf);
     }
     
     /**
      * Configures trust store.
-     * @param config truststore parameters
-     * @return Trust manager or null
+     * @param config options that might contain truststore parameters
+     * @return Trust manager or {@code null}
      */    
     private TrustManagerFactory configureTrustStore(final Map<String, String> config) {
         LOG.traceEntry("config: {}", config);
+        
         final String trustStoreType = config.getOrDefault(TRUSTSTORE_TYPE, System.getProperty("javax.net.ssl.trustStoreType"));
         final String trustStorePath = config.getOrDefault(TRUSTSTORE_PATH, System.getProperty("javax.net.ssl.trustStore"));
         final String trustStorePwd = config.getOrDefault(TRUSTSTORE_PWD, System.getProperty("javax.net.ssl.trustStorePassword"));      
@@ -415,16 +421,18 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
         } else {
             tmf = null;
         }
+        
         return LOG.traceExit(tmf);
     }    
     
     /**
      * Creates SSL context.
-     * @param config SSL parameters
-     * @return SSL context or null
+     * @param config options that might contain TLS parameters (keystore and trustore)
+     * @return SSL context or {@code null}
      */
     private SSLContext createJKSContext(final Map<String, String> config) {
         LOG.traceEntry("config: {}", config);
+        
         SSLContext sslCtx;
         try {
             sslCtx = SSLContext.getInstance("TLS");
@@ -445,7 +453,7 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
                 trusts = tmf.getTrustManagers();
             }            
             sslCtx.init(keys, trusts, new SecureRandom());            
-            
+            LOG.info("Creating a SSL configuration with JKS");
         } catch (NoSuchAlgorithmException | KeyManagementException ex) {
             LOG.catching(ex);
             sslCtx = null;
@@ -455,9 +463,9 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
     }
 
     /**
-     * Returns the http client.
+     * Returns the HTTP client.
      *
-     * @return the Http client
+     * @return the HTTP client
      */
     protected CloseableHttpClient getHttpClient() {
         LOG.traceEntry();
@@ -465,11 +473,12 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
     }
     
     /**
-     * Returns the type of httpClient.
-     * @return the type of httpClient
+     * Returns the proxy type.
+     * @return the proxy type
      */
     public Type getType() {
-        return this.type;
+        LOG.traceEntry();
+        return LOG.traceExit(this.type);
     }
 
     /**

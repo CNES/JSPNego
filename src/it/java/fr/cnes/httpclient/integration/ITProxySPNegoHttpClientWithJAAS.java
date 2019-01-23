@@ -22,6 +22,7 @@ package fr.cnes.httpclient.integration;
 
 import fr.cnes.httpclient.HttpClient;
 import fr.cnes.httpclient.HttpClientFactory;
+import fr.cnes.httpclient.ProxySPNegoHttpClientWithJAAS;
 import fr.cnes.httpclient.configuration.ProxySPNegoJAASConfiguration;
 import java.io.IOException;
 import java.util.Properties;
@@ -104,7 +105,7 @@ public class ITProxySPNegoHttpClientWithJAAS {
     }
 
     @Test
-    public void testRequest() throws IOException {
+    public void testRequestFactory() throws IOException {
         ProxySPNegoJAASConfiguration.HTTP_PROXY.setValue(host+":"+port);
         ProxySPNegoJAASConfiguration.JAAS.setValue(jaasFile);
         ProxySPNegoJAASConfiguration.JAAS_CONTEXT.setValue(jaasCtx);
@@ -113,8 +114,23 @@ public class ITProxySPNegoHttpClientWithJAAS {
         HttpResponse response = client.execute(new HttpGet("https://www.google.fr"));
         HttpEntity entity = response.getEntity();
         String content = EntityUtils.toString(entity);
+        client.close();
         assertTrue(response.getStatusLine().getStatusCode() == 200 && content.contains("<title>Google</title>"));
     }
+    
+    @Test
+    public void testRequestJAAS() throws IOException {
+        ProxySPNegoJAASConfiguration.HTTP_PROXY.setValue(host+":"+port);
+        ProxySPNegoJAASConfiguration.JAAS.setValue(jaasFile);
+        ProxySPNegoJAASConfiguration.JAAS_CONTEXT.setValue(jaasCtx);
+        ProxySPNegoJAASConfiguration.SERVICE_PROVIDER_NAME.setValue(spn);
+        HttpClient client = new ProxySPNegoHttpClientWithJAAS();
+        HttpResponse response = client.execute(new HttpGet("https://www.google.fr"));
+        HttpEntity entity = response.getEntity();
+        String content = EntityUtils.toString(entity);
+        client.close();
+        assertTrue(response.getStatusLine().getStatusCode() == 200 && content.contains("<title>Google</title>"));
+    }    
     
     @Test
     public void testRequestPerfo() throws IOException {

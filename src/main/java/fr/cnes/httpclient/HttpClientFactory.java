@@ -29,31 +29,31 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Http client factory.
+ * Creates a HttpClient based on a proxy type.
  *
  * @author Jean-Christophe Malapert
  */
 public class HttpClientFactory {
 
     /**
-     * Type of Http client.
+     * Type of HTTP client.
      */
     public enum Type {
         /**
-         * http client through a proxy authenticated by SPNego and configured by a JAAS
+         * HTTP client through a proxy authenticated by SPNego and configured by a JAAS
          * configuration file.
          */
         PROXY_SPNEGO_JAAS,
         /**
-         * http client through a proxy authenticated by SPNego and configured by the API.
+         * HTTP client through a proxy authenticated by SPNego and configured by the API.
          */
         PROXY_SPNEGO_API,
         /**
-         * http client through a proxy with/without a basic authentication.
+         * HTTP client through a proxy with/without a basic authentication.
          */
         PROXY_BASIC,
         /**
-         * http client wihtout a proxy.
+         * HTTP client without a proxy.
          */
         NO_PROXY;
     }
@@ -64,41 +64,23 @@ public class HttpClientFactory {
     private static final Logger LOG = LogManager.getLogger(HttpClientFactory.class.getName());
 
     /**
-     * Creates a Http client according to a given type.
+     * Creates a HTTP client according to a given proxy type.
      *
-     * @param type type of http client
-     * @return the Http client.
+     * @param type proxy type
+     * @return the HTTP client.
      * @throws IllegalArgumentException Unknown httpclient type
      */
     public static HttpClient create(final Type type) {
-        LOG.traceEntry("Type: {}", type.name());
-        final Map<String, String> config;
-        switch (type) {
-            case PROXY_SPNEGO_JAAS:
-                config = ProxySPNegoJAASConfiguration.getConfig();
-                break;
-            case PROXY_SPNEGO_API:
-                config = ProxySPNegoAPIConfiguration.getConfig();
-                break;
-            case PROXY_BASIC:
-                config = ProxyConfiguration.getConfig();               
-                break;
-            case NO_PROXY:
-                config = new HashMap<>();
-                break;
-            default:
-                throw LOG.throwing(new IllegalArgumentException("Unknown httpclient type"));                
-        }
-        return LOG.traceExit(HttpClientFactory.create(type, false, config));
+        return HttpClientFactory.create(type, false, new HashMap());
     }
 
     /**
-     * Create a Http client according to a given type and a parameter to disable the SSL certificate
-     * checking.
+     * Creates a HTTP client according to a proxy type, a parameter to disable the SSL certificate
+     * checking and options for HTTP client.
      *
-     * @param type type of http client
+     * @param type proxy type
      * @param isDisabledSSL True when the SSL certificate checking is disabled otherwise False
-     * @param config options for HttpClient
+     * @param config options for HTTP Client
      * @return the HttpClient
      * @throws IllegalArgumentException Unknown httpclient type
      */
@@ -116,7 +98,7 @@ public class HttpClientFactory {
                 break;
             case PROXY_BASIC:
                 LOG.debug("Uses PROXY_BASIC");
-                if(config.get("username").isEmpty()) {
+                if(ProxyConfiguration.getConfig().get("username").isEmpty()) {
                     LOG.debug("Uses proxy without authentication");
                     httpclient = new ProxyHttpClientWithoutAuth(isDisabledSSL, config);                    
                 } else {

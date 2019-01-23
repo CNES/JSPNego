@@ -121,9 +121,13 @@ public class ProxyHttpClientWithoutAuthTest {
         );
     }
     
+    private void verifyGetRequestReset() {
+        new MockServerClient("127.0.0.1", 1080).reset();
+    }      
+    
 
     @Test
-    public void testSomeMethod() throws IOException {
+    public void testSomeMethodFactory() throws IOException {
         createExpectationForTarget();
         createExpectationForAuth();
         ProxyConfiguration.HTTP_PROXY.setValue("127.0.0.1:1080");
@@ -134,8 +138,28 @@ public class ProxyHttpClientWithoutAuthTest {
         HttpResponse response = client.execute(new HttpGet("http://127.0.0.1:1081"));
         HttpEntity entity = response.getEntity();
         String content = EntityUtils.toString(entity);   
+        client.close();
         verifyGetRequest();
+        verifyGetRequestReset();
         assertTrue(response.getStatusLine().getStatusCode() == 200 && content.equals("OK target"));
     }
+    
+    @Test
+    public void testSomeMethodWithoutAuth() throws IOException {
+        createExpectationForTarget();
+        createExpectationForAuth();
+        ProxyConfiguration.HTTP_PROXY.setValue("127.0.0.1:1080");
+        ProxyConfiguration.NO_PROXY.setValue("");
+        ProxyConfiguration.USERNAME.setValue("");
+        ProxyConfiguration.PASSWORD.setValue("");
+        HttpClient client = new ProxyHttpClientWithoutAuth();
+        HttpResponse response = client.execute(new HttpGet("http://127.0.0.1:1081"));
+        HttpEntity entity = response.getEntity();
+        String content = EntityUtils.toString(entity);   
+        client.close();
+        verifyGetRequest();
+        verifyGetRequestReset();
+        assertTrue(response.getStatusLine().getStatusCode() == 200 && content.equals("OK target"));
+    }    
     
 }

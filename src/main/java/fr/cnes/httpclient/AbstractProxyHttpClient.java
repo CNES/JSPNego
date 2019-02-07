@@ -175,7 +175,13 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
                 final HttpClientContext clientContext = HttpClientContext.adapt(context);
                 final RequestConfig config = clientContext.getRequestConfig();
                 final InetAddress local = config.getLocalAddress();
-                final HttpHost proxy = config.getProxy();
+
+                // Use configured proxy is there is one.
+                HttpHost lproxy = proxy;
+                // If context defined another valid proxy use it
+                if ((config.getProxy() != null) && (config.getProxy().getHostName() != null)) {
+                    lproxy = config.getProxy();
+                }
 
                 final HttpHost target;
                 if (host.getPort() > 0
@@ -193,7 +199,7 @@ public abstract class AbstractProxyHttpClient extends HttpClient {
                     return LOG.traceExit(new HttpRoute(target, local, secure));
                 } else {
                     LOG.debug(host.getHostName()+" uses the proxy");
-                    return LOG.traceExit(new HttpRoute(target, local, proxy, secure));
+                    return LOG.traceExit(new HttpRoute(target, local, lproxy, secure));
                 }
             }
         };

@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>fr.cnes.jproxy</groupId>
     <artifactId>jproxy</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
     <name>JProxy</name>
     <inceptionYear>2018</inceptionYear>
     <licenses>

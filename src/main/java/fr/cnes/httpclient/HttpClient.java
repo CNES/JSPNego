@@ -44,8 +44,12 @@ import javax.net.ssl.X509TrustManager;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.ResponseHandler;
+import org.apache.http.client.ServiceUnavailableRetryStrategy;
+import org.apache.http.client.config.CookieSpecs;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
@@ -81,7 +85,15 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
     /**
      * number of retries before the request fails.
      */
-    public static final String MAX_RETRY = "maxRetry";    
+    public static final String MAX_RETRY = "maxRetry"; 
+    /**
+     * Delay between two retries.
+     */
+    public static final String RETRY_DELAY = "retryDelay";     
+    /**
+     * maximum number of redirection.
+     */
+    public static final String MAX_REDIRECTION = "maxRedirectsNumber";              
     /**
      * Type of Http client.
      */
@@ -269,10 +281,18 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
             extBuilder = createConnectionTimeout(extBuilder, Long.parseLong(config.get(
                     CONNECTION_TIME_TO_LIVE_MS)));
         }
-        if (config.containsKey(MAX_RETRY)) {
-            LOG.debug("configure retry");
+        if (config.containsKey(MAX_REDIRECTION)) {
+            LOG.debug("configure max number of redirection");
+            extBuilder = createRedirectsNumber(builder, Integer.parseInt(config.get(MAX_REDIRECTION)));
+        }  
+        if (config.containsKey(RETRY_DELAY) && config.containsKey(MAX_RETRY)) {
+            LOG.debug("configure retry delay and retry attempts");
+            extBuilder = createRetryDelay(builder, Integer.parseInt(config.get(MAX_RETRY)), Long.parseLong(config.get(RETRY_DELAY)));
             extBuilder = createRetry(extBuilder, Integer.parseInt(config.get(MAX_RETRY)));
-        }
+        } else if(config.containsKey(MAX_RETRY)) {
+            LOG.debug("configure retry attempts");
+            extBuilder = createRetry(extBuilder, Integer.parseInt(config.get(MAX_RETRY)));
+        }    
         return LOG.traceExit(extBuilder);
     }
 
@@ -327,7 +347,29 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
     private HttpClientBuilder createRedirect(final HttpClientBuilder builder) {
         LOG.traceEntry("builder: {}", builder);
         return LOG.traceExit(builder.setRedirectStrategy(new LaxRedirectStrategy()));
+    }  
+    
+    /**
+     * Creates redirects number
+     * @param builder builder
+     * @param maxRedirects max number of allowed redirects
+     * @return builder
+     */
+    private HttpClientBuilder createRedirectsNumber(final HttpClientBuilder builder, final int maxRedirects) {
+        LOG.traceEntry("builder: {}", builder);
+        return builder.setDefaultRequestConfig(RequestConfig.custom().setCookieSpec(CookieSpecs.DEFAULT).setMaxRedirects(maxRedirects).build());
     }
+    
+    /**
+     * Creates an allowed redirection
+     * @param builder builder
+     * @param isCircularRedirect allow redirection
+     * @return builder
+     */    
+    private HttpClientBuilder createRedirectsAllow(final HttpClientBuilder builder, final boolean isCircularRedirect) {
+        LOG.traceEntry("builder: {}", builder);
+        return builder.setDefaultRequestConfig(RequestConfig.custom().setCookieSpec(CookieSpecs.DEFAULT).setCircularRedirectsAllowed(isCircularRedirect).build());
+    }       
 
     /**
      * Creates retry.
@@ -341,6 +383,31 @@ public class HttpClient implements org.apache.http.client.HttpClient, Closeable 
         return LOG.traceExit(builder.
                 setRetryHandler(new DefaultHttpRequestRetryHandler(retry, true)));
     }
+    
+    /**
+     * Creates retry interval.
+     *
+     * @param builder builder
+     * @param maxRetries max number of retries
+     * @param retryInterval delay between two retries
+     * @return builder
+     */
+    protected HttpClientBuilder createRetryDelay(final HttpClientBuilder builder, final int maxRetries, final long retryInterval) {
+        LOG.traceEntry("builder: {}\n\tmaxRetries: {}\n\tretryInterval: {}", builder, maxRetries, retryInterval);
+        return LOG.traceExit(builder.setServiceUnavailableRetryStrategy(new ServiceUnavailableRetryStrategy() {
+            @Override
+            public boolean retryRequest(HttpResponse response, int executionCount,
+                    HttpContext context) {
+                return executionCount <= maxRetries &&
+                        response.getStatusLine().getStatusCode() == HttpStatus.SC_SERVICE_UNAVAILABLE;
+            }
+
+            @Override
+            public long getRetryInterval() {
+                return retryInterval;
+            }
+        }));
+    }    
 
     /**
      * Disables the SSL certificate checking.
